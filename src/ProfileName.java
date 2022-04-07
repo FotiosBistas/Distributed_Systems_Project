@@ -1,3 +1,12 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class ProfileName {
-    String profileName; 
+    private String profileName;
+    private HashMap<String, ArrayList<Value>> userVideoFilesMap;
+    private HashMap<String,Integer> subscribedConversations;
+    ProfileName() {
+
+
+    }
 }

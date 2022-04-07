@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class Node {
-    ArrayList BrokerList = new ArrayList();
+    ArrayList<Broker> BrokerList = new ArrayList<Broker>();
     void connect(){
 
     }

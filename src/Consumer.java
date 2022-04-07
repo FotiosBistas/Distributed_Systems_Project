@@ -1,11 +1,11 @@
 public class Consumer {
-    void disconnect(String consumer){
+    public void disconnect(String consumer){
 
     }
-    void register(String consumer){
+    public void register(String consumer){
 
     }
-    void showConversationData(String topic, int value){
+    public void showConversationData(String topic, int value){
 
 
     }
