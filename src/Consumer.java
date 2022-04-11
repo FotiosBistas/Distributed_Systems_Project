@@ -1,4 +1,4 @@
-public class Consumer {
+public class Consumer extends Node implements Runnable {
     public void disconnect(String consumer){
 
     }
@@ -7,6 +7,11 @@ public class Consumer {
     }
     public void showConversationData(String topic, int value){
 
+
+    }
+
+    @Override
+    public void run() {
 
     }
 }

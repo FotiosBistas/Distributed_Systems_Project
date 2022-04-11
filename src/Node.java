@@ -9,6 +9,10 @@ public class Node{
     protected String IPaddress;
     protected int port;
 
+    Node(){
+
+    }
+
     Node(int port, String IPaddress){
         this.port = port;
         this.IPaddress = IPaddress;

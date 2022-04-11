@@ -11,7 +11,23 @@ public class Broker extends Node implements Runnable{
     private ArrayList<Publisher> registeredPublishers = new ArrayList<Publisher>();
     private Queue<Tuple<String,Value>> message_queue = new LinkedList<Tuple<String,Value>>();
     private Socket socket;
-    private class ClientConnectionHandler implements Runnable{
+    private static int id = 0;
+    //TODO check out if it can be done this way
+    public Broker(){
+        super();
+        id++;
+    }
+
+    public Broker(String ipaddress,int port){
+        super(port,ipaddress);
+        id++;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    private class ConnectionHandler implements Runnable{
         ObjectInputStream in;
         ObjectOutputStream out;
         private Socket client;
@@ -28,19 +44,6 @@ public class Broker extends Node implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-    }
-    private class PublisherConnectionHandler implements Runnable{
-        ObjectInputStream in;
-        ObjectOutputStream out;
-        private Socket publisher;
-        public PublisherConnectionHandler(Socket client){
-            this.publisher = publisher;
-        }
-        @Override
-        public void run(){
-
         }
 
     }
