@@ -18,3 +18,9 @@ The idea is the following:
 
 The class diagram: 
 ![ProjectSkeleton2022](https://user-images.githubusercontent.com/83087431/163029181-81d7baf4-7f15-4029-9b53-f07ea6ddf30a.png)
+
+
+
+
+
+In order to read the file metadata we used https://mediaarea.net/en/MediaInfo
