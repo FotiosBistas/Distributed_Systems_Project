@@ -23,4 +23,4 @@ The class diagram:
 
 
 
-In order to read the file metadata we used https://mediaarea.net/en/MediaInfo
+
