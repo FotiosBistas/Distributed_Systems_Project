@@ -5,10 +5,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class Node{
-    ArrayList<Broker> BrokerList = new ArrayList<Broker>();
+    protected ArrayList<Broker> BrokerList = new ArrayList<Broker>();
     protected String IPaddress;
     protected int port;
-
+    //TODO private socket
     Node(){
 
     }
@@ -18,7 +18,20 @@ public class Node{
         this.IPaddress = IPaddress;
     }
 
-     Socket connect(String address,int port){
+
+    public String getIPaddress() {
+        return IPaddress;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    ArrayList<Broker> getBrokerList(){
+        return BrokerList;
+    }
+
+    Socket connect(String address,int port){
         try{
             Socket socket = new Socket(address,port);
             return socket;
@@ -27,8 +40,8 @@ public class Node{
         } catch (IOException e) {
             e.printStackTrace();
         }
-         return null;
-     }
+        return null;
+    }
 
     void disconnect(Socket socket){
         try{
@@ -40,10 +53,6 @@ public class Node{
 
     void init(int port){
 
-    }
-
-    ArrayList<Broker> getBrokerList(){
-        return BrokerList;
     }
 
     void updateNodes(){

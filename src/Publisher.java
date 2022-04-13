@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 public class Publisher extends Node implements Runnable{
     private ProfileName name ;
-    public ArrayList<Value> generateChunks(MultimediaFile file){
+    public ArrayList<MultimediaFile> generateChunks(MultimediaFile file){
 
     }
-    public void push(String topic,Value val){
+    public void push(String topic,MultimediaFile val){
         // publisher needs to see the available brokers
 
         // choose one

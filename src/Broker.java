@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.invoke.MutableCallSite;
 import java.net.*;
 import java.util.ArrayList;
 import java.security.*;
@@ -9,7 +10,7 @@ import java.util.Queue;
 public class Broker extends Node implements Runnable{
     private ArrayList<Consumer> registeredUsers = new ArrayList<Consumer>();
     private ArrayList<Publisher> registeredPublishers = new ArrayList<Publisher>();
-    private Queue<Tuple<String,Value>> message_queue = new LinkedList<Tuple<String,Value>>();
+    private Queue<Tuple<String,MultimediaFile>> message_queue = new LinkedList<Tuple<String,MultimediaFile>>();
     private Socket socket;
     private static int id = 0;
     //TODO check out if it can be done this way
@@ -26,13 +27,12 @@ public class Broker extends Node implements Runnable{
     public int getId() {
         return id;
     }
-
     private class ConnectionHandler implements Runnable{
         ObjectInputStream in;
         ObjectOutputStream out;
         private Socket client;
         private Socket publisher;
-        public ClientConnectionHandler(Socket client){
+        public ConnectionHandler(Socket client){
             this.client = client;
         }
         @Override
@@ -47,6 +47,7 @@ public class Broker extends Node implements Runnable{
         }
 
     }
+
 
     @Override
     public void run() {
