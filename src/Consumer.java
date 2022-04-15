@@ -9,8 +9,6 @@ public class Consumer extends Node{
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Socket socket = new Socket();
-    private ArrayList<Tuple<>>
-
 
     public Consumer(){
 

@@ -3,17 +3,16 @@ import java.net.Inet4Address;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-
-public class Node{
-    protected ArrayList<Broker> BrokerList = new ArrayList<Broker>();
+import java.util.List;
+public class UserNode{
     protected String IPaddress;
     protected int port;
-    //TODO private socket
+
     Node(){
 
     }
 
-    Node(int port, String IPaddress){
+    Node(String IPaddress,int port){
         this.port = port;
         this.IPaddress = IPaddress;
     }
@@ -27,19 +26,16 @@ public class Node{
         return port;
     }
 
-    ArrayList<Broker> getBrokerList(){
-        return BrokerList;
-    }
-
     Socket connect(String address,int port){
-        try{
-            Socket socket = new Socket(address,port);
-            return socket;
-        }catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //while(true) {
+            try {
+                Socket socket = new Socket(address, port);
+                return socket;
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         return null;
     }
 
@@ -50,13 +46,12 @@ public class Node{
             e.printStackTrace();
         }
     }
-
-    void init(int port){
+    /*void init(int port){
 
     }
 
     void updateNodes(){
 
 
-    }
+    }*/
 }

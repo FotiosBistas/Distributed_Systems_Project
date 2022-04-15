@@ -4,13 +4,17 @@ import java.util.ArrayList;
 
 public class Publisher extends Node implements Runnable{
     private ProfileName name ;
-    public ArrayList<MultimediaFile> generateChunks(MultimediaFile file){
 
+    public Publisher(ProfileName name, String ipaddress, int port){
+        super(ipaddress,port);
+        this.name = name;
     }
+
     public void push(String topic,MultimediaFile val){
         // publisher needs to see the available brokers
-
+        Broker brk = hashTopic(topic);
         // choose one
+        brk.getMessage_queue().add(new Tuple<String,MultimediaFile>(topic,val));
 
     }
     public void notifyFailure(Broker brk){

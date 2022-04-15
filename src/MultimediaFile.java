@@ -9,8 +9,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
-public class MultimediaFile implements Serializable {
+class MultimediaFile implements Serializable {
     private String multimediaFileName;
     private String profileName;
     private String dateCreated;
@@ -18,7 +19,7 @@ public class MultimediaFile implements Serializable {
     //private String framerate;
     //private String frameWidth;
     //private String frameHeight;
-    private ArrayList<byte[]> multimediaFileChunk;
+    private List<byte[]> multimediaFileChunk = new ArrayList<byte[]>();
 
     MultimediaFile(String filename,String profileName){
         this.multimediaFileName = filename;
@@ -38,7 +39,6 @@ public class MultimediaFile implements Serializable {
     }
 
     public void splitFile(File f){
-        int id = 0; // this is the ID of each chunks
         int sizeofchunks = 512000;
         try(FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis)) {
@@ -46,8 +46,11 @@ public class MultimediaFile implements Serializable {
             byte[] buffer = new byte[sizeofchunks];
             while((bytesAmount = bis.read(buffer))>0){
                 multimediaFileChunk.add(buffer);
+                // create a new pointer because when the new data gets written on the buffer all the buffers change
                 buffer = new byte[sizeofchunks];
+                //TODO bad code find a solution
             }
+            bis.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
