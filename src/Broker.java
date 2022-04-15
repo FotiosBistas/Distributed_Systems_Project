@@ -6,32 +6,38 @@ import java.security.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-//broker implements serializable due to
-public class Broker implements Runnable,Serializable{
+//broker implements serializable due to the list of brokers
+public class Broker implements Serializable{
     private List<Consumer> registeredUsers = new ArrayList<Consumer>();
     private List<Publisher> registeredPublishers = new ArrayList<Publisher>();
     private Queue<Tuple<String,MultimediaFile>> message_queue = new LinkedList<Tuple<String,MultimediaFile>>();
     private List<Broker> BrokerList = new ArrayList<Broker>();
+
+
     private ServerSocket server;
+    private Socket connection;
+
+
     private String ip;
     private int port;
+
+
     private final int  maxBrokers = 3;
     private boolean done = false;
     private int id = 0;
 
-    public Broker(String ip,String port){
+    public Broker(String ip,int port){
         this.ip = ip;
         this.port = port;
         this.id = SHA1.hextoInt(SHA1.encrypt(String.valueOf(port) + ip),maxBrokers);
     }
 
-    @Override
-    public void run() {
+    public void startBroker() {
         try {
             server = new ServerSocket(port);
             while(true){
-                Socket client = server.accept();
-                Thread action = new ActionsForBroker(client);
+                connection = server.accept();
+                Thread action = new ActionsForBroker(connection);
                 action.start();
             }
         } catch (Exception e) {
