@@ -10,8 +10,7 @@ public class Broker implements Serializable{
     private List<Publisher> registeredPublishers = new ArrayList<Publisher>();
 
 
-    private Queue<Tuple<Topic,Byte>> message_queue = new LinkedList<Tuple<Topic,Byte>>();
-    private Queue<String> history = new LinkedList<String>();
+    private List<Tuple<Topic,Byte>> message_queue = new ArrayList<Tuple<Topic,Byte>>();
 
     private List<Broker> BrokerList = new ArrayList<Broker>();
     private Map<String, Set<Consumer>> subscribedUsersToTopic = new HashMap<String,Set<Consumer>>();
@@ -79,22 +78,22 @@ public class Broker implements Serializable{
 
         public void HandleRequest() {
             try {
-
-                out.writeUTF("Server established connection with client: " + socket.getInetAddress().getHostAddress());
+                out.writeUTF("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
                 out.flush();
-                String request = in.readUTF();
-                if (request.equals("GetBrokerList")) {
+                String message;
+                while((message = in.readLine()) != null) {
+                    if (message.equals("GetBrokerList")) {
+                        out.writeObject(BrokerList);
+                        out.flush();
+                    } else if (message.equals("Register")) {
 
-                    out.writeObject(BrokerList);
-                    out.flush();
-                } else if (request.equals("Register")) {
+                    } else if (message.equals("Push")) {
+                        String topic = in.readUTF();
+                    } else if (message.equals("Pull")) {
 
-                } else if (request.equals("Push")) {
-                    String topic = in.readUTF();
-                } else if (request.equals("Pull")) {
+                    } else if (message.equals("Unsubscribe")) {
 
-                } else if (request.equals("Unsubscribe")) {
-
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -123,7 +122,7 @@ public class Broker implements Serializable{
         }
     }
 
-    public Set<Consumer> sendMessagesToConsumers(){
+    public Tuple<Set<Consumer>,Byte> sendMessagesToConsumers(){
         //TODO check what happens with synchronization
         //TODO check how this will happen constantly
         while(!message_queue.isEmpty()){
@@ -131,7 +130,8 @@ public class Broker implements Serializable{
             String topic_name = chunk.getValue1().getName();
             Set<Consumer> Set_of_subscribers = subscribedUsersToTopic.get(topic_name);
             //take the subscribers send them the chuck
-            return Set_of_subscribers;
+            Tuple<Set<Consumer>,Byte> new_tuple = new Tuple<Set<Consumer>,Byte>(Set_of_subscribers, chunk.getValue2());
+            return new_tuple;
         }
         return null;
     }
@@ -140,7 +140,7 @@ public class Broker implements Serializable{
 
     }
 
-    public void notifyPublisher(String topic){
+    public void notifyPublisher(Topic topic){
 
     }
 

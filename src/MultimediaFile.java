@@ -39,7 +39,7 @@ class MultimediaFile implements Serializable {
     }
 
     public void splitFile(File f){
-        int sizeofchunks = 512000;
+        int sizeofchunks = 512*1024;
         try(FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis)) {
             int bytesAmount = 0;
@@ -48,7 +48,7 @@ class MultimediaFile implements Serializable {
                 multimediaFileChunk.add(buffer);
                 // create a new pointer because when the new data gets written on the buffer all the buffers change
                 buffer = new byte[sizeofchunks];
-                //TODO bad code find a solution
+
             }
             bis.close();
         } catch (FileNotFoundException e) {

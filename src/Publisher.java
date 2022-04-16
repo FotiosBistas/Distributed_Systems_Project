@@ -19,10 +19,12 @@ public class Publisher extends UserNode implements Runnable{
         brk.getMessage_queue().add(new Tuple<String,MultimediaFile>(topic,val));
 
     }
+
     public void notifyFailure(Broker brk){
 
     }
-    public void notifyBrokersNewMessage(String){
+
+    public void notifyBrokersNewMessage(Topic topic){
 
     }
     public Broker hashTopic(String topic){

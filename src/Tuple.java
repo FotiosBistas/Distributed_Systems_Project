@@ -11,8 +11,6 @@ public class Tuple<V1, V2> {
         this.value2 = value2;
     }
 
-
-
     public V1 getValue1() {
         return value1;
     }
