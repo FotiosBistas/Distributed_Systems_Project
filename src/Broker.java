@@ -1,17 +1,21 @@
 import java.io.*;
-import java.lang.invoke.MutableCallSite;
 import java.net.*;
-import java.util.ArrayList;
-import java.security.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+
 //broker implements serializable due to the list of brokers
 public class Broker implements Serializable{
+
+
     private List<Consumer> registeredUsers = new ArrayList<Consumer>();
     private List<Publisher> registeredPublishers = new ArrayList<Publisher>();
-    private Queue<Tuple<String,MultimediaFile>> message_queue = new LinkedList<Tuple<String,MultimediaFile>>();
+
+
+    private Queue<Tuple<Topic,Byte>> message_queue = new LinkedList<Tuple<Topic,Byte>>();
+    private Queue<String> history = new LinkedList<String>();
+
     private List<Broker> BrokerList = new ArrayList<Broker>();
+    private Map<String, Set<Consumer>> subscribedUsersToTopic = new HashMap<String,Set<Consumer>>();
+
 
 
     private ServerSocket server;
@@ -23,7 +27,6 @@ public class Broker implements Serializable{
 
 
     private final int  maxBrokers = 3;
-    private boolean done = false;
     private int id = 0;
 
     public Broker(String ip,int port){
@@ -80,7 +83,7 @@ public class Broker implements Serializable{
                 out.writeUTF("Server established connection with client: " + socket.getInetAddress().getHostAddress());
                 out.flush();
                 String request = in.readUTF();
-                if (request.equals("Get Broker List")) {
+                if (request.equals("GetBrokerList")) {
 
                     out.writeObject(BrokerList);
                     out.flush();
@@ -99,7 +102,39 @@ public class Broker implements Serializable{
         }
     }
 
+    public void addConsumerToTopic(String topic_name, Consumer consumer){
+        //this if condition checks whether there's an topic that the new consumer can subscribe to
+        if(subscribedUsersToTopic.containsKey(topic_name)){
+            Set<Consumer> set = subscribedUsersToTopic.get(topic_name);
+            set.add(consumer);
+            subscribedUsersToTopic.put(topic_name,set);
+        }else{ // this is the case where the topic does not exist and the new topic must be inserted in the hash map
+            Set<Consumer> set = new HashSet<Consumer>();
+            set.add(consumer);
+            subscribedUsersToTopic.put(topic_name,set);
+        }
+    }
 
+    public void UnsubscribeFromTopic(String topic_name, Consumer consumer){
+        if(subscribedUsersToTopic.containsKey(topic_name)){
+            Set<Consumer> set = subscribedUsersToTopic.get(topic_name);
+            set.remove(consumer);
+            subscribedUsersToTopic.put(topic_name,set);
+        }
+    }
+
+    public Set<Consumer> sendMessagesToConsumers(){
+        //TODO check what happens with synchronization
+        //TODO check how this will happen constantly
+        while(!message_queue.isEmpty()){
+            Tuple<Topic,Byte> chunk = message_queue.remove();
+            String topic_name = chunk.getValue1().getName();
+            Set<Consumer> Set_of_subscribers = subscribedUsersToTopic.get(topic_name);
+            //take the subscribers send them the chuck
+            return Set_of_subscribers;
+        }
+        return null;
+    }
 
     public void notifyBrokersOnChanges(){
 
@@ -109,13 +144,13 @@ public class Broker implements Serializable{
 
     }
 
-    public void pull(String topic){
+    public void pull(Topic topic){
 
     }
 
     public List<Broker> getBrokerList() { return BrokerList; }
 
-    public Queue<Tuple<String,MultimediaFile>> getMessage_queue(){
+    public Queue<Tuple<Topic, Byte>> getMessage_queue(){
         return message_queue;
     }
 

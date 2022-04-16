@@ -2,11 +2,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 
 
-public class Publisher extends Node implements Runnable{
+public class Publisher extends UserNode implements Runnable{
+
     private ProfileName name ;
 
-    public Publisher(ProfileName name, String ipaddress, int port){
-        super(ipaddress,port);
+
+    public Publisher(ProfileName name, String ip, int port){
+        super(ip, port);
         this.name = name;
     }
 
