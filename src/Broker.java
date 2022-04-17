@@ -1,11 +1,14 @@
+
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 //broker implements serializable due to the list of brokers
 public class Broker implements Serializable{
 
-    private List<UserNode> ConnectedUsers = new ArrayList<UserNode>();
+    // private List<UserNode> ConnectedUsers = new ArrayList<UserNode>();
     private List<Thread> Connections = new ArrayList<Thread>();
 
     private List<Topic> list_of_topics = new ArrayList<Topic>();
@@ -36,7 +39,9 @@ public class Broker implements Serializable{
     public void startBroker() {
         try {
             server = new ServerSocket(port);
-            while(true){
+            System.out.println("Broker with id: " + this.id + ",listens on port: " + this.port);
+            System.out.println("IP address: " + this.ip);
+            while(!server.isClosed()){
                 connection = server.accept();
                 Thread action = new ActionsForBroker(connection);
                 Connections.add(action);
@@ -44,28 +49,54 @@ public class Broker implements Serializable{
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }finally{
-            try {
-                server.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            System.out.println("Could not open broker");
+            shutdownBroker();
         }
+
     }
 
 
     private class ActionsForBroker extends Thread {
 
-        private ObjectInputStream in;
-        private ObjectOutputStream out;
+        private ObjectInputStream is;
+        private ObjectOutputStream ous;
         private Socket connected_socket;
 
         public ActionsForBroker(Socket connection){
             try {
-                out = new ObjectOutputStream(connection.getOutputStream());
-                in = new ObjectInputStream(connection.getInputStream());
+                ous = new ObjectOutputStream(connection.getOutputStream());
+                is = new ObjectInputStream(connection.getInputStream());
                 connected_socket = connection;
             } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Could not connect");
+                shutdownConnection();
+            }catch(Exception e){
+                e.printStackTrace();
+                System.out.println("Could not connect");
+                shutdownConnection();
+            }
+        }
+
+        public void removeConnection(){
+            Connections.remove(this);
+        }
+
+        public void shutdownConnection(){
+            System.out.println("Shutted connection: " + connected_socket.getInetAddress());
+            removeConnection();
+            try{
+                if(ous != null){
+                    ous.close();
+                }
+                if(is != null){
+                    is.close();
+                }
+                if(connected_socket != null){
+                    connected_socket.close();
+                }
+            }
+            catch(IOException e){
                 e.printStackTrace();
             }
         }
@@ -78,27 +109,40 @@ public class Broker implements Serializable{
 
         public void HandleRequest() {
             try {
-                out.writeUTF("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
-                out.flush();
+                System.out.println("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
                 String message;
-                while((message = (in.readUTF())) != null) {
+                while(is.read() == -1){
+                    if(!connected_socket.isConnected()){
+                        throw new Exception();
+                    }
+                    System.out.println("Waiting for user input...");
+                    Thread.sleep(40000);
+                }
+                message = is.readUTF();
+                while(connected_socket.isConnected()) {
                     if (message.equals("GetBrokerList")) {
-                        out.writeObject(BrokerList);
-                        out.flush();
+                        System.out.println(("Sending broker list..."));
+                        ous.flush();
+                        ous.writeObject(BrokerList);
+                        ous.flush();
                     } else if (message.equals("Register")) {
                         //TODO subscribe function
-                        String topic_name = in.readUTF();
-                        Consumer new_cons = (Consumer) in.readObject();
+                        String topic_name = is.readUTF();
+                        Consumer new_cons = (Consumer) is.readObject();
+                        System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " +new_cons.getPort() + "to topic: " + topic_name);
                         addConsumerToTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)),new_cons);
-                        //someone can subscribe and unsubscribe 
-                        out.writeUTF("Send list size");
-                        out.flush();
-                        while(in.read() == 0){}
-                        int list_size = in.readInt();
+                        //someone can subscribe and unsubscribe
+                        ous.writeUTF("Send list size");
+                        ous.flush();
+                        while(is.read() == -1){
+                            System.out.println("Waiting for user list size...");
+                            Thread.sleep(40000);
+                        }
+                        int list_size = is.readInt();
                         //TODO call pull method
                     } else if (message.equals("Push")){
                         //TODO call pull method
-                        String topic = in.readUTF();
+                        String topic = is.readUTF();
                     } else if (message.equals("Pull")) {
 
                     } else if (message.equals("Unsubscribe")) {
@@ -107,10 +151,28 @@ public class Broker implements Serializable{
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
+                System.out.println("Shutting down connection...");
+                shutdownConnection();
+            }catch(Exception e){
+                e.printStackTrace();
+                System.out.println("Shutting down connection...");
+                shutdownConnection();
             }
         }
     }
 
+    public void shutdownBroker(){
+        System.out.println("Shutting down broker with id: " + this.id);
+        try {
+            if(server != null) {
+                server.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
     /* below methods accept the topic name from the input streams and find the corresponding object */
     public void addConsumerToTopic(Topic topic, Consumer consumer){
@@ -158,12 +220,26 @@ public class Broker implements Serializable{
 
     public List<Broker> getBrokerList() { return BrokerList; }
 
-    public List<Tuple<Topic, Byte>> getMessage_queue(){
+    public List<Tuple<String, Byte>> getMessage_queue(){
         return message_queue;
     }
 
     public int getId() {
         return id;
+    }
+
+    public static void main(String[] args) {
+        if(args[0] == null) {
+            System.out.println("You did not provide an ip address");
+        }else if(args[1] == null){
+            System.out.println("You did not provide a port number");
+        }
+        else {
+            String ip = args[0];
+            int port = Integer.valueOf(args[1]);
+            Broker broker = new Broker(ip, port);
+            broker.startBroker();
+        }
     }
 
 }
