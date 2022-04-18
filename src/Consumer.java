@@ -9,11 +9,7 @@ import java.util.Scanner;
 
 public class Consumer implements Serializable {
 
-    private boolean exit = false;
 
-    private Socket consumer_socket;
-    private ObjectInputStream is;
-    private ObjectOutputStream os;
 
     private String ip;
     private int port;
@@ -23,6 +19,10 @@ public class Consumer implements Serializable {
         this.ip = ip;
         this.port = port;
         this.name = name;
+    }
+
+    public String getName(){
+        return name;
     }
 
     public String getIp() {
@@ -39,10 +39,9 @@ public class Consumer implements Serializable {
 
     public void startConsumer(){
         try {
-            consumer_socket = new Socket("localhost",1234);
-            is = new ObjectInputStream(consumer_socket.getInputStream());
-            os = new ObjectOutputStream(consumer_socket.getOutputStream());
-            InputHandler inputHandler = new InputHandler();
+
+            NetworkingForConsumer inputHandler = new NetworkingForConsumer(new Socket("localhost",1234),this);
+            inputHandler.BrokerResponses();
             Thread t = new Thread(inputHandler);
             t.start();
         } catch(ConnectException e){
@@ -56,7 +55,6 @@ public class Consumer implements Serializable {
         } catch (IOException e) {
             System.out.println("Terminating client...");
             e.printStackTrace();
-            killclient();
         }
 
     }
@@ -69,111 +67,9 @@ public class Consumer implements Serializable {
                 '}';
     }
 
-    public void killclient(){
-        System.out.println("Ending client: " + name);
-        exit = true;
-        try{
-            if(is != null) {
-                is.close();
-            }
-            if(os != null) {
-                os.close();
-            }
-            if(consumer_socket != null) {
-                consumer_socket.close();
-            }
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    private class InputHandler implements Runnable{
-
-
-        @Override
-        public void run() {
-            try{
-                Scanner sc = new Scanner(System.in);
-                System.out.println("I'm the client: " + name + " and i have connected to the server");
-                while(!exit) {
-                    System.out.println("1.Register to topic");
-                    System.out.println("2.Disconnect from topic");
-                    System.out.println("3.Show conversation data");
-                    System.out.println("0.Exit");
-                    System.out.println("Type the number");
-                    int userinput = sc.nextInt();
-                    String topic_name;
-                    switch (userinput){
-                        case 1:
-                            System.out.println("Registering...");
-                            os.writeUTF("Register");
-                            os.flush();
-                            System.out.println("What topic are you interested in?");
-                            topic_name = sc.next();
-                            os.writeUTF(topic_name);
-                            os.flush();
-                            //output_stream.writeObject(Consumer.this);
-                            //output_stream.flush();
-                            break;
-                        case 2:
-                            System.out.println("Disconnecting from topic...");
-                            System.out.println("Disconnect from what topic?");
-                            topic_name = sc.nextLine();
-                            os.writeUTF(topic_name);
-                            os.flush();
-                            break;
-                        case 3:
-                            break;
-                        case 0:
-                            System.out.println("Ending the connection with the server...");
-                            killclient();
-                            break;
-                        default:
-                            System.out.println("Invalid Request... Try again");
-                            continue;
-                    }
-                }
-            } catch (UnknownHostException e) {
-                System.out.println("Terminating client...");
-                e.printStackTrace();
-                killclient();
-            } catch (IOException e) {
-                System.out.println("Terminating client...");
-                e.printStackTrace();
-                killclient();
-            }catch(Exception e){
-                System.out.println("Terminating client...");
-                e.printStackTrace();
-                killclient();
-            }
-        }
-    }
-
-    public void BrokerResponses(){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String messagebroker;
-                System.out.println("Opened thread to receive messages from broker");
-                while(consumer_socket.isConnected()){
-                    System.out.println("Waiting...");
-                    try {
-                        messagebroker = is.readUTF();
-                        System.out.println("Received message from broker: " + messagebroker);
-                    } catch (IOException e) {
-                        System.out.println("Terminating client...");
-                        e.printStackTrace();
-                        killclient();
-                    }
-                }
-            }
-        }).start();
-    }
-
     public void disconnect(String topic){
 
     }
-
 
     public void showConversationData(String topic, int value){
 
@@ -189,7 +85,7 @@ public class Consumer implements Serializable {
             Consumer consumer = new Consumer("localhost", 21312, "Fotis");
             /* Correct way to start threads */
             consumer.startConsumer();
-            consumer.BrokerResponses();
+            //consumer.BrokerResponses();
             // We create a thread object giving a runnable as a parameter
             // and we call the start method of the created object
         }
