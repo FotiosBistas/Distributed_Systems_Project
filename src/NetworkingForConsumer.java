@@ -4,6 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 class NetworkingForConsumer implements Runnable{
@@ -18,7 +19,9 @@ class NetworkingForConsumer implements Runnable{
         try {
             os = new ObjectOutputStream(request_socket.getOutputStream());
             is = new ObjectInputStream(request_socket.getInputStream());
-
+            System.out.println("Requesting for broker list");
+            os.writeUTF("GetBrokerList");
+            os.flush();
         } catch (IOException e) {
             e.printStackTrace();
             killclient();
@@ -54,9 +57,6 @@ class NetworkingForConsumer implements Runnable{
         try{
             Scanner sc = new Scanner(System.in);
             System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
-            //System.out.println("Requesting for broker list");
-            //os.writeUTF("GetBrokerList");
-            //os.flush();
             while(!exit) {
                 System.out.println("1.Register to topic");
                 System.out.println("2.Disconnect from topic");
@@ -68,11 +68,11 @@ class NetworkingForConsumer implements Runnable{
                 switch (userinput){
                     case 1:
                         System.out.println("Registering...");
-                        os.writeUTF("Register");
+                        os.writeUTF("Register\n");
                         os.flush();
-                        System.out.println("What topic are you interested in?");
+                        System.out.println("What topic are you interested in?\n");
                         topic_name = sc.next();
-                        os.writeUTF(topic_name);
+                        os.writeUTF(topic_name + "\n");
                         os.flush();
                         System.out.println("Writing consumer object...");
                         os.writeObject(cons);
@@ -82,7 +82,7 @@ class NetworkingForConsumer implements Runnable{
                         System.out.println("Disconnecting from topic...");
                         System.out.println("Disconnect from what topic?");
                         topic_name = sc.nextLine();
-                        os.writeUTF(topic_name);
+                        os.writeUTF(topic_name + "\n");
                         os.flush();
                         break;
                     case 3:
@@ -116,13 +116,27 @@ class NetworkingForConsumer implements Runnable{
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String messagebroker;
+                String messagebroker = null;
                 System.out.println("Opened thread to receive messages from broker");
                 while (!exit) {
-                    System.out.println("Waiting...");
                     try {
-                        messagebroker = is.readUTF();
-                        System.out.println("Received message from broker: " + messagebroker);
+                        if(messagebroker == null) {
+                            System.out.println("Waiting...");
+                            messagebroker = is.readUTF();
+                            System.out.println("Received message from broker: " + messagebroker);
+                        }else if(messagebroker.equals("Sending broker list...")){
+                            System.out.println("Received message that the broker list is being sent");
+                            String ip = is.readUTF();
+                            System.out.println("Broker's ip: " + ip);
+                            int port = is.readInt();
+                            System.out.println("Broker's port: " + port);
+                            System.out.println("Inserting broker's port and IP address");
+                            cons.getBrokerList().add(new Tuple<String,Integer>(ip,port));
+                            System.out.println("Finished operation");
+                            os.writeUTF("Finished operation");
+                            os.flush();
+                        }
+
                     }catch (SocketException e){
                         System.out.println("Socket was closed before");
                         killclient();
