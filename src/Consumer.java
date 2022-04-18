@@ -14,11 +14,20 @@ public class Consumer implements Serializable {
     private String ip;
     private int port;
     private String name;
+    private List<Tuple<String,Integer>> brokerList = new ArrayList<Tuple<String,Integer>>();
 
     public Consumer(String ip, int port, String name) {
         this.ip = ip;
         this.port = port;
         this.name = name;
+    }
+
+    //public void setBrokerList(ArrayList<Broker> brokerList){
+    //  this.brokerList = brokerList;
+    //}
+
+    public List<Tuple<String,Integer>> getBrokerList(){
+        return brokerList;
     }
 
     public String getName(){
@@ -65,6 +74,10 @@ public class Consumer implements Serializable {
                 "ip='" + ip + '\'' +
                 ", port=" + port +
                 '}';
+    }
+
+    public void register(String topic){
+
     }
 
     public void disconnect(String topic){
