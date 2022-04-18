@@ -111,14 +111,8 @@ public class Broker implements Serializable{
             try {
                 System.out.println("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
                 String message;
-                while(is.read() == -1){
-                    if(!connected_socket.isConnected()){
-                        throw new Exception();
-                    }
-                    System.out.println("Waiting for user input...");
-                    Thread.sleep(40000);
-                }
                 message = is.readUTF();
+                System.out.println("message: " + message);
                 while(connected_socket.isConnected()) {
                     if (message.equals("GetBrokerList")) {
                         System.out.println(("Sending broker list..."));
@@ -127,17 +121,15 @@ public class Broker implements Serializable{
                         ous.flush();
                     } else if (message.equals("Register")) {
                         //TODO subscribe function
+                        System.out.println("Serving register request for client: " + connection.getInetAddress().getHostName());
                         String topic_name = is.readUTF();
-                        Consumer new_cons = (Consumer) is.readObject();
-                        System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " +new_cons.getPort() + "to topic: " + topic_name);
-                        addConsumerToTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)),new_cons);
+                        //Consumer new_cons = (Consumer) is.readObject();
+                        System.out.println("Topic name: " + topic_name);
+                        // System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
+                        //addConsumerToTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)),new_cons);
                         //someone can subscribe and unsubscribe
-                        ous.writeUTF("Send list size");
+                        ous.writeUTF("Send list size\n");
                         ous.flush();
-                        while(is.read() == -1){
-                            System.out.println("Waiting for user list size...");
-                            Thread.sleep(40000);
-                        }
                         int list_size = is.readInt();
                         //TODO call pull method
                     } else if (message.equals("Push")){
@@ -149,7 +141,7 @@ public class Broker implements Serializable{
 
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Shutting down connection...");
                 shutdownConnection();
