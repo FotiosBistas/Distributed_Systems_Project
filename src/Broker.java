@@ -2,14 +2,15 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 //broker implements serializable due to the list of brokers
-public class Broker implements Serializable{
+public class Broker{
 
     // private List<UserNode> ConnectedUsers = new ArrayList<UserNode>();
-    private List<Thread> Connections = new ArrayList<Thread>();
+    private List<Thread> Connections = new ArrayList<>();
 
     private List<Topic> list_of_topics = new ArrayList<Topic>();
     private List<Tuple<String,Byte>> message_queue = new ArrayList<Tuple<String,Byte>>();
@@ -33,6 +34,7 @@ public class Broker implements Serializable{
     public Broker(String ip,int port){
         this.ip = ip;
         this.port = port;
+        BrokerList.add(this);
         this.id = SHA1.hextoInt(SHA1.encrypt(String.valueOf(port) + ip),maxBrokers);
     }
 
@@ -61,6 +63,7 @@ public class Broker implements Serializable{
         private ObjectInputStream is;
         private ObjectOutputStream ous;
         private Socket connected_socket;
+
 
         public ActionsForBroker(Socket connection){
             try {
@@ -112,33 +115,44 @@ public class Broker implements Serializable{
                 System.out.println("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
                 String message;
                 message = is.readUTF();
-                System.out.println("message: " + message);
+                System.out.println("Received message from client: " + message);
                 while(connected_socket.isConnected()) {
                     if (message.equals("GetBrokerList")) {
-                        System.out.println(("Sending broker list..."));
+                        System.out.println("Sending broker list");
+                        ous.writeUTF(("Sending broker list..."));
                         ous.flush();
-                        ous.writeObject(BrokerList);
-                        ous.flush();
+                        for (int i = 0; i < BrokerList.size(); i++) {
+                            System.out.println("Sending broker's IP");
+                            ous.writeUTF(BrokerList.get(i).ip);
+                            ous.flush();
+                            System.out.println("Sending broker's port");
+                            ous.writeInt(BrokerList.get(i).port);
+                            ous.flush();
+                        }
+                        System.out.println("Finished sending brokers");
+                        message = is.readUTF();
                     } else if (message.equals("Register")) {
                         //TODO subscribe function
                         System.out.println("Serving register request for client: " + connection.getInetAddress().getHostName());
                         String topic_name = is.readUTF();
-                        //Consumer new_cons = (Consumer) is.readObject();
+                        Consumer new_cons = (Consumer) is.readObject();
                         System.out.println("Topic name: " + topic_name);
-                        // System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
+                        System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
                         //addConsumerToTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)),new_cons);
                         //someone can subscribe and unsubscribe
                         ous.writeUTF("Send list size\n");
                         ous.flush();
                         int list_size = is.readInt();
                         //TODO call pull method
+                        message = is.readUTF();
                     } else if (message.equals("Push")){
                         //TODO call pull method
                         String topic = is.readUTF();
+                        message = is.readUTF();
                     } else if (message.equals("Pull")) {
-
+                        message = is.readUTF();
                     } else if (message.equals("Unsubscribe")) {
-
+                        message = is.readUTF();
                     }
                 }
             } catch (IOException e) {
@@ -151,6 +165,11 @@ public class Broker implements Serializable{
                 shutdownConnection();
             }
         }
+
+        public Socket getSocket(){
+            return connected_socket;
+        }
+
     }
 
     public void shutdownBroker(){
