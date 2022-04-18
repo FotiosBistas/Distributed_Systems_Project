@@ -27,6 +27,7 @@ class NetworkingForConsumer implements Runnable{
 
     public void killclient(){
         System.out.println("Ending client: " + cons.getName());
+        exit = true;
         try{
             if(is != null) {
                 System.out.println("Input stream was not null so we had to close it");
