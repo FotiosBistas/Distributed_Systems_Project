@@ -19,6 +19,7 @@ class NetworkingForConsumer implements Runnable{
         try {
             os = new ObjectOutputStream(request_socket.getOutputStream());
             is = new ObjectInputStream(request_socket.getInputStream());
+            System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
             System.out.println("Requesting for broker list");
             os.writeUTF("GetBrokerList");
             os.flush();
@@ -56,7 +57,6 @@ class NetworkingForConsumer implements Runnable{
     public void run() {
         try{
             Scanner sc = new Scanner(System.in);
-            System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
             while(!exit) {
                 System.out.println("1.Register to topic");
                 System.out.println("2.Disconnect from topic");
@@ -135,6 +135,7 @@ class NetworkingForConsumer implements Runnable{
                             System.out.println("Finished operation");
                             os.writeUTF("Finished operation");
                             os.flush();
+                            messagebroker = null;
                         }
 
                     }catch (SocketException e){
