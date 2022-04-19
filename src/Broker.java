@@ -43,9 +43,19 @@ public class Broker{
         try {
             //File write set true append mode
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename,true));
-            writer.append(ip + " " + port + "\n");
-            writer.close();
-            System.out.println("Wrote Ip and port to the file");
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            String line;
+            Set<String> temp = new HashSet<String>();
+            while((line = reader.readLine()) != null){
+                temp.add(line);
+            }
+            if(temp.contains(ip + " " + port)){
+                System.out.println("Broker already exists in file");
+            }else {
+                writer.append(ip + " " + port + "\n");
+                writer.close();
+                System.out.println("Wrote Ip and port to the file");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -147,15 +157,15 @@ public class Broker{
                         }
                         ous.writeInt(Messages.SENDING_BROKER_LIST.ordinal());
                         ous.flush();
-                        for (int i = 0; i < BrokerList.size(); i++) {
+                        for (Tuple<String,Integer> val: BrokerList) {
                             System.out.println("Sending list size: " + BrokerList.size());
                             ous.writeUTF(String.valueOf(BrokerList.size()));
                             ous.flush();
-                            System.out.println("Sending broker's IP: " + BrokerList.get(i).getValue1());
-                            ous.writeUTF(BrokerList.get(i).getValue1());
+                            System.out.println("Sending broker's IP: " + val.getValue1());
+                            ous.writeUTF(val.getValue1());
                             ous.flush();
-                            System.out.println("Sending broker's port: " + BrokerList.get(i).getValue2());
-                            ous.writeUTF(String.valueOf(BrokerList.get(i).getValue2()));
+                            System.out.println("Sending broker's port: " + val.getValue2());
+                            ous.writeUTF(String.valueOf(val.getValue2()));
                             ous.flush();
                         }
                         ous.writeInt(Messages.FINISHED_OPERATION.ordinal());
