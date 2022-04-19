@@ -76,18 +76,6 @@ public class Consumer implements Serializable {
                 '}';
     }
 
-    public void register(String topic){
-
-    }
-
-    public void disconnect(String topic){
-
-    }
-
-    public void showConversationData(String topic, int value){
-
-    }
-
     public static void main(String[] args) {
         if(args[0] == null){
             System.out.println("You didn't provide an IP address");
