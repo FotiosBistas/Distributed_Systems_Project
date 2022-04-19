@@ -1,0 +1,11 @@
+public enum Messages {
+    REGISTER,
+    GET_BROKER_LIST,
+    PUSH,
+    PULL,
+    UNSUBSCRIBE,
+    SENDING_BROKER_LIST,
+    SEND_LIST_SIZE,
+    FINISHED_OPERATION
+}
+
