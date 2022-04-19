@@ -8,12 +8,13 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 class NetworkingForConsumer implements Runnable{
+
     private ObjectOutputStream os;
     private ObjectInputStream is;
     private Socket request_socket;
     private Consumer cons;
     boolean exit = false;
-
+    private static Scanner sc = new Scanner(System.in);
 
 
     public NetworkingForConsumer(Socket request_socket,Consumer cons){
@@ -29,6 +30,55 @@ class NetworkingForConsumer implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
             killclient();
+        }
+    }
+
+    public void unsubscribe(){
+        try {
+            System.out.println("Unsubscribing from topic...");
+            os.writeInt(Messages.UNSUBSCRIBE.ordinal());
+            os.flush();
+            System.out.println("Disconnect from what topic?");
+            String topic_name = sc.next();
+            os.writeUTF(topic_name);
+            os.flush();
+            os.writeObject(cons);
+            os.flush();
+        }catch(IOException e){
+            System.out.println("Terminating client in unsubscribe...");
+            killclient();
+            e.printStackTrace();
+        }
+    }
+
+    public void showConversationData(){
+        try{
+            System.out.println("Requesting to show conversation data history");
+            os.writeInt(Messages.SHOW_CONVERSATION_DATA.ordinal());
+            os.flush();
+        }catch(IOException e){
+            System.out.println("Terminating client in show conversation data...");
+            killclient();
+            e.printStackTrace();
+        }
+    }
+
+    public void register(){
+        try {
+            System.out.println("Registering...");
+            os.writeInt(Messages.REGISTER.ordinal());
+            os.flush();
+            System.out.println("What topic are you interested in?");
+            String topic_name = sc.next();
+            os.writeUTF(topic_name);
+            os.flush();
+            System.out.println("Writing consumer object...");
+            os.writeObject(cons);
+            os.flush();
+        }catch(IOException e){
+            System.out.println("Terminating client in subscribe...");
+            killclient();
+            e.printStackTrace();
         }
     }
 
@@ -58,61 +108,33 @@ class NetworkingForConsumer implements Runnable{
 
     @Override
     public void run() {
-        try{
-            Scanner sc = new Scanner(System.in);
-            while(!exit) {
-                System.out.println("1.Register to topic");
-                System.out.println("2.Disconnect from topic");
-                System.out.println("3.Show conversation data");
-                System.out.println("0.Exit");
-                System.out.println("Type the number");
-                int userinput = sc.nextInt();
-                String topic_name;
-                switch (userinput){
-                    case 1:
-                        System.out.println("Registering...");
-                        os.writeInt(Messages.REGISTER.ordinal());
-                        os.flush();
-                        System.out.println("What topic are you interested in?");
-                        topic_name = sc.next();
-                        os.writeUTF(topic_name);
-                        os.flush();
-                        System.out.println("Writing consumer object...");
-                        os.writeObject(cons);
-                        os.flush();
-                        break;
-                    case 2:
-                        System.out.println("Disconnecting from topic...");
-                        System.out.println("Disconnect from what topic?");
-                        topic_name = sc.nextLine();
-                        os.writeUTF(topic_name + "\n");
-                        os.flush();
-                        break;
-                    case 3:
-                        break;
+        while(!exit) {
+            System.out.println("1.Register to topic");
+            System.out.println("2.Unsubscribe from topic");
+            System.out.println("3.Show conversation data");
+            System.out.println("0.Exit");
+            System.out.println("Type the number");
+            int userinput = sc.nextInt();
+            String topic_name;
+            switch (userinput){
+                case 1:
+                    register();
+                    break;
+                case 2:
+                    unsubscribe();
+                    break;
+                case 3:
+                    showConversationData();
+                    break;
 
-                    case 0:
-                        System.out.println("Terminating connection with server in run");
-                        killclient();
-                        break;
-                    default:
-                        System.out.println("Invalid Request... Try again");
-                        break;
-                }
+                case 0:
+                    System.out.println("Terminating connection with server in run");
+                    killclient();
+                    break;
+                default:
+                    System.out.println("Invalid Request... Try again");
+                    break;
             }
-        } catch (UnknownHostException e) {
-            System.out.println("Terminating client networking run...");
-            killclient();
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Terminating client networking run...");
-            killclient();
-            e.printStackTrace();
-
-        }catch(Exception e){
-            System.out.println("Terminating client networking run...");
-            killclient();
-            e.printStackTrace();
         }
     }
     public void BrokerResponses(){
