@@ -13,6 +13,9 @@ class NetworkingForConsumer implements Runnable{
     private Socket request_socket;
     private Consumer cons;
     boolean exit = false;
+
+
+
     public NetworkingForConsumer(Socket request_socket,Consumer cons){
         this.request_socket = request_socket;
         this.cons = cons;
@@ -21,7 +24,7 @@ class NetworkingForConsumer implements Runnable{
             is = new ObjectInputStream(request_socket.getInputStream());
             System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
             System.out.println("Requesting for broker list");
-            os.writeUTF("GetBrokerList");
+            os.writeInt(Messages.GET_BROKER_LIST.ordinal());
             os.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -68,11 +71,11 @@ class NetworkingForConsumer implements Runnable{
                 switch (userinput){
                     case 1:
                         System.out.println("Registering...");
-                        os.writeUTF("Register\n");
+                        os.writeInt(Messages.REGISTER.ordinal());
                         os.flush();
-                        System.out.println("What topic are you interested in?\n");
+                        System.out.println("What topic are you interested in?");
                         topic_name = sc.next();
-                        os.writeUTF(topic_name + "\n");
+                        os.writeUTF(topic_name);
                         os.flush();
                         System.out.println("Writing consumer object...");
                         os.writeObject(cons);
@@ -116,26 +119,44 @@ class NetworkingForConsumer implements Runnable{
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String messagebroker = null;
+                int messagebroker = -1;
                 System.out.println("Opened thread to receive messages from broker");
                 while (!exit) {
                     try {
-                        if(messagebroker == null) {
+                        if(messagebroker == -1) {
                             System.out.println("Waiting...");
-                            messagebroker = is.readUTF();
+                            messagebroker = is.readInt();
                             System.out.println("Received message from broker: " + messagebroker);
-                        }else if(messagebroker.equals("Sending broker list...")){
+                        }else if(messagebroker == Messages.SENDING_BROKER_LIST.ordinal()){
                             System.out.println("Received message that the broker list is being sent");
-                            String ip = is.readUTF();
-                            System.out.println("Broker's ip: " + ip);
-                            int port = is.readInt();
-                            System.out.println("Broker's port: " + port);
-                            System.out.println("Inserting broker's port and IP address");
-                            cons.getBrokerList().add(new Tuple<String,Integer>(ip,port));
-                            System.out.println("Finished operation");
-                            os.writeUTF("Finished operation");
+                            while(true){
+                                if((messagebroker == Messages.FINISHED_OPERATION.ordinal())){
+                                    break;
+                                }
+                                int size = Integer.parseInt(is.readUTF());
+                                String ip = is.readUTF();
+                                System.out.println("Broker's ip: " + ip);
+                                int port = Integer.parseInt(is.readUTF());
+                                System.out.println("Broker's port: " + port);
+                                System.out.println("Inserting broker's port and IP address");
+                                cons.getBrokerList().add(new Tuple<String, Integer>(ip, port));
+                                System.out.println(cons.getBrokerList());
+                                if(cons.getBrokerList().size() >= size) {
+                                    messagebroker = is.readInt();
+                                }
+                            }
+                            System.out.println("Broker sent all the broker list");
+                            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
                             os.flush();
-                            messagebroker = null;
+                            messagebroker = -1;
+                            break;
+
+
+                        }else if(messagebroker == Messages.SEND_LIST_SIZE.ordinal()){
+                            System.out.println("Broker asked for your list size");
+                            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
+                            os.flush();
+                            messagebroker = -1;
                         }
 
                     }catch (SocketException e){
