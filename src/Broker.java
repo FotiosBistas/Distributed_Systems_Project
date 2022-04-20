@@ -16,6 +16,7 @@ public class Broker{
     private List<Tuple<String,Byte>> message_queue = new ArrayList<Tuple<String,Byte>>();
 
     private List<Tuple<String,Integer>> BrokerList = new ArrayList<Tuple<String,Integer>>();
+    private List<Integer> id_list = new ArrayList<>();
     //private Map<String, Set<Consumer>> subscribedUsersToTopic = new HashMap<String,Set<Consumer>>();
 
 
@@ -35,8 +36,8 @@ public class Broker{
     public Broker(String ip,int port){
         this.ip = ip;
         this.port = port;
-        writeBrokertoConfigFile("config.txt");
         this.id = SHA1.hextoInt(SHA1.encrypt(String.valueOf(port) + ip),300);
+        writeBrokertoConfigFile("config.txt");
     }
 
     public void writeBrokertoConfigFile(String filename){
@@ -63,6 +64,34 @@ public class Broker{
 
     }
 
+    public void sortBrokerList(){
+        int[] indexes = new int[id_list.size()];
+        for (int i = 0; i < indexes.length; i++) {
+            indexes[i] = i;
+        }
+        int n = id_list.size();
+        int temp = 0;
+        for(int i=0; i < n; i++){
+            for(int j=1; j < (n-i); j++){
+                if(id_list.get(j-1) > id_list.get(j)){
+                    //swap elements
+                    temp = id_list.get(j-1);
+                    id_list.set(j-1,id_list.get(j));
+                    id_list.set(j,temp);
+                    //while we do that change the index position
+                    temp = indexes[j-1];
+                    indexes[j-1] = indexes[j];
+                    indexes[j] = temp;
+                }
+            }
+        }
+        List<Tuple<String,Integer>> temp_list = new ArrayList<>();
+        for (int i = 0; i < indexes.length; i++) {
+            temp_list.add(BrokerList.get(indexes[i]));
+        }
+        BrokerList = temp_list;
+    }
+
     public void readBrokerListFromConfigFile(){
         File file = new File("config.txt");
         BufferedReader br = null;
@@ -71,10 +100,10 @@ public class Broker{
             String line;
             while((line = br.readLine()) != null) {
                 String[] splitted = line.split("\\s+");
-                for (int i = 0; i < splitted.length - 1; i++) {
-                    BrokerList.add(new Tuple<String, Integer>(splitted[0], Integer.valueOf(splitted[1])));
-                }
+                BrokerList.add(new Tuple<String, Integer>(splitted[0], Integer.valueOf(splitted[1])));
+                id_list.add(Integer.valueOf(splitted[2]));
             }
+            sortBrokerList();
         } catch (IOException e) {
             e.printStackTrace();
         }
