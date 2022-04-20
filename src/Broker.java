@@ -50,10 +50,10 @@ public class Broker{
             while((line = reader.readLine()) != null){
                 temp.add(line);
             }
-            if(temp.contains(ip + " " + port)){
+            if(temp.contains(ip + " " + port + " " + id)){
                 System.out.println("Broker already exists in file");
             }else {
-                line = ip + " " + port + "\n";
+                line = ip + " " + port + " " + id + "\n";
                 writer.append(line);
                 writer.close();
                 System.out.println("Wrote Ip and port to the file");
