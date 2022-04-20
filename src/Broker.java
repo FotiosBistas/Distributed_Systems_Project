@@ -88,6 +88,11 @@ public class Broker{
         List<Tuple<String,Integer>> temp_list = new ArrayList<>();
         for (int i = 0; i < indexes.length; i++) {
             temp_list.add(BrokerList.get(indexes[i]));
+            if(i == 0){
+                id_list.set(i,0);
+            }else {
+                id_list.set(i, i * 100 - 1);
+            }
         }
         BrokerList = temp_list;
     }
