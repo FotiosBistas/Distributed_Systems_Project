@@ -1,4 +1,3 @@
-import jdk.net.Sockets;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -16,7 +15,6 @@ public class NetworkingForPublisher implements Runnable {
     private boolean exit = false;
     //idea here is that the user node will open a connection with the broker it wants to communicate and keep it for while
     //also its corresponding streams must be stored somewhere or not
-    private List<Tuple<Integer, Socket>> connections = new ArrayList<>();
     //private List<Tuple<ObjectInputStream,ObjectOutputStream>> streams = new ArrayList<>();
     //publisher doesn't need a while loop
 
@@ -74,35 +72,20 @@ public class NetworkingForPublisher implements Runnable {
         System.out.println("Please give the name of the topic");
         String topic_name = sc.next();
         // find the proper broker for the topic
-        Tuple<String,int[]> brk = pub.hashTopic(topic_name);
+        //Tuple<String,int[]> brk = pub.hashTopic(topic_name);
         //find the position of the broker inside the array list in order to get its id
         //can't use index of here
-        int index = -1;
-        for (int i = 0; i < pub.getBrokerList().size(); i++) {
-            if(pub.getBrokerList().get(i).getValue1().equals(brk.getValue1()) && pub.getBrokerList().get(i).getValue2()[1] == brk.getValue2()[1] && pub.getBrokerList().get(i).getValue2()[0] == brk.getValue2()[0]){
-                index = i;
-                break;
-            }
-        }
+        //int index = -1;
+        //for (int i = 0; i < pub.getBrokerList().size(); i++) {
+        //    if(pub.getBrokerList().get(i).getValue1().equals(brk.getValue1()) && pub.getBrokerList().get(i).getValue2()[1] == brk.getValue2()[1] && pub.getBrokerList().get(i).getValue2()[0] == brk.getValue2()[0]){
+        //        index = i;
+        //        break;
+        //    }
+        //}
         // start a new connection with the broker
         //we can't use contains here
         //TODO check if i can use comparable for the tuple class
-        boolean found = false;
-        for (int i = 0; i < connections.size(); i++) {
-            if(connections.get(i).getValue1() == pub.getBroker_ids().get(index)){
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            try {
-                //close the old connection
-                Socket new_connection = new Socket(brk.getValue1(),brk.getValue2()[1]);
-                connections.add(new Tuple<>(pub.getBroker_ids().get(index),new_connection));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        //Socket connection = new Socket(brk.getValue1(),brk.getValue2()[1]);
         //call send file on a existing multimedia file object or a create one
         //also notify the proper broker that you have a new message
         notifyBrokersNewMessage();
@@ -113,37 +96,14 @@ public class NetworkingForPublisher implements Runnable {
     }
 
     @Override
-    public void run() {
-        while(!exit){
-            System.out.println("1.Push");
-            System.out.println("2.Notify Failure");
-            //TODO check if i can have an event system here
-            System.out.println("3.Notify broker that there is a new message available");
-            System.out.println("0.Exit");
-            System.out.println("Enter an int from the above options");
-            int userinput = sc.nextInt();
-            switch(userinput){
-                case 1:
-                    push();
-                    break;
-                case 2:
-                    notifyBrokersNewMessage();
-                    break;
-                case 3:
-                    notifyFailure();
-                    break;
-                default:
-            }
+    public void run() { push();}
 
-        }
-    }
-    /* i don't know about this one or the one in the client because a node is both a consumer and a publisher so we might want to terminate in everything*/
     public void TerminatePublisherConnection(){
         System.out.println("Terminating publisher: " + pub.getName());
         exit = true;
         try {
-            for (Tuple<Integer, Socket> con:connections) {
-                con.getValue2().close();
+            if(connection != null){
+                connection.close();
             }
 
             if(os != null){
