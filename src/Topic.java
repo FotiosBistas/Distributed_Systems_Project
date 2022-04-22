@@ -7,13 +7,13 @@ public class Topic implements Serializable {
 
     private String name;
     private String publisher;
-    private Set<Consumer> subscribedUsers;
+    private Set<UserNode> subscribedUsers;
     //private ArrayList<MultimediaFile> files;
 
     Topic(String name,String publisher){
         this.name = name;
         this.publisher = publisher;
-        subscribedUsers = new HashSet<Consumer>();
+        subscribedUsers = new HashSet<UserNode>();
         //files = new ArrayList<>();
     }
 
@@ -25,15 +25,15 @@ public class Topic implements Serializable {
         return publisher;
     }
 
-    public Set<Consumer> getSubscribedUsers(){
+    public Set<UserNode> getSubscribedUsers(){
         return subscribedUsers;
     }
 
-    public void addSubscription(Consumer new_cons){
+    public void addSubscription(UserNode new_cons){
         subscribedUsers.add(new_cons);
     }
 
-    public void removeSubscription(Consumer to_be_removed){
+    public void removeSubscription(UserNode to_be_removed){
         subscribedUsers.remove(to_be_removed);
     }
 
