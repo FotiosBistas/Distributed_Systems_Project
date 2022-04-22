@@ -12,24 +12,34 @@ class NetworkingForConsumer implements Runnable{
     private ObjectOutputStream os;
     private ObjectInputStream is;
     private Socket request_socket;
-    private Consumer cons;
+    private UserNode cons;
     boolean exit = false;
     private static Scanner sc = new Scanner(System.in);
 
 
-    public NetworkingForConsumer(Socket request_socket,Consumer cons){
+    public NetworkingForConsumer(Socket request_socket,UserNode cons){
         this.request_socket = request_socket;
         this.cons = cons;
         try {
             os = new ObjectOutputStream(request_socket.getOutputStream());
             is = new ObjectInputStream(request_socket.getInputStream());
+            getBrokerList();
             System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
+        } catch (IOException e) {
+            e.printStackTrace();
+            TerminateConsumerConnection();
+        }
+    }
+
+    public void getBrokerList(){
+        try {
             System.out.println("Requesting for broker list");
             os.writeInt(Messages.GET_BROKER_LIST.ordinal());
             os.flush();
-        } catch (IOException e) {
+        }catch(IOException e){
+            System.out.println("Terminating client in get broker list...");
+            TerminateConsumerConnection();
             e.printStackTrace();
-            killclient();
         }
     }
 
@@ -46,7 +56,7 @@ class NetworkingForConsumer implements Runnable{
             os.flush();
         }catch(IOException e){
             System.out.println("Terminating client in unsubscribe...");
-            killclient();
+            TerminateConsumerConnection();
             e.printStackTrace();
         }
     }
@@ -58,7 +68,7 @@ class NetworkingForConsumer implements Runnable{
             os.flush();
         }catch(IOException e){
             System.out.println("Terminating client in show conversation data...");
-            killclient();
+            TerminateConsumerConnection();
             e.printStackTrace();
         }
     }
@@ -66,23 +76,27 @@ class NetworkingForConsumer implements Runnable{
     public void register(){
         try {
             System.out.println("Registering...");
-            os.writeInt(Messages.REGISTER.ordinal());
-            os.flush();
             System.out.println("What topic are you interested in?");
             String topic_name = sc.next();
+            //find the appropriate broker for the specific topic
+            System.out.println("Finding appropriate broker...");
+            Tuple<String,int[]> brk = cons.hashTopic(topic_name);
+            request_socket = new Socket(brk.getValue1(), brk.getValue2()[0]);
             os.writeUTF(topic_name);
+            os.flush();
+            os.writeInt(Messages.REGISTER.ordinal());
             os.flush();
             System.out.println("Writing consumer object...");
             os.writeObject(cons);
             os.flush();
         }catch(IOException e){
             System.out.println("Terminating client in subscribe...");
-            killclient();
+            TerminateConsumerConnection();
             e.printStackTrace();
         }
     }
 
-    public void killclient(){
+    public void TerminateConsumerConnection(){
         System.out.println("Ending client: " + cons.getName());
         exit = true;
         try{
@@ -106,6 +120,10 @@ class NetworkingForConsumer implements Runnable{
         }
     }
 
+    public void pull(String topic){
+
+    }
+
     @Override
     public void run() {
         while(!exit) {
@@ -113,9 +131,8 @@ class NetworkingForConsumer implements Runnable{
             System.out.println("2.Unsubscribe from topic");
             System.out.println("3.Show conversation data");
             System.out.println("0.Exit");
-            System.out.println("Type the number");
+            System.out.println("Enter an int from the above options");
             int userinput = sc.nextInt();
-            String topic_name;
             switch (userinput){
                 case 1:
                     register();
@@ -129,11 +146,10 @@ class NetworkingForConsumer implements Runnable{
 
                 case 0:
                     System.out.println("Terminating connection with server in run");
-                    killclient();
+                    TerminateConsumerConnection();
                     break;
                 default:
                     System.out.println("Invalid Request... Try again");
-                    break;
             }
         }
     }
@@ -144,48 +160,94 @@ class NetworkingForConsumer implements Runnable{
                 int messagebroker = -1;
                 System.out.println("Opened thread to receive messages from broker");
                 while (!exit) {
-                    try {
+                    try{
                         if(messagebroker == -1) {
-                            System.out.println("Waiting...");
+                            System.out.println("Waiting for message by the broker...");
                             messagebroker = is.readInt();
                             System.out.println("Received message from broker: " + messagebroker);
                         }else if(messagebroker == Messages.SENDING_BROKER_LIST.ordinal()){
                             System.out.println("Received message that the broker list is being sent");
                             while(true){
+                                System.out.println("In while loop for the broker list...");
                                 if((messagebroker == Messages.FINISHED_OPERATION.ordinal())){
+                                    System.out.println("Received finished operation message in the while loop for the broker list");
                                     break;
                                 }
-                                int size = Integer.parseInt(is.readUTF());
+                                int size = is.readInt();
+                                System.out.println("Size of list: " + size);
                                 String ip = is.readUTF();
                                 System.out.println("Broker's ip: " + ip);
-                                int port = Integer.parseInt(is.readUTF());
-                                System.out.println("Broker's port: " + port);
-                                System.out.println("Inserting broker's port and IP address");
-                                cons.getBrokerList().add(new Tuple<String, Integer>(ip, port));
+                                System.out.println("Sending broker's ports...");
+                                ArrayList<Integer> temp = new ArrayList<>();
+                                while(true) {
+                                    System.out.println("In while loop for the broker's ports...");
+                                    if((messagebroker == Messages.FINISHED_OPERATION.ordinal())){
+                                        System.out.println("Received finished operation message in the while loop for the broker's ports");
+                                        break;
+                                    }
+                                    int port = is.readInt();
+                                    System.out.println("Received port: " + port);
+                                    temp.add(port);
+                                    if(temp.size()>=2){
+                                        System.out.println("Waiting for finished operation message by the broker in the while loop for sending port array");
+                                        messagebroker = is.readInt();
+                                    }
+                                }
+                                messagebroker = -1;
+                                System.out.println("Set message broker to: " + messagebroker);
+                                int[] ports = new int[2];
+                                ports[0] = temp.get(0);
+                                ports[1] = temp.get(1);
+                                cons.getBrokerList().add(new Tuple<String, int[]>(ip, ports));
                                 System.out.println(cons.getBrokerList());
                                 if(cons.getBrokerList().size() >= size) {
+                                    System.out.println("Waiting for finished operation message by the broker in the while loop for sending broker list");
                                     messagebroker = is.readInt();
                                 }
+
                             }
-                            System.out.println("Broker sent all the broker list");
+                            System.out.println("Broker sent the Broker List");
                             os.writeInt(Messages.FINISHED_OPERATION.ordinal());
                             os.flush();
                             messagebroker = -1;
+
                         }else if(messagebroker == Messages.SEND_LIST_SIZE.ordinal()){
                             System.out.println("Broker asked for your list size");
                             os.writeInt(Messages.FINISHED_OPERATION.ordinal());
                             os.flush();
                             messagebroker = -1;
+                        }else if(messagebroker == Messages.SENDING_ID_LIST.ordinal()) {
+                            System.out.println("Broker is sending its ID List");
+                            while(true) {
+                                if ((messagebroker == Messages.FINISHED_OPERATION.ordinal())) {
+                                    System.out.println("Received finished operation message in while loop sending id list");
+                                    break;
+                                }
+                                int size = is.readInt() ;
+                                System.out.println("Received size: " + size);
+                                int id = is.readInt();
+                                System.out.println("Received ID: " + id);
+                                cons.getBroker_ids().add(id);
+                                if (cons.getBroker_ids().size() >= size) {
+                                    System.out.println("Waiting for finished operation message by the broker in the while loop for sending id list");
+                                    messagebroker = is.readInt();
+                                }
+                            }
+                            System.out.println("Broker sent the id list");
+                            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
+                            os.flush();
+                            messagebroker = -1;
                         }
+
 
                     }catch (SocketException e){
                         System.out.println("Socket was closed before");
-                        killclient();
+                        TerminateConsumerConnection();
                     }
                     catch (Exception e) {
                         System.out.println("Terminating client in broker responses...");
                         e.printStackTrace();
-                        killclient();
+                        TerminateConsumerConnection();
                     }
                 }
             }
