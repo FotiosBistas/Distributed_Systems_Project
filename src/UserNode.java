@@ -1,6 +1,8 @@
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class UserNode {
@@ -12,17 +14,28 @@ public class UserNode {
 
 
     //Broker list should be sorted by ids of brokers
-    private List<Tuple<String,Integer>> brokerList = new ArrayList<>();
-    private List<Integer> broker_ids = new ArrayList<>();
+    private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
+    private List<Integer> BrokerIds = new ArrayList<>();
+    private List<Tuple<String,Byte>> message_list;
 
     UserNode(String ip,int port){
         this.ip = ip;
         this.port = port;
     }
 
-    public List<Tuple<String,Integer>> getBrokerList(){
-        return brokerList;
+    public void setBrokerList(ArrayList<Tuple<String,int[]>> BrokerList){
+        this.BrokerList = BrokerList;
     }
+
+    public void setBrokerIds(ArrayList<Integer> BrokerIds){
+        this.BrokerIds = BrokerIds;
+    }
+
+    public List<Tuple<String,int[]>> getBrokerList(){
+        return BrokerList;
+    }
+
+    public List<Integer> getBroker_ids(){return BrokerIds;}
 
     public String getName(){
         return name;
@@ -36,32 +49,43 @@ public class UserNode {
         return port;
     }
 
+    public void tryagain(){connect();}
 
-    public void startUserNode(){
+    public void connect(){
         try{
-            // threads for consumer requests and responses from broker
+            // threads for consumer requests and responses from the first random broker
             NetworkingForConsumer consumer = new NetworkingForConsumer(new Socket("localhost",1234),this);
             consumer.BrokerResponses();
             Thread t1 = new Thread(consumer);
             t1.start();
 
-            //threads for publisher requests and responses from broker
-            NetworkingForPublisher publisher = new NetworkingForPublisher(new Socket("localhost",1234),this);
+            //threads for publisher requests and responses from the first random broker
+            NetworkingForPublisher publisher = new NetworkingForPublisher(new Socket("localhost",1235),this);
             //publisher.BrokerResponses();
             Thread t2 = new Thread(publisher);
             t2.start();
-        }catch(IOException e){
-
+        }catch(ConnectException e){
+            System.out.println("No response from broker try again");
+            try {
+                Thread.sleep(40000);
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            }
+            tryagain();
+        } catch (IOException e) {
+            System.out.println("Terminating client...");
+            e.printStackTrace();
         }
     }
 
-    public Tuple<String,Integer> hashTopic(Topic topic){
+
+    public Tuple<String, int[]> hashTopic(String topic){
         // hash the topic and choose the correct broker
-        int identifier = SHA1.hextoInt(topic.getName(),brokerList.size()*100);
+        int identifier = SHA1.hextoInt(topic,BrokerList.size()*100);
         int index = 0;
-        for(int i = 0 ; i < broker_ids.size() ; i++){
+        for(int i = 0 ; i < BrokerIds.size() ; i++){
             // when you find the first broker that has id larger than the topics value then you use the previous broker
-            if(broker_ids.get(i) > identifier){
+            if(BrokerIds.get(i) > identifier){
                 if(i == 0){
                     break;
                 }
@@ -69,8 +93,16 @@ public class UserNode {
                 break;
             }
         }
-        return brokerList.get(index);
+        return BrokerList.get(index);
     }
 
+    public static void main(String[] args) {
+        if(args.length <= 1){
+            System.out.println("You didn't provide ip or port number");
+        }else {
+            UserNode user = new UserNode(args[0], Integer.valueOf(args[1]));
+            user.connect();
+        }
+    }
 
 }
