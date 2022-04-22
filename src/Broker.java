@@ -146,26 +146,54 @@ public class Broker{
 
     public void startBroker() {
         try {
-            consumer_service = new ServerSocket(consumer_port);
-            publisher_service = new ServerSocket(publisher_port);
+            //consumer_service = new ServerSocket(consumer_port);
+            //publisher_service = new ServerSocket(publisher_port);
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("IP address: " + this.ip);
-            while(!consumer_service.isClosed() && !publisher_service.isClosed()){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        consumer_service = new ServerSocket(consumer_port);
+                        System.out.println("Opened thread to service consumer connections");
+                        /* accepts all consumer connections on the predestined port*/
+                        while (!consumer_service.isClosed()) {
+                            Socket consumer_connection = consumer_service.accept();
+                            Consumer_Connection consumer_handler = new Consumer_Connection(consumer_connection);
+                            Thread t1 = new Thread(consumer_handler);
+                            Consumer_Connections.add(consumer_handler);
+                            t1.start();
+                        }
+                    }catch(IOException e){
+                        e.printStackTrace();
+                        System.out.println("Error in consumer service thread");
+                        shutdownBroker();
+                    }
+                }
+            }).start();
 
-                /* accepts all consumer connections on the predestined port*/
-                Socket consumer_connection = consumer_service.accept();
-                Consumer_Connection consumer_handler = new Consumer_Connection(consumer_connection);
-                Thread t1 = new Thread(consumer_handler);
-                Consumer_Connections.add(consumer_handler);
-                t1.start();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        publisher_service = new ServerSocket(publisher_port);
+                        /*accepts all publisher connection on the predestined port*/
+                        System.out.println("Opened thread to receive publisher connections");
+                        while (!publisher_service.isClosed()) {
+                            Socket publisher_connection = publisher_service.accept();
+                            Publisher_Connection publisher_handler = new Publisher_Connection(publisher_connection);
+                            Thread t2 = new Thread(publisher_handler);
+                            Publisher_Connections.add(publisher_handler);
+                            t2.start();
+                        }
+                    }catch(IOException e){
+                        e.printStackTrace();
+                        System.out.println("Error in publisher service thread");
+                        shutdownBroker();
+                    }
+                }
+            }).start();
 
-                /*accepts all publisher connection on the predestined port*/
-                Socket publisher_connection = publisher_service.accept();
-                Publisher_Connection publisher_handler = new Publisher_Connection(publisher_connection);
-                Thread t2 = new Thread(publisher_handler);
-                Publisher_Connections.add(publisher_handler);
-                t2.start();
-            }
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Could not open broker");
