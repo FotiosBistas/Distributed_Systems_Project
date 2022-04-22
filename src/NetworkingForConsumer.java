@@ -120,6 +120,19 @@ class NetworkingForConsumer implements Runnable{
         }
     }
 
+    public void push(){
+        System.out.println("Pushing operation has started");
+        try {
+            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons);
+            Thread t = new Thread(publish);
+            t.start();
+        }catch(IOException e){
+            e.printStackTrace();
+            System.out.println("Error in push call");
+            TerminateConsumerConnection();
+        }
+    }
+
     public void pull(String topic){
 
     }
@@ -130,6 +143,7 @@ class NetworkingForConsumer implements Runnable{
             System.out.println("1.Register to topic");
             System.out.println("2.Unsubscribe from topic");
             System.out.println("3.Show conversation data");
+            System.out.println("4.Push");
             System.out.println("0.Exit");
             System.out.println("Enter an int from the above options");
             int userinput = sc.nextInt();
@@ -143,7 +157,9 @@ class NetworkingForConsumer implements Runnable{
                 case 3:
                     showConversationData();
                     break;
-
+                case 4:
+                    push();
+                    break;
                 case 0:
                     System.out.println("Terminating connection with server in run");
                     TerminateConsumerConnection();
