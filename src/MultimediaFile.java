@@ -21,6 +21,14 @@ class MultimediaFile implements Serializable {
     //private String frameHeight;
     private List<byte[]> multimediaFileChunk = new ArrayList<byte[]>();
 
+    public ArrayList<byte[]> getChunks(){
+        return (ArrayList<byte[]>) multimediaFileChunk;
+    }
+
+    public String getMultimediaFileName(){
+        return multimediaFileName;
+    }
+
     MultimediaFile(String filename,String profileName){
         this.multimediaFileName = filename;
         this.profileName = profileName;
