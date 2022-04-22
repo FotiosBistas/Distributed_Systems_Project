@@ -5,63 +5,58 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 //broker implements serializable due to the list of brokers
 public class Broker{
 
-    // private List<UserNode> ConnectedUsers = new ArrayList<UserNode>();
-    private List<Thread> Connections = new ArrayList<>();
+    private List<Consumer_Connection> Consumer_Connections = new ArrayList<>();
+    private List<Publisher_Connection> Publisher_Connections = new ArrayList<>();
 
-    private List<Topic> list_of_topics = new ArrayList<Topic>();
-    private List<Tuple<String,Byte>> message_queue = new ArrayList<Tuple<String,Byte>>();
+    private List<Topic> Topics = new ArrayList<>();
+    private List<Tuple<String,MultimediaFile>> message_queue = new ArrayList<Tuple<String,MultimediaFile>>();
 
-    private List<Tuple<String,Integer>> BrokerList = new ArrayList<Tuple<String,Integer>>();
+    private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> id_list = new ArrayList<>();
     //private Map<String, Set<Consumer>> subscribedUsersToTopic = new HashMap<String,Set<Consumer>>();
 
 
 
-    private ServerSocket server;
-    private Socket connection;
+    private ServerSocket consumer_service;
+    private ServerSocket publisher_service;
 
 
     private String ip;
-    private int port;
-
-
+    private int consumer_port;
+    private int publisher_port;
     private int id;
 
 
 
-    public Broker(String ip,int port){
+    public Broker(String ip,int consumer_port,int publisher_port){
         this.ip = ip;
-        this.port = port;
-        this.id = SHA1.hextoInt(SHA1.encrypt(String.valueOf(port) + ip),300);
+        this.consumer_port = consumer_port;
+        this.publisher_port = publisher_port;
+        this.id = SHA1.hextoInt(SHA1.encrypt(String.valueOf(consumer_port) + String.valueOf(publisher_port) + ip),countLines()*100);
         writeBrokertoConfigFile("config.txt");
     }
 
-    public void writeBrokertoConfigFile(String filename){
+    /*this method counts the brokers*/
+    public int countLines(){
         try {
-            //File write set true append mode
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filename,true));
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
-            String line;
-            Set<String> temp = new HashSet<String>();
-            while((line = reader.readLine()) != null){
-                temp.add(line);
+            BufferedReader reader = new BufferedReader(new FileReader("config.txt"));
+            int lines = 0;
+            while(reader.readLine() != null){
+                lines++;
             }
-            if(temp.contains(ip + " " + port + " " + id)){
-                System.out.println("Broker already exists in file");
-            }else {
-                line = ip + " " + port + " " + id + "\n";
-                writer.append(line);
-                writer.close();
-                System.out.println("Wrote Ip and port to the file");
-            }
+            reader.close();
+            return lines;
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("Error while reading from config file...");
+            shutdownBroker();
         }
-
+        return 0;
     }
 
     public void sortBrokerList(){
@@ -85,16 +80,43 @@ public class Broker{
                 }
             }
         }
-        List<Tuple<String,Integer>> temp_list = new ArrayList<>();
+        System.out.println(BrokerList);
+        //TODO
+        /* this would be probably better to be sent only to the user nodes and not happen internally inside the brokers*/
+        List<Tuple<String,int[]>> temp_list = new ArrayList<>();
         for (int i = 0; i < indexes.length; i++) {
             temp_list.add(BrokerList.get(indexes[i]));
             if(i == 0){
                 id_list.set(i,0);
             }else {
-                id_list.set(i, i * 100 - 1);
+                id_list.set(i, i * 100);
             }
         }
         BrokerList = temp_list;
+        System.out.println(BrokerList);
+    }
+
+    public void writeBrokertoConfigFile(String filename){
+        try {
+            //File write set true append mode
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filename,true));
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            String line;
+            Set<String> temp = new HashSet<String>();
+            while((line = reader.readLine()) != null){
+                temp.add(line);
+            }
+            if(temp.contains(ip + " " + consumer_port + " " + publisher_port)){
+                System.out.println("Broker already exists in file");
+            }else {
+                writer.append(ip + " " + consumer_port + " " + publisher_port + "\n");
+                writer.close();
+                System.out.println("Wrote Ip and port to the file");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void readBrokerListFromConfigFile(){
@@ -103,12 +125,20 @@ public class Broker{
         try {
             br = new BufferedReader(new FileReader(file));
             String line;
+
             while((line = br.readLine()) != null) {
                 String[] splitted = line.split("\\s+");
-                BrokerList.add(new Tuple<String, Integer>(splitted[0], Integer.valueOf(splitted[1])));
-                id_list.add(Integer.valueOf(splitted[2]));
+                int [] array = new int[2];
+                array[0] = Integer.valueOf(splitted[1]);
+                array[1] = Integer.valueOf(splitted[2]);
+                System.out.println("Inserted into array ports: " + array[0] + " and " + array[1]);
+                BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
+                id_list.add(SHA1.hextoInt(SHA1.encrypt(String.valueOf(array[0]) + String.valueOf(array[1]) + ip),countLines()*100));
+
             }
             sortBrokerList();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -116,14 +146,25 @@ public class Broker{
 
     public void startBroker() {
         try {
-            server = new ServerSocket(port);
-            System.out.println("Broker with id: " + this.id + ",listens on port: " + this.port);
+            consumer_service = new ServerSocket(consumer_port);
+            publisher_service = new ServerSocket(publisher_port);
+            System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("IP address: " + this.ip);
-            while(!server.isClosed()){
-                connection = server.accept();
-                Thread action = new ActionsForBroker(connection);
-                Connections.add(action);
-                action.start();
+            while(!consumer_service.isClosed() && !publisher_service.isClosed()){
+
+                /* accepts all consumer connections on the predestined port*/
+                Socket consumer_connection = consumer_service.accept();
+                Consumer_Connection consumer_handler = new Consumer_Connection(consumer_connection);
+                Thread t1 = new Thread(consumer_handler);
+                Consumer_Connections.add(consumer_handler);
+                t1.start();
+
+                /*accepts all publisher connection on the predestined port*/
+                Socket publisher_connection = publisher_service.accept();
+                Publisher_Connection publisher_handler = new Publisher_Connection(publisher_connection);
+                Thread t2 = new Thread(publisher_handler);
+                Publisher_Connections.add(publisher_handler);
+                t2.start();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -134,19 +175,134 @@ public class Broker{
     }
 
 
-    private class ActionsForBroker extends Thread {
+    private class Publisher_Connection implements Runnable{
+        private Socket publisher_connection;
+        private ObjectInputStream is;
+        private ObjectOutputStream os;
+
+        Publisher_Connection(Socket publisher_connection){
+            this.publisher_connection = publisher_connection;
+            try {
+                is = new ObjectInputStream(publisher_connection.getInputStream());
+                os = new ObjectOutputStream(publisher_connection.getOutputStream());
+            } catch (IOException e) {
+                System.out.println("Error in constructor shutting down connection...");
+                e.printStackTrace();
+                shutdownConnection();
+            }
+        }
+
+        public void receiveFile(){
+            int bytes = 0;
+            try {
+                String file_name = is.readUTF();
+
+                FileOutputStream fileOutputStream = new FileOutputStream(new File(file_name));
+
+                byte[] buffer = new byte[512 * 1024];
+                int offset = 0;
+                while ((bytes = is.read(buffer, offset, 512 * 1024)) != -1) {
+                    fileOutputStream.write(buffer, offset, bytes);
+                    fileOutputStream.flush();// read upto file size
+                }
+                fileOutputStream.close();
+            } catch (IOException e) {
+                System.out.println("Shutting down in receive file...");
+                e.printStackTrace();
+                shutdownConnection();
+            }
+        }
+
+        public int waitForUserNodePrompt(){
+            try {
+                System.out.println("Waiting for user node prompt in publisher connection");
+                return is.readInt();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Shutting down connection in wait for user node...");
+                shutdownConnection();
+            }
+            return -1;
+        }
+
+
+        public void FinishedOperation(){
+            try {
+                os.writeInt(Messages.FINISHED_OPERATION.ordinal());
+                os.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Shutting down connection in finished operation...");
+                shutdownConnection();
+            }
+        }
+
+        @Override
+        public void run() {
+            System.out.println("Established connection with publisher: " + publisher_connection.getInetAddress());
+            int message;
+            message = waitForUserNodePrompt();
+            System.out.println("Received message from publisher: " + message);
+            while (publisher_connection.isConnected()) {
+                if(message == Messages.FINISHED_OPERATION.ordinal()){
+                    System.out.println("Finished operation waiting for publisher's next input");
+                    message = waitForUserNodePrompt();
+                }
+                else if (message == Messages.NOTIFY.ordinal()) {
+                    //TODO call pull method
+                    receiveFile();
+                    FinishedOperation();
+                    message = waitForUserNodePrompt();
+                }
+            }
+
+        }
+
+        public void notifyPublisher(Topic topic){
+
+        }
+
+        public void removeConnection(){
+            Publisher_Connections.remove(this);
+        }
+
+        public void shutdownConnection(){
+            System.out.println("Shutted connection: " + publisher_connection.getInetAddress());
+            removeConnection();
+            try{
+                if(os != null){
+                    os.close();
+                }
+                if(is != null){
+                    is.close();
+                }
+                if(publisher_connection != null){
+                    publisher_connection.close();
+                }
+            }
+            catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class Consumer_Connection implements Runnable {
 
         private ObjectInputStream is;
         private ObjectOutputStream ous;
-        private Socket connected_socket;
+        private Socket consumer_connection;
 
 
-        public ActionsForBroker(Socket connection){
+        public Consumer_Connection(Socket consumer_connection){
             try {
-                ous = new ObjectOutputStream(connection.getOutputStream());
-                is = new ObjectInputStream(connection.getInputStream());
-                connected_socket = connection;
-            } catch (Exception e) {
+                this.consumer_connection = consumer_connection;
+                ous = new ObjectOutputStream(consumer_connection.getOutputStream());
+                is = new ObjectInputStream(consumer_connection.getInputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Could not connect");
+                shutdownConnection();
+            }catch(Exception e){
                 e.printStackTrace();
                 System.out.println("Could not connect");
                 shutdownConnection();
@@ -155,13 +311,17 @@ public class Broker{
 
         public void ServerUnsubscribeRequest(){
             try {
-                System.out.println("Serving unsubscribe request for client: " + connected_socket.getInetAddress().getHostName());
+                System.out.println("Serving unsubscribe request for client: " + consumer_connection.getInetAddress().getHostName());
                 String topic_name = is.readUTF();
-                Consumer new_cons = (Consumer) is.readObject();
+                UserNode new_cons = (UserNode) is.readObject();
                 System.out.println("Topic name: " + topic_name);
                 System.out.println("Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name);
-                UnsubscribeFromTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)), new_cons);
-            }catch (IOException | ClassNotFoundException e) {
+                UnsubscribeFromTopic(Topics.get(Topics.indexOf(topic_name)), new_cons);
+            }catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Shutting down connection in unsubscribe");
+                shutdownConnection();
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
                 System.out.println("Shutting down connection in unsubscribe");
                 shutdownConnection();
@@ -171,12 +331,12 @@ public class Broker{
         public void ServeRegisterRequest(){
             //TODO subscribe function
             try {
-                System.out.println("Serving register request for client: " + connection.getInetAddress().getHostName());
+                System.out.println("Serving register request for client: " + consumer_connection.getInetAddress().getHostName());
                 String topic_name = is.readUTF();
-                Consumer new_cons = (Consumer) is.readObject();
+                UserNode new_cons = (UserNode) is.readObject();
                 System.out.println("Topic name: " + topic_name);
                 System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
-                addConsumerToTopic(list_of_topics.get(list_of_topics.indexOf(topic_name)), new_cons);
+                addConsumerToTopic(Topics.get(Topics.indexOf(topic_name)), new_cons);
                 //someone can subscribe and unsubscribe
                 ous.writeUTF("Send list size");
                 ous.flush();
@@ -190,7 +350,7 @@ public class Broker{
 
         public int waitForUserNodePrompt(){
             try {
-                System.out.println("Waiting for user node prompt");
+                System.out.println("Waiting for user node prompt in consumer connection");
                 return is.readInt();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -218,16 +378,25 @@ public class Broker{
                 System.out.println("Sending broker list");
                 ous.writeInt(Messages.SENDING_BROKER_LIST.ordinal());
                 ous.flush();
-                for (Tuple<String,Integer> val: BrokerList) {
-                    System.out.println("Sending list size: " + BrokerList.size());
-                    ous.writeUTF(String.valueOf(BrokerList.size()));
+                for (Tuple<String,int[]> val: BrokerList) {
+                    System.out.println("Sending Broker List size: " + BrokerList.size());
+                    ous.writeInt(BrokerList.size());
                     ous.flush();
                     System.out.println("Sending broker's IP: " + val.getValue1());
                     ous.writeUTF(val.getValue1());
                     ous.flush();
-                    System.out.println("Sending broker's port: " + val.getValue2());
-                    ous.writeUTF(String.valueOf(val.getValue2()));
-                    ous.flush();
+                    int i;
+                    for (i = 0; i < val.getValue2().length; i++) {
+                        System.out.println("Sending broker's port: " + val.getValue2()[i]);
+                        ous.writeInt(val.getValue2()[0]);
+                        ous.flush();
+                        ous.writeInt(val.getValue2()[1]);
+                        ous.flush();
+                    }
+                    if(i == 2) {
+                        System.out.println("Finished sending ports");
+                        FinishedOperation();
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -236,12 +405,36 @@ public class Broker{
             }
         }
 
+        public void sendIdList(){
+            try{
+                System.out.println("Sending ID List");
+                ous.writeInt(Messages.SENDING_ID_LIST.ordinal());
+                ous.flush();
+                for (int i = 0; i < id_list.size(); i++) {
+                    System.out.println("Sending ID List size: " + id_list.size());
+                    ous.writeInt(id_list.size());
+                    ous.flush();
+                    System.out.println("Sending ID: " + id_list.get(i));
+                    ous.writeInt(id_list.get(i));
+                    ous.flush();
+                }
+            }catch(IOException e){
+                System.out.println("Error in sending list");
+                e.printStackTrace();
+                shutdownConnection();
+            }
+        }
+
+        public void sendTopicList(){
+
+        }
+
         public void removeConnection(){
-            Connections.remove(this);
+            Consumer_Connections.remove(this);
         }
 
         public void shutdownConnection(){
-            System.out.println("Shutted connection: " + connected_socket.getInetAddress());
+            System.out.println("Shutted connection: " + consumer_connection.getInetAddress());
             removeConnection();
             try{
                 if(ous != null){
@@ -250,8 +443,8 @@ public class Broker{
                 if(is != null){
                     is.close();
                 }
-                if(connected_socket != null){
-                    connected_socket.close();
+                if(consumer_connection != null){
+                    consumer_connection.close();
                 }
             }
             catch(IOException e){
@@ -264,30 +457,32 @@ public class Broker{
             HandleRequest();
         }
 
-
         public void HandleRequest() {
-            System.out.println("Server established connection with client: " + connected_socket.getInetAddress().getHostAddress());
+            System.out.println("Server established connection with client: " + consumer_connection.getInetAddress().getHostAddress());
             int message;
             message = waitForUserNodePrompt();
             System.out.println("Received message from client: " + message);
-            while (connected_socket.isConnected()) {
+            while (consumer_connection.isConnected()) {
                 if (message == Messages.FINISHED_OPERATION.ordinal()) {
                     System.out.println("Finished operation waiting for next input");
                     message = waitForUserNodePrompt();
                 } else if (message == Messages.GET_BROKER_LIST.ordinal()) {
-                    readBrokerListFromConfigFile();
+                    if(BrokerList.isEmpty()){
+                        readBrokerListFromConfigFile();
+                    }
                     sendBrokerList();
                     FinishedOperation();
                     System.out.println("Finished sending brokers");
+                    sendIdList();
+                    FinishedOperation();
+                    System.out.println("Finished sending id list");
                     message = waitForUserNodePrompt();
                 } else if (message == Messages.REGISTER.ordinal()) {
                     ServeRegisterRequest();
                     //TODO call pull method
                     message = waitForUserNodePrompt();
-                } else if (message == Messages.PUSH.ordinal()) {
-                    //TODO call pull method
-                    message = waitForUserNodePrompt();
                 } else if (message == Messages.PULL.ordinal()) {
+
                     message = waitForUserNodePrompt();
                 } else if (message == Messages.UNSUBSCRIBE.ordinal()) {
                     ServerUnsubscribeRequest();
@@ -297,8 +492,9 @@ public class Broker{
             }
 
         }
+
         public Socket getSocket(){
-            return connected_socket;
+            return consumer_connection;
         }
 
     }
@@ -306,60 +502,52 @@ public class Broker{
     public void shutdownBroker(){
         System.out.println("Shutting down broker with id: " + this.id);
         try {
-            if(server != null) {
-                server.close();
+            if(consumer_service != null) {
+                consumer_service.close();
             }
-        } catch (Exception e) {
+            if(publisher_service != null){
+                publisher_service.close();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     /* below methods accept the topic name from the input streams and find the corresponding object */
-    public void addConsumerToTopic(Topic topic, Consumer consumer){
+    public void addConsumerToTopic(Topic topic, UserNode consumer){
         //this if condition checks whether there's an topic that the new consumer can subscribe to
-        if(list_of_topics.contains(topic)){
+        if(Topics.contains(topic)){
             topic.addSubscription(consumer);
         }else{ // this is the case where the topic does not exist and the new topic must be inserted in the hash map
-            list_of_topics.add(topic);
+            Topics.add(topic);
             topic.addSubscription(consumer);
         }
     }
 
-    public void UnsubscribeFromTopic(Topic topic, Consumer consumer){
-        if(list_of_topics.contains(topic)){
+    public void UnsubscribeFromTopic(Topic topic, UserNode consumer){
+        if(Topics.contains(topic)){
             topic.removeSubscription(consumer);
         }
     }
 
-    public Tuple<Set<Consumer>,Byte> pull(Topic topic,int consumer_list_size){
+    public Set<UserNode> find_subscribed_users(Topic topic,int consumer_list_size){
         //pull function is called when the consumer registers for a first time to a topic
         //and when there is a new message available from the publisher
         //if the list that the consumers hold is smaller than the list of messages it needs to receive new messages
         //because the consumers hold messages only for the topics that they are interested we need the message q
-        if(consumer_list_size<message_queue.size()){
-            Tuple<String,Byte> chunk = message_queue.get(consumer_list_size);
-            Set<Consumer> Set_of_subscribers = topic.getSubscribedUsers();
-            //take the subscribers send them the chuck
-            return new Tuple<Set<Consumer>,Byte>(Set_of_subscribers, chunk.getValue2());
-        }
-        return null;
+        Set<UserNode> set_of_subscribers = topic.getSubscribedUsers();
+        return set_of_subscribers;
     }
 
     public void notifyBrokersOnChanges(){
 
     }
 
-    public void notifyPublisher(Topic topic){
 
-    }
-
-    public void pull(Topic topic){
-
-    }
 
     //public List<Broker> getBrokerList() { return BrokerList; }
 
-    public List<Tuple<String, Byte>> getMessage_queue(){
+    public List<Tuple<String, MultimediaFile>> getMessage_queue(){
         return message_queue;
     }
 
@@ -368,15 +556,14 @@ public class Broker{
     }
 
     public static void main(String[] args) {
-        if(args[0] == null) {
-            System.out.println("You did not provide an ip address");
-        }else if(args[1] == null){
-            System.out.println("You did not provide a port number");
+        if(args.length <= 2) {
+            System.out.println("You did not provide an ip address or a port numbers");
         }
         else {
             String ip = args[0];
-            int port = Integer.valueOf(args[1]);
-            Broker broker = new Broker(ip, port);
+            int consumer_port = Integer.valueOf(args[1]);
+            int service_port = Integer.valueOf(args[2]);
+            Broker broker = new Broker(ip, consumer_port,service_port);
             broker.startBroker();
         }
     }
