@@ -7,6 +7,7 @@ public enum Messages {
     SENDING_BROKER_LIST,
     SEND_LIST_SIZE,
     SHOW_CONVERSATION_DATA,
+    NOTIFY,
     FINISHED_OPERATION
 }
 
