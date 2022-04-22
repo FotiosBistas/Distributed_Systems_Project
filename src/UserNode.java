@@ -54,16 +54,16 @@ public class UserNode {
     public void connect(){
         try{
             // threads for consumer requests and responses from the first random broker
-            NetworkingForConsumer consumer = new NetworkingForConsumer(new Socket("localhost",1234),this);
+            NetworkingForConsumer consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this);
             consumer.BrokerResponses();
             Thread t1 = new Thread(consumer);
             t1.start();
 
             //threads for publisher requests and responses from the first random broker
-            NetworkingForPublisher publisher = new NetworkingForPublisher(new Socket("localhost",1235),this);
+            //NetworkingForPublisher publisher = new NetworkingForPublisher(new Socket("192.168.1.5",1235),this);
             //publisher.BrokerResponses();
-            Thread t2 = new Thread(publisher);
-            t2.start();
+            //Thread t2 = new Thread(publisher);
+            //t2.start();
         }catch(ConnectException e){
             System.out.println("No response from broker try again");
             try {
