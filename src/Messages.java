@@ -9,6 +9,8 @@ public enum Messages {
     SHOW_CONVERSATION_DATA,
     SENDING_ID_LIST,
     NOTIFY,
+    RECEIVED_CHUNK,
+    RECEIVED_ACK,
     FINISHED_OPERATION
 }
 

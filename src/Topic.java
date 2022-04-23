@@ -1,9 +1,7 @@
-import com.sun.org.apache.xpath.internal.operations.Mult;
 
 import java.io.Serializable;
 import java.util.*;
-
-public class Topic implements Serializable {
+class Topic implements Serializable{
 
     private String name;
     private String publisher;

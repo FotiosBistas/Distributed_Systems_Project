@@ -1,16 +1,17 @@
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class UserNode {
+public class UserNode implements Serializable {
 
     private String ip;
     private int port;
     private String name;
-    private ProfileName prof_name;
+    //private ProfileName prof_name;
 
 
     //Broker list should be sorted by ids of brokers
@@ -59,11 +60,6 @@ public class UserNode {
             Thread t1 = new Thread(consumer);
             t1.start();
 
-            //threads for publisher requests and responses from the first random broker
-            //NetworkingForPublisher publisher = new NetworkingForPublisher(new Socket("192.168.1.5",1235),this);
-            //publisher.BrokerResponses();
-            //Thread t2 = new Thread(publisher);
-            //t2.start();
         }catch(ConnectException e){
             System.out.println("No response from broker try again");
             try {
@@ -100,7 +96,7 @@ public class UserNode {
         if(args.length <= 1){
             System.out.println("You didn't provide ip or port number");
         }else {
-            UserNode user = new UserNode(args[0], Integer.valueOf(args[1]));
+            UserNode user = new UserNode(args[0], Integer.parseInt(args[1]));
             user.connect();
         }
     }
