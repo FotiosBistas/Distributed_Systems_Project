@@ -76,15 +76,15 @@ class NetworkingForConsumer implements Runnable{
     public void register(){
         try {
             System.out.println("Registering...");
+            os.writeInt(Messages.REGISTER.ordinal());
+            os.flush();
             System.out.println("What topic are you interested in?");
             String topic_name = sc.next();
             //find the appropriate broker for the specific topic
-            System.out.println("Finding appropriate broker...");
-            Tuple<String,int[]> brk = cons.hashTopic(topic_name);
-            request_socket = new Socket(brk.getValue1(), brk.getValue2()[0]);
+            //System.out.println("Finding appropriate broker...");
+            //Tuple<String,int[]> brk = cons.hashTopic(topic_name);
+            //request_socket = new Socket(brk.getValue1(), brk.getValue2()[0]);
             os.writeUTF(topic_name);
-            os.flush();
-            os.writeInt(Messages.REGISTER.ordinal());
             os.flush();
             System.out.println("Writing consumer object...");
             os.writeObject(cons);
@@ -94,6 +94,29 @@ class NetworkingForConsumer implements Runnable{
             TerminateConsumerConnection();
             e.printStackTrace();
         }
+    }
+
+    public void FinishedOperation(){
+        try {
+            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Shutting down connection in finished operation...");
+            TerminateConsumerConnection();
+        }
+    }
+
+    public int waitForUserNodePrompt(){
+        try {
+            System.out.println("Waiting for user node prompt in consumer connection");
+            return is.readInt();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Shutting down connection in wait for user node...");
+            TerminateConsumerConnection();
+        }
+        return -1;
     }
 
     public void TerminateConsumerConnection(){
@@ -125,7 +148,7 @@ class NetworkingForConsumer implements Runnable{
         try {
             NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons);
             Thread t = new Thread(publish);
-            t.start();
+            t.run();
         }catch(IOException e){
             e.printStackTrace();
             System.out.println("Error in push call");
@@ -150,15 +173,19 @@ class NetworkingForConsumer implements Runnable{
             switch (userinput){
                 case 1:
                     register();
+                    FinishedOperation();
                     break;
                 case 2:
                     unsubscribe();
+                    FinishedOperation();
                     break;
                 case 3:
                     showConversationData();
+                    FinishedOperation();
                     break;
                 case 4:
                     push();
+                    FinishedOperation();
                     break;
                 case 0:
                     System.out.println("Terminating connection with server in run");
