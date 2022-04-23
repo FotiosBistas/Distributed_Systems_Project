@@ -13,6 +13,7 @@ public class NetworkingForPublisher implements Runnable {
     private ObjectOutputStream os;
     private ObjectInputStream is;
     private boolean exit = false;
+    private NetworkingForConsumer thread_continue;
     //idea here is that the user node will open a connection with the broker it wants to communicate and keep it for while
     //also its corresponding streams must be stored somewhere or not
     //private List<Tuple<ObjectInputStream,ObjectOutputStream>> streams = new ArrayList<>();
@@ -20,9 +21,10 @@ public class NetworkingForPublisher implements Runnable {
 
     private Scanner sc = new Scanner(System.in);
 
-    public NetworkingForPublisher(Socket connection,UserNode pub){
+    public NetworkingForPublisher(Socket connection,UserNode pub,NetworkingForConsumer thread_continue){
         this.connection = connection;
         this.pub = pub;
+        this.thread_continue = thread_continue;
         //connections.put(,connection);
         try {
             os = new ObjectOutputStream(connection.getOutputStream());
@@ -113,6 +115,7 @@ public class NetworkingForPublisher implements Runnable {
         System.out.println("Give the name of the file");
         //String filename = "C:\\Users\\fotis\\OneDrive\\Desktop\\test_for_reading through a file\\video1.mp4";
         String filename = sc.next();
+        thread_continue.notifyThread();
         MultimediaFile new_file = new MultimediaFile(filename,"Fotis");
         sendFile(new_file);
     }

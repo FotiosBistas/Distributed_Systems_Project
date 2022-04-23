@@ -1,4 +1,6 @@
-public class Tuple<V1, V2> {
+
+
+class Tuple<V1, V2> {
     private final V1 value1;
     private final V2 value2;
 

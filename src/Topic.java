@@ -6,7 +6,6 @@ class Topic implements Serializable{
     private String name;
     private String publisher;
     private Set<UserNode> subscribedUsers;
-    //private ArrayList<MultimediaFile> files;
 
     Topic(String name,String publisher){
         this.name = name;

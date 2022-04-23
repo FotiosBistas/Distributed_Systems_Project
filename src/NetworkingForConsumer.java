@@ -143,13 +143,20 @@ class NetworkingForConsumer implements Runnable{
         }
     }
 
-    public void push(){
+    public synchronized void notifyThread(){
+        System.out.println("Waking up networking for consumer");
+        notifyAll();
+    }
+
+    public synchronized void push(){
         System.out.println("Pushing operation has started");
         try {
-            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons);
+            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons,this);
             Thread t = new Thread(publish);
-            t.run();
-        }catch(IOException e){
+            t.start();
+            //waits until input is given by the publisher and servers the push request in the background
+            wait();
+        }catch(IOException | InterruptedException e){
             e.printStackTrace();
             System.out.println("Error in push call");
             TerminateConsumerConnection();

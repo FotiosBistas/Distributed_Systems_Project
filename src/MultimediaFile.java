@@ -63,13 +63,11 @@ class MultimediaFile implements Serializable {
                 if(counter != max_seq) {
                     Chunk chunk = new Chunk(counter++,sizeofchunks, max_seq,buffer.clone());
                     multimediaFileChunk.add(chunk);
-                    System.out.println(chunk);
                 }else{
                     int actual_size = (int) (sizeofchunks - ((long) sizeofchunks * max_seq - length) + 1);
                     System.out.println(actual_size);
                     Chunk chunk = new Chunk(counter++, actual_size,max_seq,buffer.clone());
                     multimediaFileChunk.add(chunk);
-                    System.out.println(chunk);
                 }
 
                 System.out.println("Created chunk: " + multimediaFileChunk.size() +  " for file: " + multimediaFileName);

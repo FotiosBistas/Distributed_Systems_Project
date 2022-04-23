@@ -12,6 +12,7 @@ public class Broker{
     private List<Publisher_Connection> Publisher_Connections = new ArrayList<>();
 
     private List<Topic> Topics = new ArrayList<>();
+    private HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
     private List<Tuple<String,MultimediaFile>> message_queue = new ArrayList<Tuple<String,MultimediaFile>>();
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
@@ -583,14 +584,7 @@ public class Broker{
         }
     }
 
-    public Set<UserNode> find_subscribed_users(Topic topic,int consumer_list_size){
-        //pull function is called when the consumer registers for a first time to a topic
-        //and when there is a new message available from the publisher
-        //if the list that the consumers hold is smaller than the list of messages it needs to receive new messages
-        //because the consumers hold messages only for the topics that they are interested we need the message q
-        Set<UserNode> set_of_subscribers = topic.getSubscribedUsers();
-        return set_of_subscribers;
-    }
+
 
     public void notifyBrokersOnChanges(){
 
