@@ -2,10 +2,8 @@
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 //broker implements serializable due to the list of brokers
 public class Broker{
@@ -221,19 +219,48 @@ public class Broker{
         }
 
         public void receiveFile(){
-            int bytes = 0;
+
             try {
+                int bytes = 0;
+                System.out.println("Receiving file...");
                 String file_name = is.readUTF();
-
-                FileOutputStream fileOutputStream = new FileOutputStream(new File(file_name));
-
-                byte[] buffer = new byte[512 * 1024];
+                String new_file = file_name.substring(file_name.lastIndexOf("\\")+1);
+                System.out.println("Received file: " + new_file);
+                int number_of_chunks = is.readInt();
+                System.out.println("You will receive: " + number_of_chunks + " chunks");
+                String path_for_broker = new String("C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\");
+                FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
+                System.out.println("Receiving file...");
+                byte[] buffer = new byte[512*1024];
                 int offset = 0;
-                while ((bytes = is.read(buffer, offset, 512 * 1024)) != -1) {
-                    fileOutputStream.write(buffer, offset, bytes);
-                    fileOutputStream.flush();// read upto file size
+                int repetition = 0;
+                ArrayList<byte[]> chunks = new ArrayList<>();
+                //System.out.println("In while loop for receiving file");
+                while(true) {
+                    if(number_of_chunks == chunks.size()){
+                        System.out.println("Finished receiving chunks: " + chunks.size());
+                        fileOutputStream.close();
+                        break;
+                    }
+
+                    is.readFully(buffer,0,512*1024);
+                    byte[] temp = buffer.clone();
+                    fileOutputStream.write(temp);
+                    fileOutputStream.flush();
+                    chunks.add(temp);
+                    System.out.println("Sending received chunk ack");
+                    os.writeInt(Messages.RECEIVED_CHUNK.ordinal());
+                    os.flush();
+                    while(true){
+                        if(Messages.RECEIVED_ACK.ordinal() == is.readInt()){
+                            System.out.println("Client received ack");
+                            break;
+                        }
+                    }
+                    System.out.println("Chunks size now is: " + chunks.size());
                 }
-                fileOutputStream.close();
+                System.out.println("Finished receiving file");
+
             } catch (IOException e) {
                 System.out.println("Shutting down in receive file...");
                 e.printStackTrace();
@@ -246,7 +273,6 @@ public class Broker{
                 System.out.println("Waiting for user node prompt in publisher connection");
                 return is.readInt();
             } catch (IOException e) {
-                e.printStackTrace();
                 System.out.println("Shutting down connection in wait for user node...");
                 shutdownConnection();
             }
@@ -277,7 +303,7 @@ public class Broker{
                     message = waitForUserNodePrompt();
                 }
                 else if (message == Messages.NOTIFY.ordinal()) {
-                    //TODO call pull method
+                    System.out.println("Notify message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
                     receiveFile();
                     FinishedOperation();
                     message = waitForUserNodePrompt();
@@ -508,9 +534,7 @@ public class Broker{
                 } else if (message == Messages.REGISTER.ordinal()) {
                     ServeRegisterRequest();
                     //TODO call pull method
-                    message = waitForUserNodePrompt();
-                } else if (message == Messages.PULL.ordinal()) {
-
+                    FinishedOperation();
                     message = waitForUserNodePrompt();
                 } else if (message == Messages.UNSUBSCRIBE.ordinal()) {
                     ServerUnsubscribeRequest();
