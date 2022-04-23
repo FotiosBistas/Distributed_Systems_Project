@@ -35,16 +35,34 @@ public class NetworkingForPublisher implements Runnable {
     }
 
     public void sendFile(MultimediaFile file) {
-        ArrayList<byte[]> chunks = file.getChunks();
+
         try {
+            ArrayList<Chunk> chunks = file.getChunks();
+            System.out.println("Sending the file name: " + file.getMultimediaFileName());
             os.writeUTF(file.getMultimediaFileName());
             os.flush();
+            System.out.println("Informing broker how many chunks there are: " + file.getChunks().size());
+            os.writeInt(file.getChunks().size());
+            os.flush();
+            int offset = 0;
             for (int i = 0; i < chunks.size(); i++) {
-                os.write(chunks.get(i));
+                System.out.println("Sending chunk: " + i + " with actual length: " + chunks.get(i).getActual_length());
+                os.write(chunks.get(i).getChunk());
                 os.flush();
+                while(true){
+                    if(Messages.RECEIVED_CHUNK.ordinal() == is.readInt()){
+                        System.out.println("Acknowledgement that chunked was received");
+                        System.out.println("Sending ack for ack message");
+                        os.writeInt(Messages.RECEIVED_ACK.ordinal());
+                        os.flush();
+                        break;
+                    }
+                }
             }
-        } catch (IOException e) {
+        }catch(IOException e){
             e.printStackTrace();
+            System.out.println("Error in sending file");
+            TerminatePublisherConnection();
         }
     }
 
@@ -90,13 +108,48 @@ public class NetworkingForPublisher implements Runnable {
         //also notify the proper broker that you have a new message
         notifyBrokersNewMessage();
         System.out.println("Give the name of the file");
+        //String filename = "C:\\Users\\fotis\\OneDrive\\Desktop\\test_for_reading through a file\\video1.mp4";
         String filename = sc.next();
         MultimediaFile new_file = new MultimediaFile(filename,"Fotis");
         sendFile(new_file);
     }
 
+    public void FinishedOperation(){
+        try {
+            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Shutting down connection in finished operation...");
+            TerminatePublisherConnection();
+        }
+    }
+
+    public int waitForBrokerPrompt(){
+        try {
+            System.out.println("Waiting for Broker node prompt in publisher connection");
+            return is.readInt();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Shutting down connection in wait for user node...");
+            TerminatePublisherConnection();
+        }
+        return -1;
+    }
+
     @Override
-    public void run() { push();}
+    public void run() {
+        push();
+        FinishedOperation();
+        int messageFromBroker = waitForBrokerPrompt();
+        while(true) {
+            if(messageFromBroker == Messages.FINISHED_OPERATION.ordinal()) {
+                System.out.println("Received finished operation in publisher run");
+                TerminatePublisherConnection();
+                break;
+            }
+        }
+    }
 
     public void TerminatePublisherConnection(){
         System.out.println("Terminating publisher: " + pub.getName());
