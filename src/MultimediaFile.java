@@ -3,7 +3,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -19,21 +18,23 @@ class MultimediaFile implements Serializable {
     //private String framerate;
     //private String frameWidth;
     //private String frameHeight;
-    private List<byte[]> multimediaFileChunk = new ArrayList<byte[]>();
+    private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
 
-    public ArrayList<byte[]> getChunks(){
-        return (ArrayList<byte[]>) multimediaFileChunk;
+    public ArrayList<Chunk> getChunks(){
+        return multimediaFileChunk;
     }
 
     public String getMultimediaFileName(){
         return multimediaFileName;
     }
 
+
     MultimediaFile(String filename,String profileName){
         this.multimediaFileName = filename;
         this.profileName = profileName;
+        System.out.println("Filename is :" + filename);
+        System.out.println("User's profile is: " + profileName);
         Path path = FileSystems.getDefault().getPath(filename);
-        splitFile(new File(filename));
         BasicFileAttributes attr = null;
         try {
             attr = Files.readAttributes(path, BasicFileAttributes.class);
@@ -44,6 +45,7 @@ class MultimediaFile implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        splitFile(new File(filename));
     }
 
     public void splitFile(File f){
@@ -52,12 +54,32 @@ class MultimediaFile implements Serializable {
             BufferedInputStream bis = new BufferedInputStream(fis)) {
             int bytesAmount = 0;
             byte[] buffer = new byte[sizeofchunks];
-            while((bytesAmount = bis.read(buffer))>0){
-                multimediaFileChunk.add(buffer);
+            int counter = 1;
+            System.out.println("Length is: " + length);
+            double ceil = (double)(length)/(double)sizeofchunks;
+            int max_seq = (int) Math.ceil(ceil);
+            System.out.println("Max sequence number is: " + max_seq);
+            while((bytesAmount = bis.read(buffer,0,sizeofchunks))>0){
+                if(counter != max_seq) {
+                    Chunk chunk = new Chunk(counter++,sizeofchunks, max_seq,buffer);
+                    multimediaFileChunk.add(chunk);
+                    System.out.println(chunk);
+                }else{
+                    long rem = (long) sizeofchunks *max_seq;
+                    System.out.println(rem);
+                    long difference = rem - length;
+                    System.out.println();
+                    long actual_size =  (sizeofchunks - difference);
+                    System.out.println(actual_size);
+                    Chunk chunk = new Chunk(counter++, actual_size,max_seq,buffer);
+                    multimediaFileChunk.add(chunk);
+                    System.out.println(chunk);
+                }
                 // create a new pointer because when the new data gets written on the buffer all the buffers change
-                buffer = new byte[sizeofchunks];
+                System.out.println("Created chunk: " + multimediaFileChunk.size() +  " for file: " + multimediaFileName);
 
             }
+            System.out.println("Created: " + multimediaFileChunk.size() + " chunks for file: " + multimediaFileName);
             bis.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
