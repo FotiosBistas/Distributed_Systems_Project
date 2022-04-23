@@ -242,10 +242,11 @@ public class Broker{
                         fileOutputStream.close();
                         break;
                     }
-
-                    is.readFully(buffer,0,512*1024);
+                    int actual_size = is.readInt();
+                    System.out.println("Actual size of the incoming chunk is: " + actual_size);
+                    is.readFully(buffer,0,actual_size);
                     byte[] temp = buffer.clone();
-                    fileOutputStream.write(temp);
+                    fileOutputStream.write(temp,0,actual_size);
                     fileOutputStream.flush();
                     chunks.add(temp);
                     System.out.println("Sending received chunk ack");

@@ -46,8 +46,11 @@ public class NetworkingForPublisher implements Runnable {
             os.flush();
             int offset = 0;
             for (int i = 0; i < chunks.size(); i++) {
-                System.out.println("Sending chunk: " + i + " with actual length: " + chunks.get(i).getActual_length());
-                os.write(chunks.get(i).getChunk());
+                System.out.println(i + " Chunk is being sent");
+                System.out.println("Sending its actual length...");
+                os.writeInt(chunks.get(i).getActual_length());
+                os.flush();
+                os.write(chunks.get(i).getChunk(),0,chunks.get(i).getActual_length());
                 os.flush();
                 while(true){
                     if(Messages.RECEIVED_CHUNK.ordinal() == is.readInt()){

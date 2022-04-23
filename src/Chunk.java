@@ -3,9 +3,9 @@ class Chunk{
     private final int sequence_number;
     private final int max_sequence_number;
     private byte[] chunk = new byte[chunk_size];
-    private long actual_length;
+    private int actual_length;
 
-    public Chunk(int sequence_number,long actual_length, int max_sequence_number, byte[] chunk) {
+    public Chunk(int sequence_number,int actual_length, int max_sequence_number, byte[] chunk) {
         this.sequence_number = sequence_number;
         this.actual_length = actual_length;
         this.max_sequence_number = max_sequence_number;
@@ -28,7 +28,7 @@ class Chunk{
         return chunk;
     }
 
-    public long getActual_length() {
+    public int getActual_length() {
         return actual_length;
     }
 
