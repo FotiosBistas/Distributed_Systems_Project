@@ -82,7 +82,6 @@ class Broker_Handler implements Runnable{
                     messagebroker = readInput();
                 }
                 System.out.println("Broker received broker list");
-                FinishedOperation();
             }
         } catch (IOException e) {
             System.out.println("Error in receiving broker list");
@@ -123,7 +122,9 @@ class Broker_Handler implements Runnable{
                message_from_broker = readInput();
            }else if(message_from_broker == Messages.SENDING_BROKER_LIST.ordinal()){
                 receiveBrokerList();
+                FinishedOperation();
                 receiveIdList();
+                FinishedOperation();
                 message_from_broker = readInput();
            }else if(message_from_broker == Messages.NEW_TOPIC.ordinal()){
                 receiveTopicList();

@@ -486,11 +486,21 @@ public class Broker{
                     while(true){
                         System.out.println("Waiting to receive ACK");
                         if(localinputStream.readInt() == Messages.ACK.ordinal()){
+                            System.out.println("Received ack by broker: " + val.getValue1());
                             break;
                         }
                     }
                     Shared_Network_Methods.sendBrokerList(Broker.this);
+                    FinishedOperation();
+                    while(true){
+                        System.out.println("Waiting to receive Finished operation");
+                        if(localinputStream.readInt() == Messages.FINISHED_OPERATION.ordinal()){
+                            System.out.println("Received finished operation by broker: " + val.getValue1());
+                            break;
+                        }
+                    }
                     Shared_Network_Methods.sendIdList(Broker.this);
+                    FinishedOperation();
                     shutdownConnection();
                 }else if(message_type == Messages.NEW_TOPIC){
                     Shared_Network_Methods.sendTopicList();

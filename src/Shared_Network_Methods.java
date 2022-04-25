@@ -34,6 +34,7 @@ class Shared_Network_Methods{
                         broker.FinishedOperation();
                     }
                 }
+                System.out.println("Finished sending broker list");
             }
             catch (IOException e){
 
@@ -92,6 +93,7 @@ class Shared_Network_Methods{
                     broker.getLocaloutputStream().writeInt(broker.getId_list().get(i));
                     broker.getLocaloutputStream().flush();
                 }
+                System.out.println("Finished sending ID list");
             } catch (IOException e) {
                 System.out.println("Error in sending list");
                 e.printStackTrace();
