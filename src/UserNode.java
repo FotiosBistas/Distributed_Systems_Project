@@ -11,7 +11,7 @@ public class UserNode implements Serializable {
     private String ip;
     private int port;
     private String name;
-    //private ProfileName prof_name;
+    private ProfileName prof_name;
 
 
     //Broker list should be sorted by ids of brokers
@@ -38,10 +38,6 @@ public class UserNode implements Serializable {
 
     public List<Integer> getBroker_ids(){return BrokerIds;}
 
-    public String getName(){
-        return name;
-    }
-
     public String getIp() {
         return ip;
     }
@@ -49,6 +45,8 @@ public class UserNode implements Serializable {
     public int getPort() {
         return port;
     }
+
+    public String getName(){return name;}
 
 
     public void tryagain(){connect();}

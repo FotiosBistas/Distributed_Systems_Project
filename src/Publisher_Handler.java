@@ -2,14 +2,14 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-class Publisher_Connection implements Runnable{
+class Publisher_Handler implements Runnable{
     private Socket publisher_connection;
     private ObjectInputStream is;
     private ObjectOutputStream os;
     private final int chunksize = 512*1024;
     private Broker broker;
 
-    Publisher_Connection(Socket publisher_connection, Broker broker){
+    Publisher_Handler(Socket publisher_connection, Broker broker){
         this.publisher_connection = publisher_connection;
         this.broker = broker;
         try {
@@ -32,8 +32,8 @@ class Publisher_Connection implements Runnable{
             System.out.println("Received file: " + new_file);
             int number_of_chunks = is.readInt();
             System.out.println("You will receive: " + number_of_chunks + " chunks");
-            String path_for_broker = new String("C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\");
-            FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
+            String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
+            FileOutputStream fileOutputStream = new FileOutputStream(path_for_broker + new_file);
             System.out.println("Receiving file...");
             byte[] buffer = new byte[chunksize];
             ArrayList<byte[]> chunks = new ArrayList<>();
@@ -119,7 +119,7 @@ class Publisher_Connection implements Runnable{
     }
 
     public void removeConnection(){
-        broker.getPublisher_Connections().remove(this);
+        broker.getPublisher_Handlers().remove(this);
     }
 
     public void shutdownConnection(){

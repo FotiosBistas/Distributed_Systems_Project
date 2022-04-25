@@ -3,19 +3,36 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-class Consumer_Connection implements Runnable {
+class Consumer_Handler implements Runnable {
 
-    private ObjectInputStream is;
-    private ObjectOutputStream ous;
-    private Socket consumer_connection;
-    private Broker broker;
+    private ObjectInputStream localinputStream;
+    private ObjectOutputStream localoutputStream;
+    private final Socket consumer_connection;
+    private final Broker broker;
 
-    public Consumer_Connection(Socket consumer_connection,Broker broker){
+
+    public Socket getConsumer_connection() {
+        return consumer_connection;
+    }
+
+    public Broker getBroker() {
+        return broker;
+    }
+
+    public ObjectInputStream getLocalinputStream() {
+        return localinputStream;
+    }
+
+    public ObjectOutputStream getLocaloutputStream() {
+        return localoutputStream;
+    }
+
+    public Consumer_Handler(Socket consumer_connection, Broker broker){
+        this.consumer_connection = consumer_connection;
+        this.broker = broker;
         try {
-            this.consumer_connection = consumer_connection;
-            this.broker = broker;
-            ous = new ObjectOutputStream(consumer_connection.getOutputStream());
-            is = new ObjectInputStream(consumer_connection.getInputStream());
+            localoutputStream = new ObjectOutputStream(consumer_connection.getOutputStream());
+            localinputStream = new ObjectInputStream(consumer_connection.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Could not connect");
@@ -26,8 +43,8 @@ class Consumer_Connection implements Runnable {
     public void ServerUnsubscribeRequest(){
         try {
             System.out.println("Serving unsubscribe request for client: " + consumer_connection.getInetAddress().getHostName());
-            String topic_name = is.readUTF();
-            UserNode new_cons = (UserNode) is.readObject();
+            String topic_name = localinputStream.readUTF();
+            UserNode new_cons = (UserNode) localinputStream.readObject();
             System.out.println("Topic name: " + topic_name);
             Topic topic = null;
             for (int i = 0; i < broker.getTopics().size(); i++) {
@@ -48,8 +65,8 @@ class Consumer_Connection implements Runnable {
         //TODO subscribe function
         try {
             System.out.println("Serving register request for client: " + consumer_connection.getInetAddress().getHostName());
-            String topic_name = is.readUTF();
-            UserNode new_cons = (UserNode) is.readObject();
+            String topic_name = localinputStream.readUTF();
+            UserNode new_cons = (UserNode) localinputStream.readObject();
             System.out.println("Topic name: " + topic_name);
             Topic topic = null;
             for (int i = 0; i < broker.getTopics().size(); i++) {
@@ -70,7 +87,7 @@ class Consumer_Connection implements Runnable {
     public int waitForUserNodePrompt(){
         try {
             System.out.println("Waiting for user node prompt in consumer connection");
-            return is.readInt();
+            return localinputStream.readInt();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in wait for user node...");
@@ -82,64 +99,11 @@ class Consumer_Connection implements Runnable {
 
     public void FinishedOperation(){
         try {
-            ous.writeInt(Messages.FINISHED_OPERATION.ordinal());
-            ous.flush();
+            localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
+            localoutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in finished operation...");
-            shutdownConnection();
-        }
-    }
-
-
-    public void sendBrokerList(){
-        try {
-            System.out.println("Sending broker list");
-            ous.writeInt(Messages.SENDING_BROKER_LIST.ordinal());
-            ous.flush();
-            for (Tuple<String,int[]> val: broker.getBrokerList()) {
-                System.out.println("Sending Broker List size: " + broker.getBrokerList().size());
-                ous.writeInt(broker.getBrokerList().size());
-                ous.flush();
-                System.out.println("Sending broker's IP: " + val.getValue1());
-                ous.writeUTF(val.getValue1());
-                ous.flush();
-                int i;
-                for (i = 0; i < val.getValue2().length; i++) {
-                    System.out.println("Sending broker's port: " + val.getValue2()[i]);
-                    ous.writeInt(val.getValue2()[0]);
-                    ous.flush();
-                    ous.writeInt(val.getValue2()[1]);
-                    ous.flush();
-                }
-                if(i == 2) {
-                    System.out.println("Finished sending ports");
-                    FinishedOperation();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Shutting down connection in send broker list...");
-            shutdownConnection();
-        }
-    }
-
-    public void sendIdList(){
-        try{
-            System.out.println("Sending ID List");
-            ous.writeInt(Messages.SENDING_ID_LIST.ordinal());
-            ous.flush();
-            for (int i = 0; i < broker.getId_list().size(); i++) {
-                System.out.println("Sending ID List size: " + broker.getId_list().size());
-                ous.writeInt(broker.getId_list().size());
-                ous.flush();
-                System.out.println("Sending ID: " + broker.getId_list().get(i));
-                ous.writeInt(broker.getId_list().get(i));
-                ous.flush();
-            }
-        }catch(IOException e){
-            System.out.println("Error in sending list");
-            e.printStackTrace();
             shutdownConnection();
         }
     }
@@ -149,18 +113,18 @@ class Consumer_Connection implements Runnable {
     }
 
     public void removeConnection(){
-        broker.getConsumer_Connections().remove(this);
+        broker.getConsumer_Handlers().remove(this);
     }
 
     public void shutdownConnection(){
         System.out.println("Shutted connection: " + consumer_connection.getInetAddress());
         removeConnection();
         try{
-            if(ous != null){
-                ous.close();
+            if(localoutputStream != null){
+                localoutputStream.close();
             }
-            if(is != null){
-                is.close();
+            if(localinputStream != null){
+                localinputStream.close();
             }
             if(consumer_connection != null){
                 consumer_connection.close();
@@ -186,19 +150,15 @@ class Consumer_Connection implements Runnable {
                 System.out.println("Finished operation waiting for next input");
                 message = waitForUserNodePrompt();
             } else if (message == Messages.GET_BROKER_LIST.ordinal()) {
-                if(broker.getBrokerList().isEmpty()){
-                    broker.readBrokerListFromConfigFile();
-                }
-                sendBrokerList();
+                Shared_Network_Methods.sendBrokerList(Consumer_Handler.this);
                 FinishedOperation();
                 System.out.println("Finished sending brokers");
-                sendIdList();
+                Shared_Network_Methods.sendIdList(Consumer_Handler.this);
                 FinishedOperation();
                 System.out.println("Finished sending id list");
                 message = waitForUserNodePrompt();
             } else if (message == Messages.REGISTER.ordinal()) {
                 ServeRegisterRequest();
-                //TODO call pull method
                 FinishedOperation();
                 message = waitForUserNodePrompt();
             } else if (message == Messages.UNSUBSCRIBE.ordinal()) {
@@ -208,10 +168,6 @@ class Consumer_Connection implements Runnable {
             }
         }
 
-    }
-
-    public Socket getSocket(){
-        return consumer_connection;
     }
 
 }
