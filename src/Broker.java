@@ -29,21 +29,20 @@ public class Broker{
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
 
-    private final String ip;
-    private final int consumer_port;
-    private final int publisher_port;
-    private final int broker_port;
+    private String ip;
+    private int consumer_port;
+    private int publisher_port;
+    private int broker_port;
     private int id;
     private int number_of_brokers;
 
 
-    public Broker(String ip,int consumer_port,int publisher_port,int broker_port){
+    public Broker(String ip,int consumer_port , int publisher_port , int broker_port){
         this.ip = ip;
         this.consumer_port = consumer_port;
         this.publisher_port = publisher_port;
         this.broker_port = broker_port;
-        writeBrokertoConfigFile("config.txt");
-        this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + broker_port + ip),(countLines())*100);
+        this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + broker_port + ip),300);
         readBrokerListFromConfigFile();
     }
 
@@ -183,26 +182,6 @@ public class Broker{
         this.id = id;
     }
 
-    /**
-     * counts lines from the config file to properly hash the new broker and give it the correct id.
-     * @return the number of brokers which are the counted lines
-     */
-    public int countLines(){
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader("config.txt"));
-            int lines = 0;
-            while(reader.readLine() != null){
-                lines++;
-            }
-            reader.close();
-            return lines;
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error while reading from config file...");
-            shutdownBroker();
-        }
-        return 0;
-    }
 
     /**
      * Sorts the broker list using bubblesort.
@@ -243,33 +222,6 @@ public class Broker{
         System.out.println(BrokerList);
     }
 
-    /**
-     * writes the newly created broker in the config file
-     * @param filename give the relative file name
-     */
-    public void writeBrokertoConfigFile(String filename){
-        try {
-            //File write set true append mode
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filename,true));
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
-            String line;
-            Set<String> temp = new HashSet<>();
-            while((line = reader.readLine()) != null){
-                temp.add(line);
-            }
-            if(temp.contains(ip + " " + consumer_port + " " + publisher_port + " " + broker_port)){
-                System.out.println("Broker already exists in file");
-            }else {
-                writer.append(ip + " " + consumer_port + " " + publisher_port + " " + broker_port + "\n");
-                writer.close();
-                System.out.println("Wrote Ip and port to the file");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Error while writing to config file");
-        }
-
-    }
 
     /**
      * Reads broker list from config file and inserts it into local field broker list.
@@ -285,6 +237,7 @@ public class Broker{
 
             while((line = br.readLine()) != null) {
                 String[] splitted = line.split("\\s+");
+                System.out.println(Arrays.toString(splitted));
                 int [] array = new int[3];
                 array[0] = Integer.parseInt(splitted[1]);
                 array[1] = Integer.parseInt(splitted[2]);
@@ -292,7 +245,7 @@ public class Broker{
                 System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections and " + array[2] + " for broker connections");
                 BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
                 System.out.println("Broker list size now is: " + BrokerList.size());
-                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),countLines()*100));
+                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),300));
 
             }
             sortBrokerList();
@@ -351,7 +304,7 @@ public class Broker{
                 }
             }).start();
 
-
+            //TODO you can do this with a datagram socket
             /* separate thread for receiving publisher connections*/
             new Thread(() -> {
                 try {
@@ -371,8 +324,7 @@ public class Broker{
                     shutdownBroker();
                 }
             }).start();
-            /* after starting everything up notify brokers that there is a new broker*/
-            notifyBrokersOnChanges(Messages.NEW_BROKER);
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -406,9 +358,9 @@ public class Broker{
     /**
      * adds the subscriber to the subscribed users set in the topic class
      * @param topic give a topic class instance
-     * @param consumer give a usernode class instance
+     * @param consumer give a string that is the name of the consumer
      */
-    public void addConsumerToTopic(Topic topic, UserNode consumer){
+    public void addConsumerToTopic(Topic topic, String consumer){
         //this if condition checks whether there's an topic that the new consumer can subscribe to
         if(Topics.contains(topic)){
             topic.addSubscription(consumer);
@@ -423,10 +375,14 @@ public class Broker{
      * @param topic give a topic class instance
      * @param consumer give a usernode class instance
      */
-    public void UnsubscribeFromTopic(Topic topic, UserNode consumer){
+    public void UnsubscribeFromTopic(Topic topic, String consumer){
         if(Topics.contains(topic)){
             topic.removeSubscription(consumer);
         }
+    }
+
+    public void pull(){
+
     }
 
     /**
@@ -475,34 +431,13 @@ public class Broker{
                     continue;
                 }
                 //opens connection to all other brokers and sends them the new data
-                System.out.println(val.getValue2()[2]);
                 connection_to_other_brokers = new Socket(val.getValue1(), val.getValue2()[2]);
                 localoutputStream = new ObjectOutputStream(connection_to_other_brokers.getOutputStream());
                 localinputStream = new ObjectInputStream(connection_to_other_brokers.getInputStream());
-                if(message_type == Messages.NEW_BROKER){
-                    System.out.println("Sending message type: " + Messages.WAITING_FOR_ACK + " with ordinal number " + Messages.WAITING_FOR_ACK.ordinal());
-                    localoutputStream.writeInt(Messages.WAITING_FOR_ACK.ordinal());
-                    localoutputStream.flush();
-                    while(true){
-                        System.out.println("Waiting to receive ACK");
-                        if(localinputStream.readInt() == Messages.ACK.ordinal()){
-                            System.out.println("Received ack by broker: " + val.getValue1());
-                            break;
-                        }
-                    }
-                    Shared_Network_Methods.sendBrokerList(Broker.this);
-                    FinishedOperation();
-                    while(true){
-                        System.out.println("Waiting to receive Finished operation");
-                        if(localinputStream.readInt() == Messages.FINISHED_OPERATION.ordinal()){
-                            System.out.println("Received finished operation by broker: " + val.getValue1());
-                            break;
-                        }
-                    }
-                    Shared_Network_Methods.sendIdList(Broker.this);
-                    FinishedOperation();
-                    shutdownConnection();
-                }else if(message_type == Messages.NEW_TOPIC){
+                System.out.println("Sending new broker to broker: " + val.getValue1() + " " + val.getValue2()[2]);
+                System.out.println("Socket IP: " + connection_to_other_brokers.getInetAddress());
+
+                if(message_type == Messages.NEW_TOPIC){
                     Shared_Network_Methods.sendTopicList();
                     shutdownConnection();
                 }
@@ -533,6 +468,7 @@ public class Broker{
             shutdownConnection();
         }
     }
+
 
 
 
