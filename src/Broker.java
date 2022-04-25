@@ -29,12 +29,12 @@ public class Broker{
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
 
-    private String ip;
-    private int consumer_port;
-    private int publisher_port;
-    private int broker_port;
+    private final String ip;
+    private final int consumer_port;
+    private final int publisher_port;
+    private final int broker_port;
     private int id;
-    private int number_of_brokers;
+
 
 
     public Broker(String ip,int consumer_port , int publisher_port , int broker_port){
@@ -381,8 +381,17 @@ public class Broker{
         }
     }
 
-    public void pull(){
-
+    /**
+     * uses the topic class to get the subscribed users and sends them the latest message
+     */
+    public void pull(String topic){
+        Topic temp;
+        for (int i = 0; i < Topics.size(); i++) {
+            if(Topics.get(i).getName().equals(topic)){
+                temp = Topics.get(i);
+            }
+        }
+        //with temp scan all the consumer connection list and send the new values
     }
 
     /**
@@ -438,7 +447,7 @@ public class Broker{
                 System.out.println("Socket IP: " + connection_to_other_brokers.getInetAddress());
 
                 if(message_type == Messages.NEW_TOPIC){
-                    Shared_Network_Methods.sendTopicList();
+
                     shutdownConnection();
                 }
             }

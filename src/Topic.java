@@ -41,6 +41,10 @@ class Topic implements Serializable{
         message_queue.add(message);
     }
 
+    public boolean isUserSubscribed(String user){
+        return subscribedUsers.contains(user);
+    }
+
     public ArrayList<Value> findLatestMessages(String user){
         int index = last_message.get(user);
         System.out.println("Later message index: " + index);

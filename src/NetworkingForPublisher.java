@@ -94,30 +94,29 @@ public class NetworkingForPublisher implements Runnable {
     public void push(){
         System.out.println("Please give the name of the topic");
         String topic_name = sc.next();
-        // find the proper broker for the topic
+        //TODO find the proper broker for the topic by direct broker communication
+        //TODO first check into your own topic list
         //Tuple<String,int[]> brk = pub.hashTopic(topic_name);
-        //find the position of the broker inside the array list in order to get its id
-        //can't use index of here
-        //int index = -1;
-        //for (int i = 0; i < pub.getBrokerList().size(); i++) {
-        //    if(pub.getBrokerList().get(i).getValue1().equals(brk.getValue1()) && pub.getBrokerList().get(i).getValue2()[1] == brk.getValue2()[1] && pub.getBrokerList().get(i).getValue2()[0] == brk.getValue2()[0]){
-        //        index = i;
-        //        break;
-        //    }
-        //}
-        // start a new connection with the broker
-        //we can't use contains here
-        //TODO check if i can use comparable for the tuple class
-        //Socket connection = new Socket(brk.getValue1(),brk.getValue2()[1]);
-        //call send file on a existing multimedia file object or a create one
-        //also notify the proper broker that you have a new message
-        notifyBrokersNewMessage();
-        System.out.println("Give the name of the file");
-        //String filename = "C:\\Users\\fotis\\OneDrive\\Desktop\\test_for_reading through a file\\video1.mp4";
-        String filename = sc.next();
-        thread_continue.notifyThread();
-        MultimediaFile new_file = new MultimediaFile(filename,"Fotis");
-        sendFile(new_file);
+        ArrayList<Topic> topics = new ArrayList<>();//TODO method for getting topics;
+        boolean subscribed_user = false;
+        for (int i = 0; i < topics.size(); i++) {
+            if(topics.get(i).getName().equals(topic_name)){
+                if(topics.get(i).isUserSubscribed(pub.getName())){
+                    subscribed_user = true;
+                    break;
+                };
+            }
+        }
+        if(subscribed_user) {
+            notifyBrokersNewMessage();
+            System.out.println("Give the name of the file");
+            String filename = sc.next();
+            thread_continue.notifyThread();
+            MultimediaFile new_file = new MultimediaFile(filename, "Fotis");
+            sendFile(new_file);
+        }else{
+            System.out.println("User is not subscribed to topic and can't post there");
+        }
     }
 
     public void FinishedOperation(){

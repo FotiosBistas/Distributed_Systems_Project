@@ -260,11 +260,6 @@ class NetworkingForConsumer implements Runnable{
                         os.flush();
                         messagebroker = -1;
 
-                    }else if(messagebroker == Messages.SEND_LIST_SIZE.ordinal()){
-                        System.out.println("Broker asked for your list size");
-                        os.writeInt(Messages.FINISHED_OPERATION.ordinal());
-                        os.flush();
-                        messagebroker = -1;
                     }else if(messagebroker == Messages.SENDING_ID_LIST.ordinal()) {
                         System.out.println("Broker is sending its ID List");
                         while(true) {

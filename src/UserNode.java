@@ -17,7 +17,7 @@ public class UserNode implements Serializable {
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
-    private List<Tuple<String,Byte>> message_list;
+    private HashMap<String,Value> message_list;
 
     UserNode(String ip,int port){
         this.ip = ip;
