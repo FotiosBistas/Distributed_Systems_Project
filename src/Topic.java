@@ -32,6 +32,11 @@ class Topic implements Serializable{
         last_message.put(new_cons,0);
     }
 
+    public void removeSubscription(String new_cons){
+        subscribedUsers.remove(new_cons);
+        last_message.remove(new_cons);
+    }
+
     public void addToMessageQueue(Value message){
         message_queue.add(message);
     }
@@ -46,10 +51,5 @@ class Topic implements Serializable{
         last_message.put(user,message_queue.size());
         return temp;
     }
-
-    public void removeSubscription(UserNode to_be_removed){
-        subscribedUsers.remove(to_be_removed);
-    }
-
 
 }

@@ -53,7 +53,7 @@ class Consumer_Handler implements Runnable {
                 }
             }
             System.out.println("Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name);
-            broker.UnsubscribeFromTopic(topic, new_cons);
+            broker.UnsubscribeFromTopic(topic, new_cons.getName());
         }catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in unsubscribe");
@@ -75,7 +75,7 @@ class Consumer_Handler implements Runnable {
                 }
             }
             System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
-            broker.addConsumerToTopic(topic, new_cons);
+            broker.addConsumerToTopic(topic, new_cons.getName());
             //someone can subscribe and unsubscribe
         }catch (IOException | ClassNotFoundException e){
             e.printStackTrace();
@@ -94,6 +94,56 @@ class Consumer_Handler implements Runnable {
             shutdownConnection();
         }
         return -1;
+    }
+
+    public void sendIdList(){
+        try {
+            System.out.println("Sending message type: " + Messages.SENDING_ID_LIST + " with ordinal number: " + Messages.SENDING_ID_LIST.ordinal());
+            getLocaloutputStream().writeInt(Messages.SENDING_ID_LIST.ordinal());
+            getLocaloutputStream().flush();
+            for (int i = 0; i < getBroker().getId_list().size(); i++) {
+                System.out.println("Sending ID List size: " + getBroker().getId_list().size());
+                getLocaloutputStream().writeInt(getBroker().getId_list().size());
+                getLocaloutputStream().flush();
+                System.out.println("Sending ID: " + getBroker().getId_list().get(i));
+                getLocaloutputStream().writeInt(getBroker().getId_list().get(i));
+                getLocaloutputStream().flush();
+            }
+        } catch (IOException e) {
+            System.out.println("Error in sending list");
+            e.printStackTrace();
+            shutdownConnection();
+        }
+    }
+
+    public void sendBrokerList() {
+        try {
+            System.out.println("Sending message type: " + Messages.SENDING_BROKER_LIST + " with ordinal number: " + Messages.SENDING_BROKER_LIST.ordinal());
+            getLocaloutputStream().writeInt(Messages.SENDING_BROKER_LIST.ordinal());
+            getLocaloutputStream().flush();
+            for (Tuple<String, int[]> val : getBroker().getBrokerList()) {
+                System.out.println("Sending Broker List size: " + getBroker().getBrokerList().size());
+                getLocaloutputStream().writeInt(getBroker().getBrokerList().size());
+                getLocaloutputStream().flush();
+                System.out.println("Sending broker's IP: " + val.getValue1());
+                getLocaloutputStream().writeUTF(val.getValue1());
+                getLocaloutputStream().flush();
+                int i;
+                for (i = 0; i < val.getValue2().length; i++) {
+                    System.out.println("Sending broker's ports: " + val.getValue2()[i]);
+                    getLocaloutputStream().writeInt(val.getValue2()[i]);
+                    getLocaloutputStream().flush();
+                }
+                if (i == 3) {
+                    System.out.println("Finished sending ports");
+                    FinishedOperation();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Shutting down connection in send broker list...");
+            shutdownConnection();
+        }
     }
 
 
@@ -150,10 +200,10 @@ class Consumer_Handler implements Runnable {
                 System.out.println("Finished operation waiting for next input");
                 message = waitForUserNodePrompt();
             } else if (message == Messages.GET_BROKER_LIST.ordinal()) {
-                Shared_Network_Methods.sendBrokerList(Consumer_Handler.this);
+                sendBrokerList();
                 FinishedOperation();
                 System.out.println("Finished sending brokers");
-                Shared_Network_Methods.sendIdList(Consumer_Handler.this);
+                sendIdList();
                 FinishedOperation();
                 System.out.println("Finished sending id list");
                 message = waitForUserNodePrompt();
