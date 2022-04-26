@@ -215,6 +215,8 @@ class Consumer_Handler implements Runnable {
                 ServerUnsubscribeRequest();
                 FinishedOperation();
                 message = waitForUserNodePrompt();
+            }else if (message == Messages.SHOW_CONVERSATION_DATA.ordinal()){
+
             }
         }
 

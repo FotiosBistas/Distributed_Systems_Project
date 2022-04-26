@@ -1,20 +1,22 @@
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class Publisher_Handler implements Runnable{
     private Socket publisher_connection;
-    private ObjectInputStream is;
-    private ObjectOutputStream os;
+    private ObjectInputStream localinputStream;
+    private ObjectOutputStream localoutputStream;
     private final int chunksize = 512*1024;
-    private Broker broker;
+    private final Broker broker;
 
     Publisher_Handler(Socket publisher_connection, Broker broker){
         this.publisher_connection = publisher_connection;
         this.broker = broker;
         try {
-            is = new ObjectInputStream(publisher_connection.getInputStream());
-            os = new ObjectOutputStream(publisher_connection.getOutputStream());
+            localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
+            localoutputStream = new ObjectOutputStream(publisher_connection.getOutputStream());
         } catch (IOException e) {
             System.out.println("Error in constructor shutting down connection...");
             e.printStackTrace();
@@ -22,15 +24,20 @@ class Publisher_Handler implements Runnable{
         }
     }
 
+    /**
+     * Receives each chunk for a specific file.
+     * It does that using a custom ACK system for each chunk on the broker side and the publisher side.
+     */
+    //TODO message list inside broker
     public void receiveFile(){
 
         try {
             int bytes = 0;
             System.out.println("Receiving file...");
-            String file_name = is.readUTF();
+            String file_name = localinputStream.readUTF();
             String new_file = file_name.substring(file_name.lastIndexOf("\\")+1);
             System.out.println("Received file: " + new_file);
-            int number_of_chunks = is.readInt();
+            int number_of_chunks = localinputStream.readInt();
             System.out.println("You will receive: " + number_of_chunks + " chunks");
             String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
             FileOutputStream fileOutputStream = new FileOutputStream(path_for_broker + new_file);
@@ -43,18 +50,18 @@ class Publisher_Handler implements Runnable{
                     fileOutputStream.close();
                     break;
                 }
-                int actual_size = is.readInt();
+                int actual_size = localinputStream.readInt();
                 System.out.println("Actual size of the incoming chunk is: " + actual_size);
-                is.readFully(buffer,0,actual_size);
+                localinputStream.readFully(buffer,0,actual_size);
                 byte[] temp = buffer.clone();
                 fileOutputStream.write(temp,0,actual_size);
                 fileOutputStream.flush();
                 chunks.add(temp);
                 System.out.println("Sending received chunk ack");
-                os.writeInt(Messages.RECEIVED_CHUNK.ordinal());
-                os.flush();
+                localoutputStream.writeInt(Messages.RECEIVED_CHUNK.ordinal());
+                localoutputStream.flush();
                 while(true){
-                    if(Messages.RECEIVED_ACK.ordinal() == is.readInt()){
+                    if(Messages.RECEIVED_ACK.ordinal() == localinputStream.readInt()){
                         System.out.println("Client received ack");
                         break;
                     }
@@ -70,10 +77,44 @@ class Publisher_Handler implements Runnable{
         }
     }
 
+    public String receiveTopicName(){
+        try{
+            System.out.println("Receiving the topic name");
+            String topic_name = localinputStream.readUTF();
+            System.out.println(topic_name);
+            return topic_name;
+        }catch (IOException e){
+            System.out.println("Error while receiving topic name");
+            e.printStackTrace();
+            shutdownConnection();
+            return null;
+        }
+    }
+
+    public void sendTopicList(){
+        try {
+            System.out.println("Sending topic list...");
+            localoutputStream.writeInt(Messages.SENDING_TOPIC_LIST.ordinal());
+            localoutputStream.flush();
+            for (int i = 0; i < broker.getTopics().size(); i++) {
+                System.out.println("Sending topic list size: " + broker.getTopics().size());
+                localoutputStream.writeInt(broker.getTopics().size());
+                localoutputStream.flush();
+                System.out.println("Sending topic: " + broker.getTopics().get(i));
+                localoutputStream.writeObject(broker.getTopics().get(i));
+                localoutputStream.flush();
+            }
+        }catch(IOException e){
+            System.out.println("Error while trying to send topic list in publisher connection");
+            e.printStackTrace();
+            shutdownConnection();
+        }
+    }
+
     public int waitForUserNodePrompt(){
         try {
             System.out.println("Waiting for user node prompt in publisher connection");
-            return is.readInt();
+            return localinputStream.readInt();
         } catch (IOException e) {
             System.out.println("Shutting down connection in wait for user node...");
             shutdownConnection();
@@ -81,11 +122,32 @@ class Publisher_Handler implements Runnable{
         return -1;
     }
 
+    public void sendMessage(Messages message_type){
+        try{
+            localoutputStream.writeInt(message_type.ordinal());
+            localoutputStream.flush();
+        }catch(IOException e){
+            System.out.println("Error in sending message");
+            e.printStackTrace();
+            shutdownConnection();
+        }
+    }
+
+    public void sendMessage(int index){
+        try{
+            localoutputStream.writeInt(index);
+            localoutputStream.flush();
+        }catch(IOException e){
+            System.out.println("Error in sending message");
+            e.printStackTrace();
+            shutdownConnection();
+        }
+    }
 
     public void FinishedOperation(){
         try {
-            os.writeInt(Messages.FINISHED_OPERATION.ordinal());
-            os.flush();
+            localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
+            localoutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in finished operation...");
@@ -109,6 +171,42 @@ class Publisher_Handler implements Runnable{
                 receiveFile();
                 FinishedOperation();
                 message = waitForUserNodePrompt();
+            }else if(message == Messages.GET_TOPIC_LIST.ordinal()){
+                System.out.println("Get topic list message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
+                sendTopicList();
+                FinishedOperation();
+                message = waitForUserNodePrompt();
+            }else if(message == Messages.SEND_APPROPRIATE_BROKER.ordinal()){
+                System.out.println("Send me the topic name to find appropriate broker");
+                String topic_name =  receiveTopicName();
+                FinishedOperation();
+                int index = broker.hashTopic(topic_name);
+                Tuple<String,int[]> brk = broker.getBrokerList().get(index);
+                System.out.println("Brk IP: " + brk.getValue1());
+                System.out.println("Brk ports: " + Arrays.toString(brk.getValue2()));
+                System.out.println("Local Broker IP: " + broker.getIp());
+                if(brk.getValue1().equals(broker.getIp())){
+                    System.out.println("They have equal IPs");
+                    if(broker.getConsumer_port() == brk.getValue2()[0] &&
+                    broker.getPublisher_port() == brk.getValue2()[1] && broker.getBroker_port() == brk.getValue2()[2]){
+                        System.out.println("The broker is correct");
+                        sendMessage(Messages.I_AM_THE_CORRECT_BROKER);
+                        sendMessage(index);
+                    }else{
+                        System.out.println("The broker is not correct");
+                        sendMessage(Messages.I_AM_NOT_THE_CORRECT_BROKER);
+                        sendMessage(index);
+                        shutdownConnection();
+                        return;
+                    }
+                }else{
+                    sendMessage(Messages.I_AM_NOT_THE_CORRECT_BROKER);
+                    sendMessage(index);
+                    shutdownConnection();
+                    return;
+                }
+                message = waitForUserNodePrompt();
+
             }
         }
 
@@ -126,11 +224,11 @@ class Publisher_Handler implements Runnable{
         System.out.println("Shutted connection: " + publisher_connection.getInetAddress());
         removeConnection();
         try{
-            if(os != null){
-                os.close();
+            if(localoutputStream != null){
+                localoutputStream.close();
             }
-            if(is != null){
-                is.close();
+            if(localinputStream != null){
+                localinputStream.close();
             }
             if(publisher_connection != null){
                 publisher_connection.close();

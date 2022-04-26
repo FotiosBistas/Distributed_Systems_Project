@@ -74,23 +74,6 @@ public class UserNode implements Serializable {
     }
 
 
-    public Tuple<String, int[]> hashTopic(String topic){
-        // hash the topic and choose the correct broker
-        int identifier = SHA1.hextoInt(topic,BrokerList.size()*100);
-        int index = 0;
-        for(int i = 0 ; i < BrokerIds.size() ; i++){
-            // when you find the first broker that has id larger than the topics value then you use the previous broker
-            if(BrokerIds.get(i) > identifier){
-                if(i == 0){
-                    break;
-                }
-                index = i - 1;
-                break;
-            }
-        }
-        return BrokerList.get(index);
-    }
-
     public static void main(String[] args) {
         if(args.length <= 1){
             System.out.println("You didn't provide ip or port number");

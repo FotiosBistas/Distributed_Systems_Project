@@ -229,7 +229,7 @@ public class Broker{
      * Also calls the sort operation on the broker list.
      */
     public void readBrokerListFromConfigFile(){
-        File file = new File("config.txt");
+        File file = new File("C:\\Users\\fotis\\IdeaProjects\\DSproject\\src\\config.txt");
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -246,7 +246,7 @@ public class Broker{
                 BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
                 System.out.println("Broker list size now is: " + BrokerList.size());
                 id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),300));
-
+                System.out.println("Running in while loop");
             }
             sortBrokerList();
         } catch (IOException e) {
@@ -264,6 +264,11 @@ public class Broker{
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("It also listens to port: " + this.broker_port + " for broker communication");
             System.out.println("IP address: " + this.ip);
+
+            Topic temp = new Topic("something","Fotis");
+            temp.addSubscription("Fotis");
+            Topics.add(temp);
+            Topics.add(new Topic("something else","Tasos"));
 
             /*listener for receiving messages from other brokers*/
             new Thread(() -> {
@@ -360,7 +365,7 @@ public class Broker{
      * @param topic give a topic class instance
      * @param consumer give a string that is the name of the consumer
      */
-    public void addConsumerToTopic(Topic topic, String consumer){
+    public synchronized  void addConsumerToTopic(Topic topic, String consumer){
         //this if condition checks whether there's an topic that the new consumer can subscribe to
         if(Topics.contains(topic)){
             topic.addSubscription(consumer);
@@ -375,7 +380,7 @@ public class Broker{
      * @param topic give a topic class instance
      * @param consumer give a usernode class instance
      */
-    public void UnsubscribeFromTopic(Topic topic, String consumer){
+    public synchronized void UnsubscribeFromTopic(Topic topic, String consumer){
         if(Topics.contains(topic)){
             topic.removeSubscription(consumer);
         }
@@ -416,56 +421,40 @@ public class Broker{
         }
     }
 
+    /**
+     * Hashes the topic with its name and returns the broker that will serve the request.
+     * @param topic first parameter is the topic name
+     * @return returns a tuple instance of string, int[]
+     */
+    public int hashTopic(String topic){
+        // hash the topic and choose the correct broker
+        int identifier = SHA1.hextoInt(SHA1.encrypt(topic),BrokerList.size()*100);
+        int index = 0;
+        for(int i = 0 ; i < id_list.size() ; i++){
+            // when you find the first broker that has id larger than the topics value then you use the previous broker
+            if(id_list.get(i) > identifier){
+                if(i == 0){
+                    break;
+                }
+                index = i - 1;
+                break;
+            }
+        }
+        return index;
+    }
+
     public void tryagain(Messages message_type){
-        notifyBrokersOnChanges(message_type);
+        notifyBrokersOnChanges();
     }
 
     /**
      *After a change e.g. new broker is inserted into the list or a topic is inserted into the topic list.
      *Notify all the brokers about the changes, like a broadcast operation.
      */
-    public void notifyBrokersOnChanges(Messages message_type){
-        if(BrokerList.size() <=1){
-            return;
-        }
-        try {
-            for (Tuple<String, int[]> val : BrokerList) {
-                boolean same_broker = false;
-                if(val.getValue1().equals(this.ip)){
-                        if(this.consumer_port == val.getValue2()[0]){
-                            same_broker = true;
-                        }
-                }
-                if(same_broker){
-                    continue;
-                }
-                //opens connection to all other brokers and sends them the new data
-                connection_to_other_brokers = new Socket(val.getValue1(), val.getValue2()[2]);
-                localoutputStream = new ObjectOutputStream(connection_to_other_brokers.getOutputStream());
-                localinputStream = new ObjectInputStream(connection_to_other_brokers.getInputStream());
-                System.out.println("Sending new broker to broker: " + val.getValue1() + " " + val.getValue2()[2]);
-                System.out.println("Socket IP: " + connection_to_other_brokers.getInetAddress());
+    public void notifyBrokersOnChanges(){
 
-                if(message_type == Messages.NEW_TOPIC){
-
-                    shutdownConnection();
-                }
-            }
-        }catch (ConnectException e){
-            System.out.println("The socket is not open on the other end");
-            e.printStackTrace();
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
-            tryagain(message_type);
-        } catch (IOException e){
-            System.out.println("Error while trying to notify other brokers");
-            e.printStackTrace();
-            shutdownConnection();
-        }
     }
+
 
     public void FinishedOperation(){
         try {

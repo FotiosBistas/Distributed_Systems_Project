@@ -12,7 +12,9 @@ class Topic implements Serializable{
     Topic(String name,String publisher){
         this.name = name;
         this.publisher = publisher;
-
+        this.subscribedUsers = new ArrayList<>();
+        this.last_message = new HashMap<>();
+        this.message_queue = new ArrayList<>();
     }
 
     public String getName(){
@@ -37,7 +39,7 @@ class Topic implements Serializable{
         last_message.remove(new_cons);
     }
 
-    public void addToMessageQueue(Value message){
+    public synchronized void addToMessageQueue(Value message){
         message_queue.add(message);
     }
 
@@ -56,4 +58,11 @@ class Topic implements Serializable{
         return temp;
     }
 
+    @Override
+    public String toString() {
+        return "Topic{" +
+                "name='" + name + '\'' +
+                ", publisher='" + publisher + '\'' +
+                '}';
+    }
 }
