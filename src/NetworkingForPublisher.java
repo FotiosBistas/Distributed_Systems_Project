@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class NetworkingForPublisher implements Runnable {
 
@@ -15,6 +16,8 @@ public class NetworkingForPublisher implements Runnable {
     private UserNode pub;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
+    private BufferedOutputStream bufferedOutputStream;
+    private BufferedInputStream bufferedInputStream;
     private boolean exit = false;
     private NetworkingForConsumer thread_continue;
     //idea here is that the user node will open a connection with the broker it wants to communicate and keep it for while
@@ -32,6 +35,8 @@ public class NetworkingForPublisher implements Runnable {
         try {
             localoutputStream = new ObjectOutputStream(connection.getOutputStream());
             localinputStream = new ObjectInputStream(connection.getInputStream());
+            bufferedInputStream = new BufferedInputStream(connection.getInputStream());
+            bufferedOutputStream = new BufferedOutputStream(connection.getOutputStream());
         } catch (IOException e) {
             System.out.println("Error in constructor");
             e.printStackTrace();
@@ -50,23 +55,24 @@ public class NetworkingForPublisher implements Runnable {
             localoutputStream.writeInt(file.getChunks().size());
             localoutputStream.flush();
             int offset = 0;
+            /*System.out.println(i + " Chunk is being sent");
+            localoutputStream.writeInt(i);
+            localoutputStream.flush();
+            System.out.println("Sending its actual length...");
+            localoutputStream.writeInt(chunks.get(i).getActual_length());
+            localoutputStream.flush();*/
             for (int i = 0; i < chunks.size(); i++) {
                 System.out.println(i + " Chunk is being sent");
+                localoutputStream.writeInt(i);
+                localoutputStream.flush();
                 System.out.println("Sending its actual length...");
                 localoutputStream.writeInt(chunks.get(i).getActual_length());
                 localoutputStream.flush();
                 localoutputStream.write(chunks.get(i).getChunk(), 0, chunks.get(i).getActual_length());
                 localoutputStream.flush();
-                while (true) {
-                    if (Messages.RECEIVED_CHUNK.ordinal() == localinputStream.readInt()) {
-                        System.out.println("Acknowledgement that chunked was received");
-                        System.out.println("Sending ack for ack message");
-                        localoutputStream.writeInt(Messages.RECEIVED_ACK.ordinal());
-                        localoutputStream.flush();
-                        break;
-                    }
-                }
             }
+            //try to synchronize
+
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Error in sending file");
@@ -141,6 +147,16 @@ public class NetworkingForPublisher implements Runnable {
         }
     }
 
+    public void sendMessage(Messages message_type){
+        try{
+            localoutputStream.writeInt(message_type.ordinal());
+            localoutputStream.flush();
+        }catch (IOException e){
+            System.out.println("Error in send message");
+            TerminatePublisherConnection();
+        }
+    }
+
     /**
      * Publisher gives the name of the topic it wants to publish data to.
      * After finding the proper broker it establishes a connection and publishes data to it.
@@ -179,7 +195,7 @@ public class NetworkingForPublisher implements Runnable {
                 Thread t = new Thread(new_connection);
                 t.start();
                 System.out.println("Received the proper broker and i'm closing the connection with the old broker down");
-                FinishedOperation();
+                sendMessage(Messages.SHUTDOWN_CONNECTION);
                 TerminatePublisherConnection();
                 return;
             }
@@ -190,8 +206,12 @@ public class NetworkingForPublisher implements Runnable {
             ArrayList<Topic> topics = receiveTopicList();
             System.out.println(topics);
             for (int i = 0; i < topics.size(); i++) {
+                topics.get(i).printSubscribers();
+                System.out.println("This publisher's name is: " + pub.getName());
                 if (topics.get(i).getName().equals(topic_name)) {
+                    System.out.println("Found the right topic: " + topics.get(i).getName());
                     if (topics.get(i).isUserSubscribed(pub.getName())) {
+                        System.out.println("This publisher is subcribed to the topic");
                         subscribed_user = true;
                         break;
                     }
@@ -240,16 +260,8 @@ public class NetworkingForPublisher implements Runnable {
     public void run() {
         System.out.println("New publisher was created");
         push();
-        FinishedOperation();
-        int messageFromBroker = waitForBrokerPrompt();
-        while(true) {
-            if(messageFromBroker == Messages.FINISHED_OPERATION.ordinal()) {
-                System.out.println("Received finished operation in publisher run");
-                TerminatePublisherConnection();
-                break;
-            }
-        }
-    }
+        TerminatePublisherConnection();
+}
 
     public void TerminatePublisherConnection(){
         System.out.println("Terminating publisher: " + pub.getName());

@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
@@ -32,7 +33,6 @@ class Publisher_Handler implements Runnable{
     public void receiveFile(){
 
         try {
-            int bytes = 0;
             System.out.println("Receiving file...");
             String file_name = localinputStream.readUTF();
             String new_file = file_name.substring(file_name.lastIndexOf("\\")+1);
@@ -40,16 +40,19 @@ class Publisher_Handler implements Runnable{
             int number_of_chunks = localinputStream.readInt();
             System.out.println("You will receive: " + number_of_chunks + " chunks");
             String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
-            FileOutputStream fileOutputStream = new FileOutputStream(path_for_broker + new_file);
+            System.out.println(path_for_broker + new_file);
+            FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
             System.out.println("Receiving file...");
             byte[] buffer = new byte[chunksize];
             ArrayList<byte[]> chunks = new ArrayList<>();
             while(true) {
                 if(number_of_chunks == chunks.size()){
-                    System.out.println("Finished receiving chunks: " + chunks.size());
+                    System.out.println("Finished receiving: " + chunks.size() + "chunks");
                     fileOutputStream.close();
                     break;
                 }
+                int index = localinputStream.readInt();
+                System.out.println("You are receiving chunk: " + index);
                 int actual_size = localinputStream.readInt();
                 System.out.println("Actual size of the incoming chunk is: " + actual_size);
                 localinputStream.readFully(buffer,0,actual_size);
@@ -57,19 +60,24 @@ class Publisher_Handler implements Runnable{
                 fileOutputStream.write(temp,0,actual_size);
                 fileOutputStream.flush();
                 chunks.add(temp);
-                System.out.println("Sending received chunk ack");
+                /*System.out.println("Sending received chunk ack");
                 localoutputStream.writeInt(Messages.RECEIVED_CHUNK.ordinal());
                 localoutputStream.flush();
                 while(true){
-                    if(Messages.RECEIVED_ACK.ordinal() == localinputStream.readInt()){
+                    System.out.println("Waiting to receive the received ack message");
+                    int message_from_publisher = localinputStream.readInt();
+                    if(Messages.RECEIVED_ACK.ordinal() != message_from_publisher){
+                        localoutputStream.writeInt(Messages.RECEIVED_CHUNK.ordinal());
+                        localoutputStream.flush();
+                        System.out.println("Waiting to receive the received ack message");
+                    }else{
                         System.out.println("Client received ack");
                         break;
                     }
-                }
+                }*/
                 System.out.println("Chunks size now is: " + chunks.size());
             }
             System.out.println("Finished receiving file");
-
         } catch (IOException e) {
             System.out.println("Shutting down in receive file...");
             e.printStackTrace();
@@ -124,6 +132,7 @@ class Publisher_Handler implements Runnable{
 
     public void sendMessage(Messages message_type){
         try{
+            System.out.println("Sending message: " + message_type);
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
         }catch(IOException e){
@@ -146,6 +155,7 @@ class Publisher_Handler implements Runnable{
 
     public void FinishedOperation(){
         try {
+            System.out.println("Sending finished operation message");
             localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
             localoutputStream.flush();
         } catch (IOException e) {
@@ -176,7 +186,7 @@ class Publisher_Handler implements Runnable{
                 sendTopicList();
                 FinishedOperation();
                 message = waitForUserNodePrompt();
-            }else if(message == Messages.SEND_APPROPRIATE_BROKER.ordinal()){
+            } else if(message == Messages.SEND_APPROPRIATE_BROKER.ordinal()){
                 System.out.println("Send me the topic name to find appropriate broker");
                 String topic_name =  receiveTopicName();
                 FinishedOperation();
@@ -206,7 +216,6 @@ class Publisher_Handler implements Runnable{
                     return;
                 }
                 message = waitForUserNodePrompt();
-
             }
         }
 
