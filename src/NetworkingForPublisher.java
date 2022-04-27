@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +38,9 @@ public class NetworkingForPublisher implements Runnable {
             localinputStream = new ObjectInputStream(connection.getInputStream());
             bufferedInputStream = new BufferedInputStream(connection.getInputStream());
             bufferedOutputStream = new BufferedOutputStream(connection.getOutputStream());
+        } catch (SocketException socketException) {
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         } catch (IOException e) {
             System.out.println("Error in constructor");
             e.printStackTrace();
@@ -73,6 +77,9 @@ public class NetworkingForPublisher implements Runnable {
             }
             //try to synchronize
 
+        } catch (SocketException socketException) {
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Error in sending file");
@@ -85,6 +92,9 @@ public class NetworkingForPublisher implements Runnable {
             System.out.println("Notifying broker that there is a new message");
             localoutputStream.writeInt(Messages.NOTIFY.ordinal());
             localoutputStream.flush();
+        } catch (SocketException socketException) {
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         } catch (IOException e) {
             System.out.println("Terminating publisher in notify brokers new message...");
             e.printStackTrace();
@@ -101,16 +111,16 @@ public class NetworkingForPublisher implements Runnable {
      */
 
     public ArrayList<Topic> receiveTopicList() {
-        try{
+        try {
             ArrayList<Topic> topic_list = new ArrayList<>();
             int message_broker = localinputStream.readInt();
-            if(message_broker != Messages.SENDING_TOPIC_LIST.ordinal()) {
-                while(true){
+            if (message_broker != Messages.SENDING_TOPIC_LIST.ordinal()) {
+                while (true) {
                     System.out.println("Requesting for broker list again");
                     localoutputStream.writeInt(Messages.GET_TOPIC_LIST.ordinal());
                     localoutputStream.flush();
                     message_broker = localinputStream.readInt();
-                    if(message_broker == Messages.SENDING_TOPIC_LIST.ordinal()){
+                    if (message_broker == Messages.SENDING_TOPIC_LIST.ordinal()) {
                         System.out.println("Received sending topic list");
                         break;
                     }
@@ -138,20 +148,26 @@ public class NetworkingForPublisher implements Runnable {
             }
 
             return topic_list;
-        }catch (IOException e){
-            e.printStackTrace();
+        } catch (SocketException socketException) {
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
             return null;
-        } catch (ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+            TerminatePublisherConnection();
             return null;
         }
     }
 
-    public void sendMessage(Messages message_type){
-        try{
+
+    public void sendMessage(Messages message_type) {
+        try {
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
-        }catch (IOException e){
+        }catch(SocketException socketException){
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
+        } catch (IOException e){
             System.out.println("Error in send message");
             TerminatePublisherConnection();
         }
@@ -195,7 +211,6 @@ public class NetworkingForPublisher implements Runnable {
                 Thread t = new Thread(new_connection);
                 t.start();
                 System.out.println("Received the proper broker and i'm closing the connection with the old broker down");
-                sendMessage(Messages.SHUTDOWN_CONNECTION);
                 TerminatePublisherConnection();
                 return;
             }
@@ -226,7 +241,13 @@ public class NetworkingForPublisher implements Runnable {
                 sendFile(new_file);
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
+                thread_continue.notifyThread();
+                TerminatePublisherConnection();
+                return;
             }
+        }catch (SocketException socketException) {
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -237,6 +258,9 @@ public class NetworkingForPublisher implements Runnable {
         try {
             localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
             localoutputStream.flush();
+        }catch(SocketException socketException){
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in finished operation...");
@@ -248,6 +272,9 @@ public class NetworkingForPublisher implements Runnable {
         try {
             System.out.println("Waiting for Broker node prompt in publisher connection");
             return localinputStream.readInt();
+        }catch(SocketException socketException){
+            System.out.println("Socket error");
+            TerminatePublisherConnection();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Shutting down connection in wait for user node...");
@@ -261,7 +288,7 @@ public class NetworkingForPublisher implements Runnable {
         System.out.println("New publisher was created");
         push();
         TerminatePublisherConnection();
-}
+    }
 
     public void TerminatePublisherConnection(){
         System.out.println("Terminating publisher: " + pub.getName());
