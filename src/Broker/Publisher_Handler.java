@@ -37,9 +37,10 @@ class Publisher_Handler implements Runnable{
     public void run() {
         System.out.println("Established connection with publisher: " + publisher_connection.getInetAddress());
         while (publisher_connection.isConnected()) {
-            Integer message = NetworkUtils.waitForNodePrompt(localinputStream,localoutputStream,publisher_connection);
+            Integer message = NetworkUtils.waitForNodePrompt(localinputStream,publisher_connection);
             if(message == null){
                 shutdownConnection();
+                break;
             }
             Messages message_received = Messages.values()[message];
             switch (message_received){
@@ -48,22 +49,22 @@ class Publisher_Handler implements Runnable{
                     break;
                 case NOTIFY:
                     System.out.println("Notify message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
-                    if(NetworkUtils.receiveFile(localinputStream,localoutputStream,publisher_connection) == null){
+                    if(NetworkUtils.receiveFile(localinputStream,publisher_connection) == null){
                         shutdownConnection();
                         break;
                     }
-                    if(NetworkUtils.FinishedOperation(localinputStream,localoutputStream,publisher_connection) == null){
+                    if(NetworkUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
                     }
                     break;
                 case GET_TOPIC_LIST:
                     System.out.println("Get topic list message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
-                    if(NetworkUtils.sendTopicList(localinputStream,localoutputStream,publisher_connection,this.broker) == null){
+                    if(NetworkUtils.sendTopicList(localoutputStream,this.broker) == null){
                         shutdownConnection();
                         break;
                     }
-                    if(NetworkUtils.FinishedOperation(localinputStream,localoutputStream,publisher_connection) == null){
+                    if(NetworkUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
                     }
@@ -74,7 +75,7 @@ class Publisher_Handler implements Runnable{
                     if(topic_name == null){
                         shutdownConnection();
                     }
-                    Boolean correct = NetworkUtils.isCorrectBroker(localinputStream,localoutputStream,publisher_connection,this.broker,topic_name);
+                    Boolean correct = NetworkUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
                     if(correct == null){
                         shutdownConnection();
                     } else if(!correct){
