@@ -15,14 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class BrokerUtils {
-    /**
-     * Sends a Message type GET_BROKER_LIST from the Messages ENUM found in the tools package.
-     * @param localoutputStream accepts the local output stream.
-     * @return returns the exit value of the program -1 indicating success and null indicating error.
-     */
-    public static Integer getBrokerList(ObjectOutputStream localoutputStream) {
-        return GeneralUtils.sendMessage(Messages.GET_BROKER_LIST,localoutputStream);
-    }
 
     /**
      * Sends the topic list of the broker that is in the parameter list.
@@ -248,7 +240,7 @@ public class BrokerUtils {
             UserNode new_cons;
             if((new_cons = (UserNode) GeneralUtils.readObject(localinputStream,socket)) == null){
                 return null;
-            };
+            }
             System.out.println("\033[0;32m" + "Topic name: " + topic_name + "\033[0m");
             Topic topic = null;
             for (int i = 0; i < broker.getTopics().size(); i++) {
@@ -315,7 +307,7 @@ public class BrokerUtils {
         String nickname;
         if((nickname = SHA1.encrypt(GeneralUtils.readUTFString(localinputStream,socket))) == null){
             return null;
-        };
+        }
         System.out.println("\033[0;32m" + "Client's nickname is: " + nickname + "\033[0m");
         return nickname;
     }

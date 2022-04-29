@@ -25,12 +25,11 @@ class Publisher_Handler implements Runnable{
             localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
             localoutputStream = new ObjectOutputStream(publisher_connection.getOutputStream());
         }catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println("\033[0;31m" + "Socket error" + "\033[0m");
             shutdownConnection();
         } catch (IOException e) {
-            System.out.println("Error in constructor shutting down connection...");
-            e.printStackTrace();
-           shutdownConnection();
+            System.out.println("\033[0;31m" + "Error in constructor shutting down connection..." + "\033[0m");
+            shutdownConnection();
         }
     }
 
@@ -51,36 +50,36 @@ class Publisher_Handler implements Runnable{
                 case NOTIFY:
                     if(BrokerUtils.receiveFile(localinputStream,publisher_connection) == null){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     break;
                 case GET_TOPIC_LIST:
                     if(BrokerUtils.sendTopicList(localoutputStream,this.broker) == null){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     break;
                 case SEND_APPROPRIATE_BROKER:
                     String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
                     if(topic_name == null){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     Boolean correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
                     if(correct == null){
                         shutdownConnection();
-                        break;
+                        return;
                     } else if(!correct){
                         shutdownConnection();
-                        break;
+                        return;
                     }
                     break;
                 default:

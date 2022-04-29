@@ -59,7 +59,6 @@ public class UserNode implements Serializable {
         try{
             // threads for consumer requests and responses from the first random broker
             NetworkingForConsumer consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this);
-            consumer.BrokerResponses();
             Thread t1 = new Thread(consumer);
             t1.start();
 
@@ -83,7 +82,7 @@ public class UserNode implements Serializable {
 
 
     /**
-     * checks periodically for new messages in the message list
+     * Sends a pull request periodically to the corresponding broker port.
      */
     public void checkMessageList(){
         new Thread(()->{

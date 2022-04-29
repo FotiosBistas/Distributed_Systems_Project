@@ -1,5 +1,7 @@
 
 package Broker;
+import Broker.Consumer_Handler;
+import Broker.Publisher_Handler;
 import Tools.Topic;
 import Tools.Value;
 import Tools.Tuple;
@@ -39,7 +41,7 @@ public class  Broker{
     private final int consumer_port;
     private final int publisher_port;
     private final int broker_port;
-    private int id;
+    private Integer id;
 
 
 
@@ -48,7 +50,10 @@ public class  Broker{
         this.consumer_port = consumer_port;
         this.publisher_port = publisher_port;
         this.broker_port = broker_port;
-        this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + broker_port + ip),300);
+        if((this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + broker_port + ip),300)) == null){
+            System.out.println("\033[0;31m" + "Error while constructing broker" + "\033[0m");
+            return;
+        }
         readBrokerListFromConfigFile();
     }
 
@@ -199,7 +204,7 @@ public class  Broker{
             indexes[i] = i;
         }
         int n = id_list.size();
-        int temp = 0;
+        int temp;
         for(int i=0; i < n; i++){
             for(int j=1; j < (n-i); j++){
                 if(id_list.get(j-1) > id_list.get(j)){
@@ -235,8 +240,8 @@ public class  Broker{
      * Also calls the sort operation on the broker list.
      */
     public void readBrokerListFromConfigFile(){
-        File file = new File("C:\\Users\\fotis\\IdeaProjects\\DSproject\\src\\config.txt");
-        BufferedReader br = null;
+        File file = new File("C:\\Users\\fotis\\IdeaProjects\\DSproject\\src\\Broker\\config.txt");
+        BufferedReader br;
         try {
             br = new BufferedReader(new FileReader(file));
             String line;
@@ -277,7 +282,7 @@ public class  Broker{
             Topics.add(new Topic("something else","Tasos"));
 
             /*listener for receiving messages from other brokers*/
-            new Thread(() -> {
+            /*new Thread(() -> {
                 try {
                     broker_listener_service = new ServerSocket(broker_port);
                     System.out.println("Opened thread to receive broker connections");
@@ -293,7 +298,7 @@ public class  Broker{
                     System.out.println("Could not open listener service for brokers");
                     shutdownBroker();
                 }
-            }).start();
+            }).start();*/
 
             /* separate thread for receiving consumer connections */
             new Thread(() -> {
@@ -397,9 +402,9 @@ public class  Broker{
      */
     public void pull(String topic){
         Topic temp;
-        for (int i = 0; i < Topics.size(); i++) {
-            if(Topics.get(i).getName().equals(topic)){
-                temp = Topics.get(i);
+        for (Topic value : Topics) {
+            if (value.getName().equals(topic)) {
+                temp = value;
             }
         }
         //with temp scan all the consumer connection list and send the new values
@@ -432,9 +437,13 @@ public class  Broker{
      * @param topic first parameter is the topic name
      * @return returns a tuple instance of string, int[]
      */
-    public int hashTopic(String topic){
+    public Integer hashTopic(String topic){
         // hash the topic and choose the correct broker
-        int identifier = SHA1.hextoInt(SHA1.encrypt(topic),BrokerList.size()*100);
+        Integer identifier;
+        if((identifier = SHA1.hextoInt(SHA1.encrypt(topic),BrokerList.size()*100)) == null){
+            System.out.println("\033[0;31m" + "Error while hashing topic: " + topic +  "\033[0m");
+            return null;
+        }
         System.out.println("The identifier for the topic: " + topic + " is: " + identifier);
         int index = 0;
         for(int i = 0 ; i < id_list.size() ; i++){

@@ -1,4 +1,8 @@
 package Tools;
+
+/**
+ * These messages are sent over the network for terminal and broker communication and synchronization
+ */
 public enum Messages {
     REGISTER,
     GET_BROKER_LIST,

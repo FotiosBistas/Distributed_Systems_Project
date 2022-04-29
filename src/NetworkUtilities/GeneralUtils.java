@@ -1,6 +1,8 @@
 package NetworkUtilities;
 import Tools.Messages;
 import Logging.ConsoleColors;
+
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -10,7 +12,7 @@ import java.util.Arrays;
 public class GeneralUtils {
 
     /**
-     *
+     * Reads data into the parameter buffer. The number of data read is the actual size parameter.
      * @param localinputStream  Accepts the local input stream.
      * @param buffer Accepts a byte buffer and writes the data from the input stream to the buffer.
      * @param offset Accepts the offset start reading the local input stream.
@@ -31,7 +33,7 @@ public class GeneralUtils {
     }
 
     /**
-     * Reads a UTF string from the input stream using the inputStream.readUTF() method.Shutdowns the connection if a exception is thrown.
+     * Reads a UTF string from the input stream using the inputStream.readUTF() method.
      * @param localinputStream  accepts the local input stream.
      * @param socket            accepts the corresponding socket of the streams.
      * @return returns the input read from the local input stream. If it catches an exception it returns null as an error string.
@@ -52,11 +54,10 @@ public class GeneralUtils {
     }
 
     /**
-     * Waits until an int input is read by the input stream using the inputStream.readInt() method.Shutdowns the connection if a exception is thrown.
-     *
+     * Waits until an int input is read by the input stream using the inputStream.readInt() method.
      * @param localinputStream  accepts the local input stream.
      * @param socket accepts the corresponding socket of the streams.
-     * @return returns the input read from the local input stream. If it catches an exception it returns -1 as an error int.
+     * @return returns the input read from the local input stream. If it catches an exception it returns null.
      */
     public static Integer waitForNodePrompt(ObjectInputStream localinputStream, Socket socket) {
         try {
@@ -73,6 +74,12 @@ public class GeneralUtils {
         }
     }
 
+    /**
+     * Waits until an object input is read from the input stream using the inputStream.readObject() method.
+     * @param localinputStream Accepts the local input stream.
+     * @param socket Accepts the local socket.
+     * @return Returns the object read if everything goes well. If an error occurs it returns nulls.
+     */
     public static Object readObject(ObjectInputStream localinputStream,Socket socket){
         try {
             System.out.println("\033[0;32m" + "Waiting to receive object from input stream" + "\033[0m");
@@ -89,9 +96,10 @@ public class GeneralUtils {
     }
 
     /**
-     * Sends a string object through the output stream. Shutdowns the connection if a exception is thrown.
+     * Sends a string object through the output stream.
      * @param message Accepts any int and sends it as a message.
      * @param localoutputStream Accepts the local output stream.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer sendMessage(String message, ObjectOutputStream localoutputStream) {
         try {
@@ -109,10 +117,10 @@ public class GeneralUtils {
     }
 
     /**
-     * Sends a serializable object through the output stream. Shutdowns the connection if a exception is thrown.
-     *
+     * Sends a serializable object through the output stream.
      * @param message Accepts any int and sends it as a message.
      * @param localoutputStream accepts the local output stream.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer sendMessage(Object message,ObjectOutputStream localoutputStream) {
         try {
@@ -131,10 +139,10 @@ public class GeneralUtils {
     }
 
     /**
-     * Sends int message type. Shutdowns the connection if a exception is thrown.
-     *
+     * Sends int message type.
      * @param message Accepts any int and sends it as a message.
      * @param localoutputStream accepts the local output stream.
+     * @return Returns -1 if everything goes well. If an error occurs it returns null.
      */
     public static Integer sendMessage(int message,ObjectOutputStream localoutputStream) {
         try {
@@ -151,9 +159,30 @@ public class GeneralUtils {
         }
     }
 
+
     /**
-     * Sends any messages from the Message ENUM found in the tools package. Shutdowns the connection if a exception is thrown.
-     *
+     * Write a buffer array to the output stream.
+     * @param buffer Accepts the buffer that will be written onto the output stream.
+     * @param localoutputStream Accepts the local output stream.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs.
+     */
+    public static Integer sendMessage(byte[] buffer,ObjectOutputStream localoutputStream){
+        try {
+            System.out.println( "\033[0;32m" + "Sending buffer: " + buffer + "\033[0m");
+            localoutputStream.write(buffer);
+            localoutputStream.flush();
+            return -1;
+        } catch (SocketException socketException) {
+            System.out.println( "\033[1;31m" + "Socket error in send message of Message ENUM type..." + "\033[0m");
+            return null;
+        } catch (IOException e) {
+            System.out.println( "\033[1;31m" + "Error in send message of Message ENUM type..." + "\033[0m");
+            return null;
+        }
+    }
+
+    /**
+     * Sends any messages from the Message ENUM found in the tools package.
      * @param message_type      Accepts any message type from the Messages ENUM found in the tools package.
      * @param localoutputStream accepts the local output stream.
      * @return returns the exit value of the program -1 indicating success and null indicating error.
