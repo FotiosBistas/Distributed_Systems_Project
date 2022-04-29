@@ -1,5 +1,6 @@
 package NetworkUtilities;
 import Tools.Messages;
+import Logging.ConsoleColors;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -21,10 +22,10 @@ public class GeneralUtils {
             localinputStream.readFully(buffer,0,actual_size);
             return buffer;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in read buffer..." + "\033[0m");
             return null;
         } catch (IOException e) {
-            System.out.println("Shutting down connection in read UTF string...");
+            System.out.println( "\033[1;31m" + "Error in read buffer..." + "\033[0m");
             return null;
         }
     }
@@ -37,15 +38,15 @@ public class GeneralUtils {
      */
     public static String readUTFString(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println("Waiting to read UTF type");
+            System.out.println("\033[0;32m" + "Waiting to read UTF type" + "\033[0m");
             String message = localinputStream.readUTF();
-            System.out.println("Received message: " + message + " from node: " + socket.getInetAddress());
+            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
             return message;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in read UTF string..." + "\033[0m");
             return null;
         } catch (IOException e) {
-            System.out.println("Shutting down connection in read UTF string...");
+            System.out.println( "\033[1;31m" + "Error in read UTF string..." + "\033[0m");
             return null;
         }
     }
@@ -59,30 +60,30 @@ public class GeneralUtils {
      */
     public static Integer waitForNodePrompt(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println("Waiting for node prompt");
+            System.out.println("\033[0;32m" + "Waiting for node prompt" + "\033[0m");
             int message = localinputStream.readInt();
-            System.out.println("Received message: " + message + " from node: " + socket.getInetAddress());
+            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
             return message;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + "\033[0m");
             return null;
         } catch (IOException e) {
-            System.out.println("...");
+            System.out.println( "\033[1;31m" + "Error in wait for node prompt..." + "\033[0m");
             return null;
         }
     }
 
     public static Object readObject(ObjectInputStream localinputStream,Socket socket){
         try {
-            System.out.println("Waiting to receive object from input stream");
+            System.out.println("\033[0;32m" + "Waiting to receive object from input stream" + "\033[0m");
             Object message = localinputStream.readObject();
-            System.out.println("Received message: " + message + " from node: " + socket.getInetAddress());
+            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
             return message;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in read object..." + "\033[0m");
             return null;
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error in read object...");
+            System.out.println( "\033[1;31m" + "Error in read object..." + "\033[0m");
             return null;
         }
     }
@@ -94,16 +95,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(String message, ObjectOutputStream localoutputStream) {
         try {
-            System.out.println("Sending Message: " + message);
+            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
             localoutputStream.writeUTF(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in send message of string type..." + "\033[0m");
             return null;
-
         } catch (IOException e) {
-            System.out.println("Error in send message");
+            System.out.println( "\033[1;31m" + "Error in send message of string type..." + "\033[0m");
             return null;
         }
     }
@@ -111,22 +111,21 @@ public class GeneralUtils {
     /**
      * Sends a serializable object through the output stream. Shutdowns the connection if a exception is thrown.
      *
-     * @param message           Accepts any int and sends it as a message.
+     * @param message Accepts any int and sends it as a message.
      * @param localoutputStream accepts the local output stream.
      */
     public static Integer sendMessage(Object message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println("Sending Message: " + message);
+            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
             localoutputStream.writeObject(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in send message of Object type..." + "\033[0m");
             return null;
 
         } catch (IOException e) {
-            System.out.println("Error in send message");
-            //shutdownConnection(localinputStream, localoutputStream, socket);
+            System.out.println( "\033[1;31m" + "Error in send message of Object type..." + "\033[0m");
             return null;
         }
     }
@@ -134,20 +133,20 @@ public class GeneralUtils {
     /**
      * Sends int message type. Shutdowns the connection if a exception is thrown.
      *
-     * @param message           Accepts any int and sends it as a message.
+     * @param message Accepts any int and sends it as a message.
      * @param localoutputStream accepts the local output stream.
      */
     public static Integer sendMessage(int message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println("Sending Message: " + message);
+            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
             localoutputStream.writeInt(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in send message of int type..." + "\033[0m");
             return null;
         } catch (IOException e) {
-            System.out.println("Error in send message");
+            System.out.println( "\033[1;31m" + "Error in send message of int type..." + "\033[0m");
             return null;
         }
     }
@@ -161,15 +160,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(Messages message_type,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println("Sending Message: " + message_type);
+            System.out.println( "\033[0;32m" + "Sending Message: " + message_type + "\033[0m");
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println("Socket error");
+            System.out.println( "\033[1;31m" + "Socket error in send message of Message ENUM type..." + "\033[0m");
             return null;
         } catch (IOException e) {
-            System.out.println("Error in send message");
+            System.out.println( "\033[1;31m" + "Error in send message of Message ENUM type..." + "\033[0m");
             return null;
         }
     }

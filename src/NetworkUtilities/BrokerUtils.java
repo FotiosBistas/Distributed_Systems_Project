@@ -1,5 +1,6 @@
 package NetworkUtilities;
 
+import SHA1.SHA1;
 import Tools.Messages;
 import Broker.Broker;
 import Tools.Topic;
@@ -180,23 +181,23 @@ public class BrokerUtils {
     public static Integer sendBrokerList(ObjectOutputStream localoutputStream, Broker broker) {
         GeneralUtils.sendMessage(Messages.SENDING_TOPIC_LIST, localoutputStream);
         for (Tuple<String, int[]> val : broker.getBrokerList()) {
-            System.out.println("Sending Broker List size: " + broker.getBrokerList().size());
+            System.out.println("\033[0;32m" + "Sending Broker List size: " + broker.getBrokerList().size() + "\033[0m");
             if(GeneralUtils.sendMessage(broker.getBrokerList().size(),localoutputStream) == null){
                 return null;
             }
-            System.out.println("Sending broker's IP: " + val.getValue1());
+            System.out.println("\033[0;32m" + "Sending broker's IP: " + val.getValue1() + "\033[0m");
             if(GeneralUtils.sendMessage(val.getValue1(),localoutputStream) == null){
                 return null;
             }
             int i;
             for (i = 0; i < val.getValue2().length; i++) {
-                System.out.println("Sending broker's ports: " + val.getValue2()[i]);
+                System.out.println("\033[0;32m" + "Sending broker's ports: " + val.getValue2()[i] + "\033[0m");
                 if(GeneralUtils.sendMessage(val.getValue2()[i],localoutputStream) == null){
                     return null;
                 }
             }
             if (i == 3) {
-                System.out.println("Finished sending ports");
+                System.out.println("\033[0;32m" + "Finished sending ports" + "\033[0m");
                 if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                     return null;
                 }
@@ -207,7 +208,7 @@ public class BrokerUtils {
 
     /**
      * Sends the ID list of the brokers. IDs are the identifier that have came up from the SHA1 hashing.
-     * @param localoutputStream accepts the local output stream.
+     * @param localoutputStream Accepts the local output stream.
      * @param broker Accepts the broker that we want to receive the id list from. This broker created the specific handler.
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
      */
@@ -224,16 +225,68 @@ public class BrokerUtils {
         return -1;
     }
 
+    /**
+     * Serves unsubscribe request for the specific consumer that is read through the input stream to the corresponding topic that is read from the input stream.
+     * @param localinputStream Accepts the local input stream.
+     * @param localoutputStream Accepts the local output stream.
+     * @param socket Accepts the local socket.
+     * @param broker Accepts the broker that is responsible for the handler.
+     * @return Returns -1 if everything worked properly.If it returns null there was an error.
+     */
     public static Integer ServerUnsubscribeRequest(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Broker broker){
 
-        System.out.println("Serving unsubscribe request");
+        System.out.println("\033[0;32m" + "Serving unsubscribe request" + "\033[0m");
         String topic_name;
         if((topic_name = GeneralUtils.readUTFString(localinputStream,socket)) == null){
             return null;
         }
-        Boolean correct = isCorrectBroker(localoutputStream,broker,topic_name);
+        Boolean correct;
+        if((correct = isCorrectBroker(localoutputStream,broker,topic_name)) == null){
+            return null;
+        }
         if(correct) {
-            UserNode new_cons = (UserNode) localinputStream.readObject();
+            UserNode new_cons;
+            if((new_cons = (UserNode) GeneralUtils.readObject(localinputStream,socket)) == null){
+                return null;
+            };
+            System.out.println("\033[0;32m" + "Topic name: " + topic_name + "\033[0m");
+            Topic topic = null;
+            for (int i = 0; i < broker.getTopics().size(); i++) {
+                if (topic_name.equals(broker.getTopics().get(i).getName())) {
+                    topic = broker.getTopics().get(i);
+                }
+            }
+            System.out.println("\033[0;32m" + "Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name + "\033[0m");
+            broker.UnsubscribeFromTopic(topic, new_cons.getName());
+        }else{
+            System.out.println("\033[0;31m" + "This is not the correct broker for the topic" + "\033[0m");
+            return null;
+        }
+        return -1;
+    }
+
+    /**
+     * Serves subscribe request for the specific consumer that is read through the input stream to the corresponding topic that is read from the input stream.
+     * @param localinputStream Accepts the local input stream.
+     * @param localoutputStream Accepts the local output stream.
+     * @param socket Accepts the local socket.
+     * @param broker Accepts the broker that is responsible for the handler.
+     * @return Returns -1 if everything worked properly.If it returns null there was an error.
+     */
+    public static Integer ServeRegisterRequest(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Broker broker){
+        String topic_name;
+        if((topic_name = GeneralUtils.readUTFString(localinputStream,socket)) == null){
+            return null;
+        }
+        Boolean correct;
+        if((correct = BrokerUtils.isCorrectBroker(localoutputStream,broker,topic_name)) == null){
+            return null;
+        }
+        if(correct) {
+            UserNode new_cons;
+            if ((new_cons = (UserNode) GeneralUtils.readObject(localinputStream, socket)) == null) {
+                return null;
+            }
             System.out.println("Topic name: " + topic_name);
             Topic topic = null;
             for (int i = 0; i < broker.getTopics().size(); i++) {
@@ -241,8 +294,29 @@ public class BrokerUtils {
                     topic = broker.getTopics().get(i);
                 }
             }
-            System.out.println("Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name);
-            broker.UnsubscribeFromTopic(topic, new_cons.getName());
+            System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
+            broker.addConsumerToTopic(topic, new_cons.getName());
+        }else{
+            System.out.println("\033[0;31m" + "This is not the correct broker for the topic" + "\033[0m");
+            return null;
         }
+        return -1;
+    }
+
+    /**
+     * Receives the nickname of the user node and hashes it for broker to be able to uniquely identify the user node.
+     * @param localinputStream Accepts the local input stream.
+     * @param socket Accepts the local socket.
+     * @return Returns the nickname if everything worked properly.If it returns null there was an error.
+     */
+    public static String receiveNickname(ObjectInputStream localinputStream, Socket socket) {
+
+        System.out.println( "\033[0;32m" + "Receiving client's nickname" + "\033[0m");
+        String nickname;
+        if((nickname = SHA1.encrypt(GeneralUtils.readUTFString(localinputStream,socket))) == null){
+            return null;
+        };
+        System.out.println("\033[0;32m" + "Client's nickname is: " + nickname + "\033[0m");
+        return nickname;
     }
 }
