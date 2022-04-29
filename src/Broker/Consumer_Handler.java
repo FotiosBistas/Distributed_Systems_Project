@@ -1,14 +1,20 @@
 package Broker;
+import NetworkUtilities.BrokerUtils;
+import NetworkUtilities.GeneralUtils;
 import UserNode.UserNode;
 import Broker.Broker;
 import Tools.Topic;
 import Tools.Messages;
 import Tools.Tuple;
+import sun.nio.ch.Net;
+
+import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 
 class Consumer_Handler implements Runnable {
 
@@ -16,6 +22,7 @@ class Consumer_Handler implements Runnable {
     private ObjectOutputStream localoutputStream;
     private final Socket consumer_connection;
     private final Broker broker;
+    private String nickname;
 
 
     public Socket getConsumer_connection() {
@@ -50,35 +57,37 @@ class Consumer_Handler implements Runnable {
         }
     }
 
-    public void ServerUnsubscribeRequest(){
-        try {
-            System.out.println("Serving unsubscribe request for client: " + consumer_connection.getInetAddress().getHostName());
-            String topic_name = localinputStream.readUTF();
-            UserNode new_cons = (UserNode) localinputStream.readObject();
-            System.out.println("Topic name: " + topic_name);
-            Topic topic = null;
-            for (int i = 0; i < broker.getTopics().size(); i++) {
-                if(topic_name.equals(broker.getTopics().get(i).getName())){
-                    topic = broker.getTopics().get(i);
-                }
-            }
-            System.out.println("Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name);
-            broker.UnsubscribeFromTopic(topic, new_cons.getName());
-        }catch (SocketException socketException) {
-            System.out.println("Socket error");
-            shutdownConnection();
-        }catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            System.out.println("Shutting down connection in unsubscribe");
-            shutdownConnection();
-        }
-    }
+
 
     public void ServeRegisterRequest(){
-        //TODO subscribe function
         try {
             System.out.println("Serving register request for client: " + consumer_connection.getInetAddress().getHostName());
             String topic_name = localinputStream.readUTF();
+            int index = broker.hashTopic(topic_name);
+            Tuple<String,int[]> brk = broker.getBrokerList().get(index);
+            System.out.println("Brk IP: " + brk.getValue1());
+            System.out.println("Brk ports: " + Arrays.toString(brk.getValue2()));
+            System.out.println("Local Broker IP: " + broker.getIp());
+            if(brk.getValue1().equals(broker.getIp())){
+                System.out.println("They have equal IPs");
+                if(broker.getConsumer_port() == brk.getValue2()[0] &&
+                        broker.getPublisher_port() == brk.getValue2()[1] && broker.getBroker_port() == brk.getValue2()[2]){
+                    System.out.println("The broker is correct");
+                    sendMessage(Messages.I_AM_THE_CORRECT_BROKER);
+                    sendMessage(index);
+                }else{
+                    System.out.println("The broker is not correct");
+                    sendMessage(Messages.I_AM_NOT_THE_CORRECT_BROKER);
+                    sendMessage(index);
+                    shutdownConnection();
+                    return;
+                }
+            }else{
+                sendMessage(Messages.I_AM_NOT_THE_CORRECT_BROKER);
+                sendMessage(index);
+                shutdownConnection();
+                return;
+            }
             UserNode new_cons = (UserNode) localinputStream.readObject();
             System.out.println("Topic name: " + topic_name);
             Topic topic = null;
@@ -100,94 +109,103 @@ class Consumer_Handler implements Runnable {
         }
     }
 
-    public int waitForUserNodePrompt(){
+
+    public void receiveNickname() {
         try {
-            System.out.println("Waiting for user node prompt in consumer connection");
-            return localinputStream.readInt();
-        }catch (SocketException socketException) {
+            System.out.println("Receiving client's nickname");
+            this.nickname = localinputStream.readUTF();
+            System.out.println("Client's nickname is: " + this.nickname);
+        } catch (SocketException socketException){
             System.out.println("Socket error");
             shutdownConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Shutting down connection in wait for user node...");
+        }catch (IOException e){
+            System.out.println("Error in receive nickname");
             shutdownConnection();
         }
-        return -1;
     }
 
-    public void sendIdList(){
-        try {
-            System.out.println("Sending message type: " + Messages.SENDING_ID_LIST + " with ordinal number: " + Messages.SENDING_ID_LIST.ordinal());
-            getLocaloutputStream().writeInt(Messages.SENDING_ID_LIST.ordinal());
-            getLocaloutputStream().flush();
-            for (int i = 0; i < getBroker().getId_list().size(); i++) {
-                System.out.println("Sending ID List size: " + getBroker().getId_list().size());
-                getLocaloutputStream().writeInt(getBroker().getId_list().size());
-                getLocaloutputStream().flush();
-                System.out.println("Sending ID: " + getBroker().getId_list().get(i));
-                getLocaloutputStream().writeInt(getBroker().getId_list().get(i));
-                getLocaloutputStream().flush();
+    @Override
+    public void run() {
+        while (consumer_connection.isConnected()) {
+            System.out.println("Server established connection with client: " + consumer_connection.getInetAddress().getHostAddress());
+            Integer message = GeneralUtils.waitForNodePrompt(localinputStream,consumer_connection);
+            if(message == null){
+                shutdownConnection();
+                break;
             }
-        }catch (SocketException socketException) {
-            System.out.println("Socket error");
-            shutdownConnection();
-        } catch (IOException e) {
-            System.out.println("Error in sending list");
-            e.printStackTrace();
-            shutdownConnection();
-        }
-    }
-
-    public void sendBrokerList() {
-        try {
-            System.out.println("Sending message type: " + Messages.SENDING_BROKER_LIST + " with ordinal number: " + Messages.SENDING_BROKER_LIST.ordinal());
-            getLocaloutputStream().writeInt(Messages.SENDING_BROKER_LIST.ordinal());
-            getLocaloutputStream().flush();
-            for (Tuple<String, int[]> val : getBroker().getBrokerList()) {
-                System.out.println("Sending Broker List size: " + getBroker().getBrokerList().size());
-                getLocaloutputStream().writeInt(getBroker().getBrokerList().size());
-                getLocaloutputStream().flush();
-                System.out.println("Sending broker's IP: " + val.getValue1());
-                getLocaloutputStream().writeUTF(val.getValue1());
-                getLocaloutputStream().flush();
-                int i;
-                for (i = 0; i < val.getValue2().length; i++) {
-                    System.out.println("Sending broker's ports: " + val.getValue2()[i]);
-                    getLocaloutputStream().writeInt(val.getValue2()[i]);
-                    getLocaloutputStream().flush();
-                }
-                if (i == 3) {
-                    System.out.println("Finished sending ports");
-                    FinishedOperation();
-                }
+            Messages message_received = Messages.values()[message];
+            switch (message_received){
+                case FINISHED_OPERATION:
+                    System.out.println("Received finished operation message");
+                    break;
+                case GET_BROKER_LIST:
+                    if(BrokerUtils.sendBrokerList(localoutputStream,this.broker) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    if(BrokerUtils.sendIdList(localoutputStream,this.broker) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                case SENDING_NICK_NAME:
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                case REGISTER:
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                case UNSUBSCRIBE:
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                case SHOW_CONVERSATION_DATA:
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                default:
+                    System.out.println("No known message type was received");
+                    break;
             }
-        }catch (SocketException socketException) {
-            System.out.println("Socket error");
-            shutdownConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Shutting down connection in send broker list...");
-            shutdownConnection();
+
+            if (message == Messages.FINISHED_OPERATION.ordinal()) {
+                System.out.println("Finished operation waiting for next input");
+                message = waitForUserNodePrompt();
+            } else if (message == Messages.GET_BROKER_LIST.ordinal()) {
+                System.out.println("Finished sending brokers");
+                sendIdList();
+                FinishedOperation();
+                System.out.println("Finished sending id list");
+                message = waitForUserNodePrompt();
+            } else if (message == Messages.SENDING_NICK_NAME.ordinal()) {
+                receiveNickname();
+                FinishedOperation();
+                message = waitForUserNodePrompt();
+            } else if (message == Messages.REGISTER.ordinal()) {
+                ServeRegisterRequest();
+                FinishedOperation();
+                message = waitForUserNodePrompt();
+            } else if (message == Messages.UNSUBSCRIBE.ordinal()) {
+                ServerUnsubscribeRequest();
+                FinishedOperation();
+                message = waitForUserNodePrompt();
+            }else if (message == Messages.SHOW_CONVERSATION_DATA.ordinal()){
+
+            }
         }
-    }
-
-
-    public void FinishedOperation(){
-        try {
-            localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
-            localoutputStream.flush();
-        }catch (SocketException socketException) {
-            System.out.println("Socket error");
-            shutdownConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Shutting down connection in finished operation...");
-            shutdownConnection();
-        }
-    }
-
-    public void sendTopicList(){
-
     }
 
     public void removeConnection(){
@@ -212,41 +230,5 @@ class Consumer_Handler implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        HandleRequest();
-    }
-
-    public void HandleRequest() {
-        System.out.println("Server established connection with client: " + consumer_connection.getInetAddress().getHostAddress());
-        int message;
-        message = waitForUserNodePrompt();
-        System.out.println("Received message from client: " + message);
-        while (consumer_connection.isConnected()) {
-            if (message == Messages.FINISHED_OPERATION.ordinal()) {
-                System.out.println("Finished operation waiting for next input");
-                message = waitForUserNodePrompt();
-            } else if (message == Messages.GET_BROKER_LIST.ordinal()) {
-                sendBrokerList();
-                FinishedOperation();
-                System.out.println("Finished sending brokers");
-                sendIdList();
-                FinishedOperation();
-                System.out.println("Finished sending id list");
-                message = waitForUserNodePrompt();
-            } else if (message == Messages.REGISTER.ordinal()) {
-                ServeRegisterRequest();
-                FinishedOperation();
-                message = waitForUserNodePrompt();
-            } else if (message == Messages.UNSUBSCRIBE.ordinal()) {
-                ServerUnsubscribeRequest();
-                FinishedOperation();
-                message = waitForUserNodePrompt();
-            }else if (message == Messages.SHOW_CONVERSATION_DATA.ordinal()){
-
-            }
-        }
-
-    }
 
 }

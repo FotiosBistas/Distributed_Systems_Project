@@ -1,7 +1,8 @@
 
 package Broker;
+import NetworkUtilities.BrokerUtils;
+import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
-import Tools.NetworkUtils;
 import Tools.Tuple;
 import Tools.Topic;
 import java.io.*;
@@ -37,7 +38,7 @@ class Publisher_Handler implements Runnable{
     public void run() {
         System.out.println("Established connection with publisher: " + publisher_connection.getInetAddress());
         while (publisher_connection.isConnected()) {
-            Integer message = NetworkUtils.waitForNodePrompt(localinputStream,publisher_connection);
+            Integer message = GeneralUtils.waitForNodePrompt(localinputStream,publisher_connection);
             if(message == null){
                 shutdownConnection();
                 break;
@@ -48,39 +49,38 @@ class Publisher_Handler implements Runnable{
                     System.out.println("Received finished operation message");
                     break;
                 case NOTIFY:
-                    System.out.println("Notify message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
-                    if(NetworkUtils.receiveFile(localinputStream,publisher_connection) == null){
+                    if(BrokerUtils.receiveFile(localinputStream,publisher_connection) == null){
                         shutdownConnection();
                         break;
                     }
-                    if(NetworkUtils.FinishedOperation(localoutputStream) == null){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
                     }
                     break;
                 case GET_TOPIC_LIST:
-                    System.out.println("Get topic list message was received by publisher: " + publisher_connection.getInetAddress().getHostName());
-                    if(NetworkUtils.sendTopicList(localoutputStream,this.broker) == null){
+                    if(BrokerUtils.sendTopicList(localoutputStream,this.broker) == null){
                         shutdownConnection();
                         break;
                     }
-                    if(NetworkUtils.FinishedOperation(localoutputStream) == null){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
                     }
                     break;
                 case SEND_APPROPRIATE_BROKER:
-                    System.out.println("Waiting to receive the topic name so I can find the appropriate broker");
-                    String topic_name =  NetworkUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
+                    String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
                     if(topic_name == null){
                         shutdownConnection();
+                        break;
                     }
-                    Boolean correct = NetworkUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
+                    Boolean correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
                     if(correct == null){
                         shutdownConnection();
+                        break;
                     } else if(!correct){
-                        removeConnection();
                         shutdownConnection();
+                        break;
                     }
                     break;
                 default:
@@ -102,6 +102,7 @@ class Publisher_Handler implements Runnable{
      */
     public void shutdownConnection() {
         System.out.println("Shutting down connection");
+        removeConnection();
         try {
             if (localinputStream != null) {
                 System.out.println("Shutting down local input stream");
