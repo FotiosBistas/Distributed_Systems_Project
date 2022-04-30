@@ -3,7 +3,7 @@ package Tools;
 
 import java.io.Serializable;
 
-public class Tuple<V1, V2> implements Serializable {
+public class Tuple<V1,V2> implements Serializable {
     private final V1 value1;
     private final V2 value2;
 

@@ -1,11 +1,13 @@
 package UserNode;
 import Tools.Topic;
 import Tools.Value;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProfileName {
+public class ProfileName implements Serializable {
     private String profileName;
     private Map<Topic,ArrayList<Value>> userVideoFilesMap;
     private Map<Topic,Integer> subscribedConversations;

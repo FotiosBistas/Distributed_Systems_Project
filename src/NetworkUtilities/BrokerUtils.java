@@ -48,7 +48,6 @@ public class BrokerUtils {
      * @return True if the broker is the responsible broker for the topic. False if the broker is not responsible for the topic. If it returns null there was an error.
      */
     public static Boolean isCorrectBroker(ObjectOutputStream localoutputStream, Broker broker, String topic) {
-        GeneralUtils.FinishedOperation(localoutputStream);
         int index = broker.hashTopic(topic);
         Tuple<String, int[]> brk = broker.getBrokerList().get(index);
         System.out.println("Brk IP: " + brk.getValue1());
@@ -62,9 +61,9 @@ public class BrokerUtils {
                 if (GeneralUtils.sendMessage(Messages.I_AM_THE_CORRECT_BROKER,localoutputStream) == null) {
                     return null;
                 }
-                if (GeneralUtils.sendMessage(index,localoutputStream) == null) {
-                    return null;
-                }
+                //if (GeneralUtils.sendMessage(index,localoutputStream) == null) {
+                //    return null;
+                //}
                 return true;
             } else {
                 System.out.println("The broker is not correct. Sending index of the correct broker");

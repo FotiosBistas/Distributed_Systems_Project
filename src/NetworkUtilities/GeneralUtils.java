@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 public class GeneralUtils {
 
+
     /**
      * Reads data into the parameter buffer. The number of data read is the actual size parameter.
      * @param localinputStream  Accepts the local input stream.
@@ -82,13 +83,16 @@ public class GeneralUtils {
      * @param socket Accepts the local socket.
      * @return Returns the object read if everything goes well. If an error occurs it returns nulls.
      */
-    public static Object readObject(ObjectInputStream localinputStream,Socket socket){
+    public static Object readObject(ObjectInputStream localinputStream,Socket socket) {
         try {
             System.out.println("\033[0;32m" + "Waiting to receive object from input stream" + "\033[0m");
             Object message = localinputStream.readObject();
             System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
             return message;
-        } catch (SocketException socketException) {
+        }catch (NotSerializableException notSerializableException){
+            System.out.println( "\033[1;31m" + "Not serializable error in read object..." + "\033[0m");
+            return null;
+        }catch (SocketException socketException) {
             System.out.println( "\033[1;31m" + "Socket error in read object..." + "\033[0m");
             return null;
         } catch (IOException | ClassNotFoundException e) {
@@ -125,11 +129,18 @@ public class GeneralUtils {
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer sendMessage(Object message,ObjectOutputStream localoutputStream) {
+
         try {
+            if(!(message instanceof Serializable)){
+                throw new NotSerializableException("The object is not serializable");
+            }
             System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
             localoutputStream.writeObject(message);
             localoutputStream.flush();
             return -1;
+        } catch(NotSerializableException notSerializableException){
+            System.out.println( "\033[1;31m" + "Not serializable object error in send message of Object type..." + "\033[0m");
+            return null;
         } catch (SocketException socketException) {
             System.out.println( "\033[1;31m" + "Socket error in send message of Object type..." + "\033[0m");
             return null;

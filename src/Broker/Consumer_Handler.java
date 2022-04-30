@@ -163,6 +163,8 @@ class Consumer_Handler implements Runnable {
             if(consumer_connection != null){
                 consumer_connection.close();
             }
+        }catch (SocketException socketException){
+            System.out.println("\033[0;31m" + "Connection was either closed already or a socket error occurred" + "\033[0m");
         } catch(IOException e){
             e.printStackTrace();
         }

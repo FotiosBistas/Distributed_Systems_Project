@@ -2,15 +2,12 @@
 package UserNode;
 import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
-import Tools.Messages;
 import Tools.Tuple;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Scanner;
 public class NetworkingForConsumer implements Runnable{
 
@@ -71,6 +68,22 @@ public class NetworkingForConsumer implements Runnable{
 
     }
 
+    public void startNewConnection(Tuple<String,int[]> new_broker){
+        shutdownConnection();
+        String IP = new_broker.getValue1();
+        System.out.println("New connection IP: " + IP);
+        int port = new_broker.getValue2()[0];
+        System.out.println("New broker port: " + port);
+        NetworkingForConsumer new_connection = null;
+        try {
+            new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,3);
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        Thread t = new Thread(new_connection);
+        t.start();
+    }
+
     @Override
     public void run() {
         switch (operation){
@@ -118,18 +131,18 @@ public class NetworkingForConsumer implements Runnable{
                 if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,sc,cons)) == null){
                     shutdownConnection();
                     break;
-                }
-                /*Tuple<String,int[]> brk = cons.getBrokerList().get(index);
-                String IP = brk.getValue1();
-                int port = brk.getValue2()[0];
-                NetworkingForConsumer new_connection = new NetworkingForConsumer(new Socket(IP,port),cons);
-                Thread t = new Thread(new_connection);
-                t.start();
-                if(GeneralUtils.FinishedOperation(localoutputStream) == null{
-                    shutdownConnection();
+                }else if(index == -1){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
                     break;
-                };*/
-                break;
+                }else{
+                    Tuple<String,int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk);
+                    break;
+                }
+
             case 4:
                 if(UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons) == null){
                     shutdownConnection();

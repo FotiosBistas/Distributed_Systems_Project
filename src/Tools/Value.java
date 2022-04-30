@@ -1,6 +1,8 @@
 package Tools;
 
-public class Value {
+import java.io.Serializable;
+
+public class Value implements Serializable {
     private final MultimediaFile file;
     private final String message;
 

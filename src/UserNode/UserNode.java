@@ -18,7 +18,6 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
     private ProfileName prof_name;
-    private Scanner sc = new Scanner(System.in);
     private boolean exit;
 
     //Broker list should be sorted by ids of brokers
@@ -63,6 +62,7 @@ public class UserNode implements Serializable {
         try{
             NetworkingForConsumer consumer;
             Thread t1;
+            Scanner sc = new Scanner(System.in);
             while(!exit) {
                 System.out.println("0.Send Broker List");
                 System.out.println("1.Send ID list");
@@ -133,8 +133,8 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void addNewMessage(String topic_name, Value new_value){
-        message_list.put(topic_name,new_value);
+    public synchronized void addNewMessage(String topic_name, Value new_value) {
+        message_list.put(topic_name, new_value);
     }
 
 
@@ -156,7 +156,7 @@ public class UserNode implements Serializable {
         }else {
             UserNode user = new UserNode(args[0], Integer.parseInt(args[1]),args[2]);
             user.connect();
-            user.checkMessageList();
+            //user.checkMessageList();
         }
     }
 
