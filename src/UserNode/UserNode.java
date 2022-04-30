@@ -1,4 +1,6 @@
 package UserNode;
+import NetworkUtilities.GeneralUtils;
+import NetworkUtilities.UserNodeUtils;
 import Tools.Value;
 import Tools.Tuple;
 import java.io.IOException;
@@ -8,6 +10,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 public class UserNode implements Serializable {
 
@@ -15,7 +18,8 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
     private ProfileName prof_name;
-
+    private Scanner sc = new Scanner(System.in);
+    private boolean exit;
 
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
@@ -57,10 +61,63 @@ public class UserNode implements Serializable {
 
     public void connect(){
         try{
-            // threads for consumer requests and responses from the first random broker
-            NetworkingForConsumer consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this);
-            Thread t1 = new Thread(consumer);
-            t1.start();
+            NetworkingForConsumer consumer;
+            Thread t1;
+            while(!exit) {
+                System.out.println("0.Send Broker List");
+                System.out.println("1.Send ID list");
+                System.out.println("2.Send Nickname");
+                System.out.println("3.Register to topic");
+                System.out.println("4.Unsubscribe from topic");
+                System.out.println("5.Show conversation data");
+                System.out.println("6.Push");
+                System.out.println("7.Exit");
+                System.out.println("Enter an int from the above options");
+                int userinput = sc.nextInt();
+                switch (userinput){
+                    case 0:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,0);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 1:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,1);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 2:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,2);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 3:
+                        // threads for consumer requests and responses from the first random broker
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,3);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 4:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,4);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 5:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,5);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 6:
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,6);
+                        t1 = new Thread(consumer);
+                        t1.start();
+                        break;
+                    case 7:
+                        exit = true;
+                        break;
+                    default:
+                        System.out.println("Invalid Request... Try again");
+                }
+            }
 
         }catch(ConnectException e){
             System.out.println("No response from broker try again");

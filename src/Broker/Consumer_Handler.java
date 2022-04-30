@@ -61,16 +61,17 @@ class Consumer_Handler implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("Server established connection with client: " + consumer_connection.getInetAddress().getHostAddress());
         while (consumer_connection.isConnected()) {
-            System.out.println("Server established connection with client: " + consumer_connection.getInetAddress().getHostAddress());
             Integer message = GeneralUtils.waitForNodePrompt(localinputStream,consumer_connection);
             if(message == null){
                 shutdownConnection();
-                break;
+                return;
             }else if(message > 23){
                 System.out.println("\033[0;31m" + "Out of enum bounds message received " + "\033[0m");
                 continue;
             }
+            System.out.println("\033[0;35m" + "Received index: " + message + "\033[0m");
             Messages message_received = Messages.values()[message];
             switch (message_received){
                 case FINISHED_OPERATION:
@@ -85,12 +86,22 @@ class Consumer_Handler implements Runnable {
                         shutdownConnection();
                         return;
                     }
+                    break;
+                case GET_ID_LIST:
                     if(BrokerUtils.sendIdList(localoutputStream,this.broker) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         return;
                     }
                     break;
                 case SENDING_NICK_NAME:
+                    if(BrokerUtils.receiveNickname(localinputStream,consumer_connection) == null){
+                        shutdownConnection();
+                        return;
+                    }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         return;

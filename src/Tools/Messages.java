@@ -6,6 +6,7 @@ package Tools;
 public enum Messages {
     REGISTER,
     GET_BROKER_LIST,
+    GET_ID_LIST,
     SENDING_NICK_NAME,
     PUSH,
     PULL,

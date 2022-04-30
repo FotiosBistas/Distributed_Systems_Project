@@ -3,6 +3,8 @@ package NetworkUtilities;
 import Tools.*;
 import UserNode.NetworkingForConsumer;
 import UserNode.UserNode;
+
+import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -32,6 +34,15 @@ public class UserNodeUtils {
      */
     public static Integer getBrokerList(ObjectOutputStream localoutputStream) {
         return GeneralUtils.sendMessage(Messages.GET_BROKER_LIST,localoutputStream);
+    }
+
+    /**
+     * Sends a Message type GET_ID_LIST from the Messages ENUM found in the tools package.
+     * @param localoutputStream accepts the local output stream.
+     * @return returns the exit value of the program -1 indicating success and null indicating error.
+     */
+    public static Integer getIDList(ObjectOutputStream localoutputStream){
+        return GeneralUtils.sendMessage(Messages.GET_ID_LIST,localoutputStream);
     }
 
     /**
@@ -152,16 +163,33 @@ public class UserNodeUtils {
     public static Integer receiveBrokerList(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,UserNode cons){
         Integer messagebroker = -1;
         while(true){
+            System.out.println("\033[0;34m" + "Waiting to receive sending broker list message" + "\033[0m");
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(messagebroker == null){
+                return null;
+            }else if(messagebroker != Messages.SENDING_BROKER_LIST.ordinal()){
+                UserNodeUtils.getBrokerList(localoutputStream);
+            }else{
+                System.out.println("\033[0;33m" + "Stopping the wait for sending the broker list message because it was just received" + "\033[0m");
+                break;
+            }
+        }
+        Integer size;
+        System.out.println( "\033[0;34m" + "Waiting to receive broker list size" + "\033[0m");
+        if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
+            return null;
+        }else if(size <= 0){
+            System.out.println("\033[0;31m" + "Received empty broker list" + "\033[0m");
+            return null;
+        }
+        System.out.println("Size of list: " + size);
+        while(true){
             System.out.println("In while loop for the broker list...");
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream, socket);
             if((messagebroker == Messages.FINISHED_OPERATION.ordinal())){
                 System.out.println("Received finished operation message in the while loop for the broker list");
                 break;
             }
-            Integer size;
-            if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
-                return null;
-            }
-            System.out.println("Size of list: " + size);
             String IP;
             if((IP = GeneralUtils.readUTFString(localinputStream,socket)) == null){
                 return null;
@@ -178,14 +206,22 @@ public class UserNodeUtils {
                 Integer port = GeneralUtils.waitForNodePrompt(localinputStream,socket);
                 if(port == null){
                     return null;
+                }else if(port <= 0){
+                    System.out.println("\033[0;31m" + "Received wrong port number" + "\033[0m");
+                    return null;
                 }
                 System.out.println("Received port: " + port);
                 port_list.add(port);
                 if(port_list.size()>=3){
-                    System.out.println("Waiting for finished operation message by the broker in the while loop for sending port array");
-                    messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
-                    if(messagebroker == null){
-                        return null;
+                    while(true) {
+                        System.out.println("Waiting for finished operation message by the broker in the while loop for sending port array");
+                        messagebroker = GeneralUtils.waitForNodePrompt(localinputStream, socket);
+                        if (messagebroker == null) {
+                            System.out.println("\033[0;31m" + "Received null message while waiting for finished operation message in the port while" + "\033[0m");
+                            return null;
+                        }else if(messagebroker == Messages.FINISHED_OPERATION.ordinal()){
+                            break;
+                        }
                     }
                 }
             }
@@ -195,14 +231,6 @@ public class UserNodeUtils {
             }
             cons.getBrokerList().add(new Tuple<>(IP, ports));
             System.out.println(cons.getBrokerList());
-            if(cons.getBrokerList().size() >= size) {
-                System.out.println("Waiting for finished operation message by the broker in the while loop for sending broker list");
-                messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
-                if(messagebroker == null){
-                    return null;
-                }
-            }
-
         }
         System.out.println("Broker sent the Broker List");
         return -1;
@@ -374,6 +402,9 @@ public class UserNodeUtils {
             Integer size;
             if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
                 return null;
+            }else if(size <= 0){
+                System.out.println("\033[0;31m" + "Received empty topic list" + "\033[0m");
+                return null;
             }
             System.out.println("The size of the list is: " + size);
             System.out.println("Reading topic...");
@@ -395,6 +426,55 @@ public class UserNodeUtils {
             }
         }
         return topic_list;
+    }
+
+
+    /**
+     * Receives the ID list from the connected broker.
+     * @param localinputStream Accepts the local input stream.
+     * @param socket Accepts the local socket.
+     * @return Returns the topic list if everything goes well. If an error occurs it returns null.
+     */
+    public static Integer receiveIDList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream,Socket socket,UserNode cons){
+        Integer messagebroker = -1;
+        while(true){
+            System.out.println("Waiting to receive sending ID list message");
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(messagebroker == null){
+                return null;
+            }else if(messagebroker != Messages.SENDING_ID_LIST.ordinal()){
+                UserNodeUtils.getIDList(localoutputStream);
+            }else{
+                System.out.println("\033[0;33m" + "Stopping the wait for sending the ID list message because it was just received" + "\033[0m");
+                break;
+            }
+        }
+        Integer size;
+        if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
+            return null;
+        }else if(size <= 0){
+            System.out.println("\033[0;31m" + "Received empty ID list" + "\033[0m");
+            return null;
+        }
+        System.out.println("Received size: " + size);
+        while(true) {
+            System.out.println("Broker is sending its ID List");
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if ((messagebroker == Messages.FINISHED_OPERATION.ordinal())) {
+                System.out.println("Received finished operation message in while loop sending id list");
+                break;
+            }
+            Integer ID;
+            if((ID = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
+                return null;
+            }else if(ID < 0){
+                System.out.println("\033[0;31m" + "Received negative ID" + "\033[0m");
+                return null;
+            }
+            System.out.println("Received ID: " + ID);
+            cons.getBroker_ids().add(ID);
+        }
+        return -1;
     }
 
 }

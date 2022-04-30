@@ -67,9 +67,11 @@ public class GeneralUtils {
             return message;
         } catch (SocketException socketException) {
             System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + "\033[0m");
+            socketException.printStackTrace();
             return null;
         } catch (IOException e) {
             System.out.println( "\033[1;31m" + "Error in wait for node prompt..." + "\033[0m");
+            e.printStackTrace();
             return null;
         }
     }
@@ -189,7 +191,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(Messages message_type,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( "\033[0;32m" + "Sending Message: " + message_type + "\033[0m");
+            System.out.println( "\033[0;32m" + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + "\033[0m");
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
             return -1;

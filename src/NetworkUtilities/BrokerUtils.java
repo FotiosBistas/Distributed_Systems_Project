@@ -171,10 +171,15 @@ public class BrokerUtils {
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
      */
     public static Integer sendBrokerList(ObjectOutputStream localoutputStream, Broker broker) {
-        GeneralUtils.sendMessage(Messages.SENDING_TOPIC_LIST, localoutputStream);
+        if(GeneralUtils.sendMessage(Messages.SENDING_BROKER_LIST, localoutputStream) == null){
+            return null;
+        }
+        System.out.println("\033[0;32m" + "Sending Broker List size: " + broker.getBrokerList().size() + "\033[0m");
+        if(GeneralUtils.sendMessage(broker.getBrokerList().size(),localoutputStream) == null){
+            return null;
+        }
         for (Tuple<String, int[]> val : broker.getBrokerList()) {
-            System.out.println("\033[0;32m" + "Sending Broker List size: " + broker.getBrokerList().size() + "\033[0m");
-            if(GeneralUtils.sendMessage(broker.getBrokerList().size(),localoutputStream) == null){
+            if(GeneralUtils.sendMessage(Messages.SENDING_BROKER_LIST, localoutputStream) == null){
                 return null;
             }
             System.out.println("\033[0;32m" + "Sending broker's IP: " + val.getValue1() + "\033[0m");
@@ -205,12 +210,17 @@ public class BrokerUtils {
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
      */
     public static Integer sendIdList(ObjectOutputStream localoutputStream,Broker broker) {
-        GeneralUtils.sendMessage(Messages.SENDING_ID_LIST, localoutputStream);
+        if(GeneralUtils.sendMessage(Messages.SENDING_ID_LIST, localoutputStream) == null){
+            return null;
+        }
+        if(GeneralUtils.sendMessage(broker.getId_list().size(), localoutputStream) == null){
+            return null;
+        }
         for (int i = 0; i < broker.getId_list().size(); i++) {
-            if(GeneralUtils.sendMessage(broker.getId_list().size(), localoutputStream) == null){
+            if(GeneralUtils.sendMessage(Messages.SENDING_ID_LIST, localoutputStream) == null){
                 return null;
             }
-            if(GeneralUtils.sendMessage(broker.getId_list().get(i), localoutputStream) == null){
+            if(GeneralUtils.sendMessage((int)broker.getId_list().get(i), localoutputStream) == null){
                 return null;
             }
         }

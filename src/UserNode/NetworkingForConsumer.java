@@ -20,16 +20,18 @@ public class NetworkingForConsumer implements Runnable{
     private UserNode cons;
     boolean exit = false;
     private Scanner sc = new Scanner(System.in);
+    private int operation;
 
 
-    public NetworkingForConsumer(Socket request_socket,UserNode cons){
+    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation){
         this.request_socket = request_socket;
         this.cons = cons;
+        this.operation = operation;
         try {
             localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
             localinputStream = new ObjectInputStream(request_socket.getInputStream());
         }catch (SocketException socketException) {
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
+            System.out.println("\033[0;31m" + "Socket Error while constructing networking for consumer" + "\033[0m");
             shutdownConnection();
             return;
         }catch (IOException e) {
@@ -37,27 +39,6 @@ public class NetworkingForConsumer implements Runnable{
             shutdownConnection();
             return;
         }
-        if(UserNodeUtils.getBrokerList(localoutputStream) == null){
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-        if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-        if(UserNodeUtils.sendNickname(localoutputStream,cons) == null){
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-        if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-        System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
     }
 
 
@@ -92,67 +73,95 @@ public class NetworkingForConsumer implements Runnable{
 
     @Override
     public void run() {
-        while(!exit) {
-            System.out.println("1.Register to topic");
-            System.out.println("2.Unsubscribe from topic");
-            System.out.println("3.Show conversation data");
-            System.out.println("4.Push");
-            System.out.println("0.Exit");
-            System.out.println("Enter an int from the above options");
-            int userinput = sc.nextInt();
-            switch (userinput){
-                case 1:
-                    Integer index;
-                    if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,sc,cons)) == null){
-                        shutdownConnection();
-                        break;
-                    }
-                    /*Tuple<String,int[]> brk = cons.getBrokerList().get(index);
-                    String IP = brk.getValue1();
-                    int port = brk.getValue2()[0];
-                    NetworkingForConsumer new_connection = new NetworkingForConsumer(new Socket(IP,port),cons);
-                    Thread t = new Thread(new_connection);
-                    t.start();
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null{
-                        shutdownConnection();
-                        break;
-                    };*/
-                    break;
-                case 2:
-                    if(UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons) == null){
-                        shutdownConnection();
-                        return;
-                    }
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        return;
-                    }
-                    break;
-                case 3:
-                    if(UserNodeUtils.showConversationData(localoutputStream) == null){
-                        shutdownConnection();
-                        return;
-                    }
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        return;
-                    }
-                    break;
-                case 4:
-                    push();
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        return;
-                    }
-                    break;
-                case 0:
-                    System.out.println("Terminating connection with server in run");
+        switch (operation){
+            case 0:
+                if(UserNodeUtils.getBrokerList(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(UserNodeUtils.receiveBrokerList(localinputStream,localoutputStream,request_socket,cons) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                break;
+            case 1:
+                if(UserNodeUtils.getIDList(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(UserNodeUtils.receiveIDList(localinputStream,localoutputStream,request_socket,cons) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                break;
+            case 2:
+                if(UserNodeUtils.sendNickname(localoutputStream,cons) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
+                break;
+            case 3:
+                Integer index;
+                if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,sc,cons)) == null){
                     shutdownConnection();
                     break;
-                default:
-                    System.out.println("Invalid Request... Try again");
-            }
+                }
+                /*Tuple<String,int[]> brk = cons.getBrokerList().get(index);
+                String IP = brk.getValue1();
+                int port = brk.getValue2()[0];
+                NetworkingForConsumer new_connection = new NetworkingForConsumer(new Socket(IP,port),cons);
+                Thread t = new Thread(new_connection);
+                t.start();
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null{
+                    shutdownConnection();
+                    break;
+                };*/
+                break;
+            case 4:
+                if(UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                break;
+            case 5:
+                if(UserNodeUtils.showConversationData(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                break;
+            case 6:
+                push();
+                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                break;
+            default:
+                System.out.println("Invalid Request... Try again");
+                shutdownConnection();
         }
+        shutdownConnection();
     }
 
 
