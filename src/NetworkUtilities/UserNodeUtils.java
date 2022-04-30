@@ -75,8 +75,7 @@ public class UserNodeUtils {
             return null;
         }
         System.out.println("What topic are you interested in?");
-        //String topic_name = sc.next();
-        String topic_name = "sddfgjl;dsfjgl;sdl;gsdfgjkl;sdfkl;gkl;sdfl";
+        String topic_name = sc.next();
         System.out.println(topic_name);
         if(topic_name == null){
             return null;
@@ -142,10 +141,10 @@ public class UserNodeUtils {
             System.out.println("Read index: " + index);
             return index;
         }else if(message == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
-            System.out.println("Sending topic name");
-            if(GeneralUtils.sendMessage(topic_name,localoutputStream) == null){
-                return null;
-            }
+            //System.out.println("Sending topic name");
+            //if(GeneralUtils.sendMessage(topic_name,localoutputStream) == null){
+            //    return null;
+            //}
             System.out.println("Writing consumer object...");
             if(GeneralUtils.sendMessage(cons,localoutputStream) == null){
                 return null;

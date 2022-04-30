@@ -257,6 +257,10 @@ public class BrokerUtils {
                     topic = broker.getTopics().get(i);
                 }
             }
+            if(topic == null){
+                System.out.println( "\033[0;31m" + "There is no such topic in the topic list of the broker" + "\033[0m");
+                return null;
+            }
             System.out.println("\033[0;32m" + "Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name + "\033[0m");
             broker.UnsubscribeFromTopic(topic, new_cons.getName());
         }else{
@@ -294,6 +298,10 @@ public class BrokerUtils {
                 if (topic_name.equals(broker.getTopics().get(i).getName())) {
                     topic = broker.getTopics().get(i);
                 }
+            }
+            if(topic == null){
+                System.out.println( "\033[0;31m" + "There is no such topic in the topic list of the broker" + "\033[0m");
+                return null;
             }
             System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
             broker.addConsumerToTopic(topic, new_cons.getName());

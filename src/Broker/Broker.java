@@ -1,7 +1,5 @@
 
 package Broker;
-import Broker.Consumer_Handler;
-import Broker.Publisher_Handler;
 import Tools.Topic;
 import Tools.Value;
 import Tools.Tuple;
@@ -320,7 +318,9 @@ public class  Broker{
                 }
             }).start();
 
-            //TODO you can do this with a datagram socket
+            //TODO you can do this with a datagram socket interbroker communication
+
+
             /* separate thread for receiving publisher connections*/
             new Thread(() -> {
                 try {
@@ -378,12 +378,14 @@ public class  Broker{
      */
     public  void addConsumerToTopic(Topic topic, String consumer){
         //this if condition checks whether there's an topic that the new consumer can subscribe to
-        if(Topics.contains(topic)){
+        if (Topics.contains(topic)) {
             topic.addSubscription(consumer);
-        }else{ // this is the case where the topic does not exist and the new topic must be inserted in the hash map
+        } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
         }
+        System.out.println("Subscribed users: ");
+        System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
     }
 
     /**
@@ -395,6 +397,8 @@ public class  Broker{
         if(Topics.contains(topic)){
             topic.removeSubscription(consumer);
         }
+        System.out.println("Subscribed users: ");
+        System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
     }
 
     /**
