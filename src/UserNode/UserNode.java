@@ -1,16 +1,14 @@
 package UserNode;
-import NetworkUtilities.GeneralUtils;
-import NetworkUtilities.UserNodeUtils;
-import Tools.Value;
+
+import Logging.ConsoleColors;
 import Tools.Tuple;
+import Tools.Value;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class UserNode implements Serializable {
 
@@ -19,11 +17,11 @@ public class UserNode implements Serializable {
     private String name;
     private ProfileName prof_name;
     private boolean exit;
-
+    private boolean erroneousinput = true;
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
-    private HashMap<String,Value> message_list;
+    private HashMap<String, Value> message_list;
 
     UserNode(String ip,int port,String name){
         this.ip = ip;
@@ -63,64 +61,84 @@ public class UserNode implements Serializable {
             NetworkingForConsumer consumer;
             Thread t1;
             Scanner sc = new Scanner(System.in);
-            while(!exit) {
-                System.out.println("0.Send Broker List");
-                System.out.println("1.Send ID list");
-                System.out.println("2.Send Nickname");
-                System.out.println("3.Register to topic");
-                System.out.println("4.Unsubscribe from topic");
-                System.out.println("5.Show conversation data");
-                System.out.println("6.Push");
-                System.out.println("7.Exit");
-                System.out.println("Enter an int from the above options");
-                int userinput = sc.nextInt();
-                switch (userinput){
+            int userinput = -1;
+            while (!exit) {
+                while(erroneousinput) {
+                    sc = new Scanner(System.in);
+                    try {
+                        System.out.println("0.Send Broker List");
+                        System.out.println("1.Send ID list");
+                        System.out.println("2.Send Nickname");
+                        System.out.println("3.Register to topic");
+                        System.out.println("4.Unsubscribe from topic");
+                        System.out.println("5.Show conversation data");
+                        System.out.println("6.Push");
+                        System.out.println("7.Exit");
+                        System.out.println("Enter an int from the above options");
+                        userinput = sc.nextInt();
+                        erroneousinput = false;
+                    } catch (InputMismatchException inputMismatchException) {
+                        System.out.println(ConsoleColors.RED + "You gave a wrong input type try again" + ConsoleColors.RESET);
+                        break;
+                    }
+                }
+                if(erroneousinput){
+                    continue;
+                }
+                switch (userinput) {
                     case 0:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,0);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 0);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 1:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,1);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 1);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 2:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,2);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 2);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 3:
                         // threads for consumer requests and responses from the first random broker
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,3);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 3);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 4:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,4);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 4);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 5:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,5);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 5);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 6:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5",1234),this,6);
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 6);
                         t1 = new Thread(consumer);
                         t1.start();
+                        erroneousinput = true;
                         break;
                     case 7:
                         exit = true;
                         break;
                     default:
                         System.out.println("Invalid Request... Try again");
+                        erroneousinput = true;
                 }
             }
-
         }catch(ConnectException e){
-            System.out.println("No response from broker try again");
+            System.out.println(ConsoleColors.RED + "No response from broker try again" + ConsoleColors.RESET);
             try {
                 Thread.sleep(40000);
             } catch (InterruptedException interruptedException) {
@@ -128,7 +146,7 @@ public class UserNode implements Serializable {
             }
             tryagain();
         } catch (IOException e) {
-            System.out.println("Terminating client...");
+            System.out.println(ConsoleColors.RED + "Terminating client..." + ConsoleColors.RESET);
             e.printStackTrace();
         }
     }

@@ -1,13 +1,11 @@
 package NetworkUtilities;
-import Tools.Messages;
-import Logging.ConsoleColors;
 
-import java.awt.*;
+
+import Tools.Messages;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class GeneralUtils {
 
@@ -200,7 +198,7 @@ public class GeneralUtils {
      * @param localoutputStream accepts the local output stream.
      * @return returns the exit value of the program -1 indicating success and null indicating error.
      */
-    public static Integer sendMessage(Messages message_type,ObjectOutputStream localoutputStream) {
+    public static Integer sendMessage(Messages message_type, ObjectOutputStream localoutputStream) {
         try {
             System.out.println( "\033[0;32m" + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + "\033[0m");
             localoutputStream.writeInt(message_type.ordinal());

@@ -1,24 +1,25 @@
 
 package Broker;
+
+
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
-import Tools.Tuple;
-import Tools.Topic;
-import java.io.*;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
-class Publisher_Handler implements Runnable{
+public class Publisher_Handler implements Runnable{
     private Socket publisher_connection;
     private ObjectInputStream localinputStream;
     private ObjectOutputStream localoutputStream;
     private final int chunksize = 512*1024;
     private final Broker broker;
 
-    Publisher_Handler(Socket publisher_connection, Broker broker){
+    public Publisher_Handler(Socket publisher_connection, Broker broker){
         this.publisher_connection = publisher_connection;
         this.broker = broker;
         try {

@@ -1,16 +1,16 @@
 package NetworkUtilities;
 
-import SHA1.SHA1;
-import Tools.Messages;
+
 import Broker.Broker;
+import Tools.Messages;
 import Tools.Topic;
 import Tools.Tuple;
 import UserNode.UserNode;
+import SHA1.SHA1;
 
 
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -22,14 +22,17 @@ public class BrokerUtils {
      * @param broker accepts the broker that we want to receive the topic list from.
      * @return returns the exit value of the program -1 indicating success and null indicating error.
      */
-    public static Integer sendTopicList(ObjectOutputStream localoutputStream,Broker broker) {
+    public static Integer sendTopicList(ObjectOutputStream localoutputStream, Broker broker) {
         if (GeneralUtils.sendMessage(Messages.SENDING_TOPIC_LIST,localoutputStream) == null) {
             return null;
         }
         int list_size = broker.getTopics().size();
+        System.out.println("Sending topic list size...");
+        if (GeneralUtils.sendMessage(list_size,localoutputStream) == null) {
+            return null;
+        }
         for (int i = 0; i < list_size; i++) {
-            System.out.println("Sending topic list size...");
-            if (GeneralUtils.sendMessage(list_size,localoutputStream) == null) {
+            if (GeneralUtils.sendMessage(Messages.SENDING_TOPIC_LIST,localoutputStream) == null) {
                 return null;
             }
             System.out.println("Sending topic: " + broker.getTopics().get(i));

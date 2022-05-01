@@ -1,21 +1,16 @@
 package Broker;
+
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
-import UserNode.UserNode;
-import Broker.Broker;
-import Tools.Topic;
 import Tools.Messages;
-import Tools.Tuple;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Arrays;
 
-class Consumer_Handler implements Runnable {
+public class Consumer_Handler implements Runnable {
 
     private ObjectInputStream localinputStream;
     private ObjectOutputStream localoutputStream;

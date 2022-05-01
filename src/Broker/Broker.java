@@ -1,13 +1,17 @@
 
 package Broker;
+
+import Logging.ConsoleColors;
 import Tools.Topic;
-import Tools.Value;
 import Tools.Tuple;
-import Tools.Messages;
+import Tools.Value;
 import UserNode.UserNode;
-import SHA1.*;
+import SHA1.SHA1;
+
+
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 
 //broker implements serializable due to the list of brokers
@@ -379,6 +383,7 @@ public class  Broker{
     public  void addConsumerToTopic(Topic topic, String consumer){
         //this if condition checks whether there's an topic that the new consumer can subscribe to
         if (Topics.contains(topic)) {
+            System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
@@ -395,6 +400,7 @@ public class  Broker{
      */
     public void UnsubscribeFromTopic(Topic topic, String consumer){
         if(Topics.contains(topic)){
+            System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
         }
         System.out.println("Subscribed users: ");
@@ -458,36 +464,6 @@ public class  Broker{
         System.out.println("The correct Broker is: " + Arrays.toString(BrokerList.get(index).getValue2()) + " and id: " + id_list.get(index));
         return index;
     }
-
-    public void tryagain(Messages message_type){
-        notifyBrokersOnChanges();
-    }
-
-    /**
-     *After a change e.g. new broker is inserted into the list or a topic is inserted into the topic list.
-     *Notify all the brokers about the changes, like a broadcast operation.
-     */
-    public void notifyBrokersOnChanges(){
-
-    }
-
-
-    public void FinishedOperation() {
-        try {
-            localoutputStream.writeInt(Messages.FINISHED_OPERATION.ordinal());
-            localoutputStream.flush();
-        } catch (SocketException e){
-            System.out.println("There is something wrong with socket");
-            System.out.println("Shutting down connection in finished operation...");
-            shutdownConnection();
-        } catch (IOException e) {
-            System.out.println("Shutting down connection in finished operation...");
-            shutdownConnection();
-        }
-    }
-
-
-
 
     public static void main(String[] args) {
         if(args.length <= 3) {

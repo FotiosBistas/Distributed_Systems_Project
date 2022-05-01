@@ -1,15 +1,11 @@
 package NetworkUtilities;
 
+import Logging.ConsoleColors;
 import Tools.*;
-import UserNode.NetworkingForConsumer;
-import UserNode.UserNode;
-
-import java.awt.*;
-import java.io.IOException;
+import UserNode.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -22,6 +18,18 @@ public class UserNodeUtils {
      */
     public static Integer showConversationData(ObjectOutputStream localoutputStream){
         if(GeneralUtils.sendMessage(Messages.SHOW_CONVERSATION_DATA,localoutputStream) == null){
+            return null;
+        }
+        return -1;
+    }
+
+    /**
+     * Sends a Message type GET_TOPIC_LIST from the Messages ENUM found in the tools package.
+     * @param localoutputStream accepts the local output stream.
+     * @return returns the exit value of the program -1 indicating success and null indicating error.
+     */
+    public static Integer getTopicList(ObjectOutputStream localoutputStream){
+        if(GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST,localoutputStream) == null){
             return null;
         }
         return -1;
@@ -70,16 +78,18 @@ public class UserNodeUtils {
      * @param cons Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
-    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream,Socket socket,Scanner sc, UserNode cons){
+    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Scanner sc, UserNode cons){
         if(GeneralUtils.sendMessage(Messages.REGISTER,localoutputStream) == null){
             return null;
         }
         System.out.println("What topic are you interested in?");
+        sc = new Scanner(System.in);
         String topic_name = sc.next();
-        System.out.println(topic_name);
+        System.out.println(ConsoleColors.PURPLE + topic_name + ConsoleColors.RESET);
         if(topic_name == null){
             return null;
         }
+        System.out.println(ConsoleColors.PURPLE + "Sending topic name" + ConsoleColors.RESET);
         if(GeneralUtils.sendMessage(topic_name,localoutputStream) == null){
             return null;
         }
@@ -125,7 +135,16 @@ public class UserNodeUtils {
             return null;
         }
         System.out.println("Disconnect from what topic?");
+        sc = new Scanner(System.in);
         String topic_name = sc.next();
+        System.out.println(ConsoleColors.PURPLE + topic_name + ConsoleColors.RESET);
+        if(topic_name == null){
+            return null;
+        }
+        System.out.println(ConsoleColors.PURPLE + "Sending topic name" + ConsoleColors.RESET);
+        if(GeneralUtils.sendMessage(topic_name,localoutputStream) == null){
+            return null;
+        }
         Integer message = GeneralUtils.waitForNodePrompt(localinputStream,socket);
         if(message == null){
             return null;
@@ -230,7 +249,7 @@ public class UserNodeUtils {
             for (int i = 0; i < port_list.size(); i++) {
                 ports[i] = port_list.get(i);
             }
-            cons.getBrokerList().add(new Tuple<>(IP, ports));
+            cons.getBrokerList().add(new Tuple<String,int[]>(IP, ports));
             System.out.println(cons.getBrokerList());
         }
         System.out.println("Broker sent the Broker List");
@@ -260,7 +279,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer sendFile(MultimediaFile file,ObjectOutputStream localoutputStream) {
+    public static Integer sendFile(MultimediaFile file, ObjectOutputStream localoutputStream) {
 
         ArrayList<Chunk> chunks = file.getChunks();
         System.out.println("Sending the file name: " + file.getMultimediaFileName());
@@ -300,7 +319,7 @@ public class UserNodeUtils {
      * @param thread_continue Resumes the thread for consumer in order to send the file in the background.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer push(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Scanner sc,UserNode pub,NetworkingForConsumer thread_continue) {
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Scanner sc, UserNode pub, NetworkingForConsumer thread_continue) {
         System.out.println("Requesting for proper broker from the connection");
         if (GeneralUtils.sendMessage(Messages.SEND_APPROPRIATE_BROKER, localoutputStream) == null) {
             return null;
@@ -339,7 +358,7 @@ public class UserNodeUtils {
             if(GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST,localoutputStream) == null){
                 return null;
             }
-            ArrayList<Topic> topics = receiveTopicList(localinputStream,socket);
+            ArrayList<Topic> topics = receiveTopicList(localoutputStream,localinputStream,socket);
             if(topics == null){
                 return null;
             }else if(topics.isEmpty()){
@@ -380,34 +399,40 @@ public class UserNodeUtils {
      * @param socket Accepts the local socket.
      * @return Returns the topic list if everything goes well. If an error occurs it returns null.
      */
-    public static ArrayList<Topic> receiveTopicList(ObjectInputStream localinputStream, Socket socket){
+    public static ArrayList<Topic> receiveTopicList(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket socket){
         ArrayList<Topic> topic_list = new ArrayList<>();
-        /*int message_broker = localinputStream.readInt();
-        if (message_broker != Messages.SENDING_TOPIC_LIST.ordinal()) {
-            while (true) {
-                System.out.println("Requesting for broker list again");
-                localoutputStream.writeInt(Messages.GET_TOPIC_LIST.ordinal());
-                localoutputStream.flush();
-                message_broker = localinputStream.readInt();
-                if (message_broker == Messages.SENDING_TOPIC_LIST.ordinal()) {
-                    System.out.println("Received sending topic list");
-                    break;
-                }
+        Integer messagebroker = -1;
+        while(true){
+            System.out.println("\033[0;34m" + "Waiting to receive sending topic list message" + "\033[0m");
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(messagebroker == null){
+                return null;
+            }else if(messagebroker != Messages.SENDING_TOPIC_LIST.ordinal()){
+                UserNodeUtils.getTopicList(localoutputStream);
+            }else{
+                System.out.println("\033[0;33m" + "Stopping the wait for sending the topic list message because it was just received" + "\033[0m");
+                break;
             }
-        }*/
+        }
+        Integer size;
+        System.out.println( "\033[0;34m" + "Waiting to receive topic list size" + "\033[0m");
+        if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
+            return null;
+        }else if(size <= 0){
+            System.out.println("\033[0;31m" + "Received empty topic list" + "\033[0m");
+            return null;
+        }
+        System.out.println("The size of the list is: " + size);
         while (true) {
             System.out.println("Receiving topic list");
-            //wait till you are sure that broker is sending the broker list
             System.out.println("Received message that the topic list is being sent and now accepting elements");
-            System.out.println("Reading topic list size...");
-            Integer size;
-            if((size = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
+            messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(messagebroker == null){
                 return null;
-            }else if(size <= 0){
-                System.out.println("\033[0;31m" + "Received empty topic list" + "\033[0m");
-                return null;
+            } else if (messagebroker == Messages.FINISHED_OPERATION.ordinal()) {
+                System.out.println("Received finished operation message from broker inside the receive topic list method");
+                break;
             }
-            System.out.println("The size of the list is: " + size);
             System.out.println("Reading topic...");
             Topic temp;
             if((temp = (Topic) GeneralUtils.readObject(localinputStream,socket)) == null){
@@ -415,16 +440,7 @@ public class UserNodeUtils {
             }
             System.out.println("The topic is: " + temp);
             topic_list.add(temp);
-            if (topic_list.size() >= size) {
-                System.out.println("Waiting to receive finished operation message from broker inside the receive topic list method");
-                Integer message_broker;
-                if((message_broker = GeneralUtils.waitForNodePrompt(localinputStream,socket)) == null){
-                    return null;
-                } else if (message_broker == Messages.FINISHED_OPERATION.ordinal()) {
-                    System.out.println("Received finished operation message from broker inside the receive topic list method");
-                    break;
-                }
-            }
+            System.out.println("Waiting to receive finished operation message from broker inside the receive topic list method");
         }
         return topic_list;
     }

@@ -1,11 +1,15 @@
 
 package UserNode;
+
+import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
 import Tools.Tuple;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Scanner;
@@ -68,7 +72,7 @@ public class NetworkingForConsumer implements Runnable{
 
     }
 
-    public void startNewConnection(Tuple<String,int[]> new_broker){
+    public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
         shutdownConnection();
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
@@ -76,9 +80,12 @@ public class NetworkingForConsumer implements Runnable{
         System.out.println("New broker port: " + port);
         NetworkingForConsumer new_connection = null;
         try {
-            new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,3);
+            new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,operation);
+        } catch (ConnectException connectException){
+            System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
         } catch (IOException ioException) {
             ioException.printStackTrace();
+            System.out.println(ConsoleColors.RED + "IO error while trying to connect to the new broker" + ConsoleColors.RESET);
         }
         Thread t = new Thread(new_connection);
         t.start();
@@ -86,6 +93,7 @@ public class NetworkingForConsumer implements Runnable{
 
     @Override
     public void run() {
+        Integer index;
         switch (operation){
             case 0:
                 if(UserNodeUtils.getBrokerList(localoutputStream) == null){
@@ -127,7 +135,6 @@ public class NetworkingForConsumer implements Runnable{
                 System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
                 break;
             case 3:
-                Integer index;
                 if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,sc,cons)) == null){
                     shutdownConnection();
                     break;
@@ -138,21 +145,27 @@ public class NetworkingForConsumer implements Runnable{
                     }
                     break;
                 }else{
-                    Tuple<String,int[]> brk = cons.getBrokerList().get(index);
-                    startNewConnection(brk);
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,3);
                     break;
                 }
 
             case 4:
-                if(UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons) == null){
+                if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons)) == null){
                     shutdownConnection();
                     return;
+                }else if(index == -1){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                }else{
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,4);
+                    break;
                 }
-                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                    shutdownConnection();
-                    return;
-                }
-                break;
+
             case 5:
                 if(UserNodeUtils.showConversationData(localoutputStream) == null){
                     shutdownConnection();
