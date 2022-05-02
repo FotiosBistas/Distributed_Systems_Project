@@ -22,21 +22,21 @@ public class NetworkingForPublisher implements Runnable {
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
     private boolean exit = false;
-    private NetworkingForConsumer thread_continue;
     private String topic_name;
     private int operation;
+    private String contents_file_name;
     //idea here is that the user node will open a connection with the broker it wants to communicate and keep it for while
     //also its corresponding streams must be stored somewhere or not
     //private List<Tuple<ObjectInputStream,ObjectOutputStream>> streams = new ArrayList<>();
     //publisher doesn't need a while loop
 
 
-    public NetworkingForPublisher(Socket connection, UserNode pub, String topic_name,NetworkingForConsumer thread_continue, int operation) {
+    public NetworkingForPublisher(Socket connection, UserNode pub, String topic_name, int operation, String contents_file_name) {
         this.connection = connection;
         this.pub = pub;
         this.topic_name = topic_name;
-        this.thread_continue = thread_continue;
         this.operation = operation;
+        this.contents_file_name = contents_file_name;
         //connections.put(,connection);
         try {
             localoutputStream = new ObjectOutputStream(connection.getOutputStream());
@@ -60,7 +60,7 @@ public class NetworkingForPublisher implements Runnable {
         System.out.println("New broker port: " + port);
         NetworkingForPublisher new_connection = null;
         try {
-            new_connection = new NetworkingForPublisher(new Socket(IP,port),pub,topic_name,thread_continue,operation);
+            new_connection = new NetworkingForPublisher(new Socket(IP,port),pub,topic_name,operation,contents_file_name);
             shutdownConnection();
         } catch (ConnectException connectException){
             System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
@@ -76,26 +76,23 @@ public class NetworkingForPublisher implements Runnable {
     public void run() {
         System.out.println("New publisher was created");
         Integer index;
-        System.out.println("0.Send file");
-        System.out.println("1.Send text message");
         switch (operation) {
-           case 0:
-            if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, thread_continue,operation)) == null) {
-                System.out.println(ConsoleColors.RED + "Error while trying to push file" + ConsoleColors.RESET);
-                shutdownConnection();
-                return;
-            } else if (index == -1) {
-                System.out.println(ConsoleColors.PURPLE + "Finished the push file operation" + ConsoleColors.RESET);
-                shutdownConnection();
-                return;
-            } else {
-                Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                startNewConnection(brk, 0);
-            }
-            break;
-
+            case 0:
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub,0,contents_file_name)) == null) {
+                    System.out.println(ConsoleColors.RED + "Error while trying to push file" + ConsoleColors.RESET);
+                    shutdownConnection();
+                    return;
+                } else if (index == -1) {
+                    System.out.println(ConsoleColors.PURPLE + "Finished the push file operation" + ConsoleColors.RESET);
+                    shutdownConnection();
+                    return;
+                } else {
+                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                    startNewConnection(brk, 0);
+                }
+                break;
             case 1:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, thread_continue,operation)) == null) {
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub,1,contents_file_name)) == null) {
                     System.out.println(ConsoleColors.RED + "Error while trying to push message" + ConsoleColors.RESET);
                     shutdownConnection();
                     return;
@@ -108,7 +105,6 @@ public class NetworkingForPublisher implements Runnable {
                     startNewConnection(brk, 1);
                 }
                 break;
-
         }
     }
 

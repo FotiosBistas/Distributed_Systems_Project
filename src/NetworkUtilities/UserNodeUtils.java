@@ -359,10 +359,9 @@ public class UserNodeUtils {
      * @param socket Accepts the local socket.
      * @param topic_name Accepts the topic_name that it wants to push to.
      * @param pub Accepts a node to access its name and other necessary fiels.
-     * @param thread_continue Resumes the thread for consumer in order to send the file in the background.
      * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
-    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, NetworkingForConsumer thread_continue, int file_or_text) {
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, int file_or_text, String contents_file_name) {
         System.out.println("Requesting for proper broker from the connection");
         notifyBrokersNewMessage(localoutputStream);
 
@@ -423,28 +422,19 @@ public class UserNodeUtils {
                 Scanner sc;
                 switch (file_or_text){
                     case 0:
-                        push_file(localoutputStream);
-                        System.out.println("Give the name of the file");
-                        sc = new Scanner(System.in);
-                        String filename = sc.next();
-                        thread_continue.notifyThread();
-                        MultimediaFile new_file = new MultimediaFile(filename, pub.getName());
-                        sendFile(new_file,localoutputStream);
+                        push_message(localoutputStream);
+                        Text_Message new_text = new Text_Message(pub.getName(),contents_file_name);
+                        sendTextMessage(new_text,localoutputStream);
                         break;
                     case 1:
-                        push_message(localoutputStream);
-                        System.out.println("Type the contents of the text message");
-                        sc = new Scanner(System.in);
-                        String contents = sc.next();
-                        thread_continue.notifyThread();
-                        Text_Message new_text = new Text_Message(pub.getName(),contents);
-                        sendTextMessage(new_text,localoutputStream);
+                        push_file(localoutputStream);
+                        MultimediaFile new_file = new MultimediaFile(contents_file_name, pub.getName());
+                        sendFile(new_file,localoutputStream);
                         break;
                 }
 
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
-                thread_continue.notifyThread();
                 return null;
             }
             return -1;

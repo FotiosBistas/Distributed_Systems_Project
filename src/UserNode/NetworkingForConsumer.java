@@ -89,24 +89,6 @@ public class NetworkingForConsumer implements Runnable{
         notifyAll();
     }
 
-    public synchronized void push(){
-        System.out.println("Pushing operation has started");
-        try {
-            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons,topic_name,this,publisher_operation);
-            Thread t = new Thread(publish);
-            t.start();
-            //waits until input is given by the publisher and servers the push request in the background
-            wait();
-        }catch (SocketException socketException) {
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }catch(IOException | InterruptedException e){
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-    }
 
     public void pull(String topic){
 
@@ -217,13 +199,6 @@ public class NetworkingForConsumer implements Runnable{
                     shutdownConnection();
                     return;
                 }
-                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                    shutdownConnection();
-                    return;
-                }
-                break;
-            case 6:
-                push();
                 if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                     shutdownConnection();
                     return;

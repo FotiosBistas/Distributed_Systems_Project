@@ -21,7 +21,7 @@ public class Text_Message extends Value implements Serializable {
 
     @Override
     public String toString() {
-        return " Text_Message{" +
+        return super.toString() + " Text_Message{" +
                 "contents='" + contents + '\'' +
                 '}';
     }

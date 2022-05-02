@@ -59,6 +59,7 @@ public class UserNode implements Serializable {
     public void connect(){
         try{
             NetworkingForConsumer consumer;
+            NetworkingForPublisher publisher;
             Thread t1;
             int userinput = -1;
             String topic_name;
@@ -133,9 +134,21 @@ public class UserNode implements Serializable {
                         System.out.println("0.Publish message");
                         System.out.println("1.Publish file");
                         int operation = sc.nextInt();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 6,topic_name,operation);
-                        t1 = new Thread(consumer);
-                        t1.start();
+                        String con_file_name = null;
+                        switch (operation){
+                            case 0:
+                                System.out.println("Give the contents of the message");
+                                con_file_name = sc.next();
+                                break;
+                            case 1:
+                                System.out.println("Give the file name");
+                                con_file_name = sc.next();
+                                break;
+
+                        }
+                        NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), this,topic_name,operation,con_file_name);
+                        Thread t = new Thread(publish);
+                        t.start();
                         erroneousinput = true;
                         break;
                     case 7:
