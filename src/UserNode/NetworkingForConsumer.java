@@ -20,8 +20,9 @@ public class NetworkingForConsumer implements Runnable{
     private Socket request_socket;
     private UserNode cons;
     boolean exit = false;
-    private Scanner sc = new Scanner(System.in);
     private int operation;
+    private int publisher_operation;
+    private String topic_name = null;
 
 
     public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation){
@@ -42,6 +43,45 @@ public class NetworkingForConsumer implements Runnable{
         }
     }
 
+    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation,String topic_name){
+        this.request_socket = request_socket;
+        this.cons = cons;
+        this.operation = operation;
+        this.topic_name = topic_name;
+        try {
+            localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
+            localinputStream = new ObjectInputStream(request_socket.getInputStream());
+        }catch (SocketException socketException) {
+            System.out.println("\033[0;31m" + "Socket Error while constructing networking for consumer" + "\033[0m");
+            shutdownConnection();
+            return;
+        }catch (IOException e) {
+            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
+            shutdownConnection();
+            return;
+        }
+    }
+
+
+    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation,String topic_name, int publisher_operation){
+        this.request_socket = request_socket;
+        this.cons = cons;
+        this.operation = operation;
+        this.topic_name = topic_name;
+        this.publisher_operation = publisher_operation;
+        try {
+            localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
+            localinputStream = new ObjectInputStream(request_socket.getInputStream());
+        }catch (SocketException socketException) {
+            System.out.println("\033[0;31m" + "Socket Error while constructing networking for consumer" + "\033[0m");
+            shutdownConnection();
+            return;
+        }catch (IOException e) {
+            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
+            shutdownConnection();
+            return;
+        }
+    }
 
 
     public synchronized void notifyThread(){
@@ -52,7 +92,7 @@ public class NetworkingForConsumer implements Runnable{
     public synchronized void push(){
         System.out.println("Pushing operation has started");
         try {
-            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons,this);
+            NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), cons,topic_name,this,publisher_operation);
             Thread t = new Thread(publish);
             t.start();
             //waits until input is given by the publisher and servers the push request in the background
@@ -76,11 +116,16 @@ public class NetworkingForConsumer implements Runnable{
         shutdownConnection();
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
+        //port for connecting to broker for consumer traffic
         int port = new_broker.getValue2()[0];
         System.out.println("New broker port: " + port);
         NetworkingForConsumer new_connection = null;
         try {
-            new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,operation);
+            if(topic_name == null) {
+                new_connection = new NetworkingForConsumer(new Socket(IP, port), cons, operation);
+            }else{
+                new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,operation,topic_name);
+            }
             shutdownConnection();
         } catch (ConnectException connectException){
             System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
@@ -136,7 +181,7 @@ public class NetworkingForConsumer implements Runnable{
                 System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
                 break;
             case 3:
-                if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,sc,cons)) == null){
+                if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,topic_name,cons)) == null){
                     shutdownConnection();
                     break;
                 }else if(index == -1){
@@ -152,7 +197,7 @@ public class NetworkingForConsumer implements Runnable{
                 }
 
             case 4:
-                if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,sc,this.cons)) == null){
+                if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,topic_name,this.cons)) == null){
                     shutdownConnection();
                     return;
                 }else if(index == -1){

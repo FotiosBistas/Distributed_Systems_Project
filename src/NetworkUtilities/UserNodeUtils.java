@@ -95,17 +95,15 @@ public class UserNodeUtils {
      * @param localinputStream Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket Accepts the local socket.
-     * @param sc Accepts a scanner instance in order to read the topic name for the command line.
+     * @param topic_name Accepts the topic name that the user wants to subscribe to.
      * @param cons Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
-    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Scanner sc, UserNode cons){
+    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode cons){
         if(GeneralUtils.sendMessage(Messages.REGISTER,localoutputStream) == null){
             return null;
         }
-        System.out.println("What topic are you interested in?");
-        sc = new Scanner(System.in);
-        String topic_name = sc.next();
+        System.out.println("The topic that you are going to be subscribed to: ");
         System.out.println(ConsoleColors.PURPLE + topic_name + ConsoleColors.RESET);
         if(topic_name == null){
             return null;
@@ -147,17 +145,15 @@ public class UserNodeUtils {
      * @param localinputStream Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket Accepts the local socket.
-     * @param sc Accepts a scanner instance in order to read the topic name for the command line.
+     * @param topic_name Accepts the topic name that the user wants to subscribe to.
      * @param cons Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
-    public static Integer unsubscribe(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Scanner sc,UserNode cons){
+    public static Integer unsubscribe(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,String topic_name,UserNode cons){
         if(GeneralUtils.sendMessage(Messages.UNSUBSCRIBE,localoutputStream) == null){
             return null;
         }
-        System.out.println("Disconnect from what topic?");
-        sc = new Scanner(System.in);
-        String topic_name = sc.next();
+        System.out.println("Disconnecting from topic...");
         System.out.println(ConsoleColors.PURPLE + topic_name + ConsoleColors.RESET);
         if(topic_name == null){
             return null;
@@ -361,17 +357,16 @@ public class UserNodeUtils {
      * @param localinputStream Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket Accepts the local socket.
-     * @param sc Accepts a scanner instance in order to read from the command line.
+     * @param topic_name Accepts the topic_name that it wants to push to.
      * @param pub Accepts a node to access its name and other necessary fiels.
      * @param thread_continue Resumes the thread for consumer in order to send the file in the background.
      * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
-    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Scanner sc, UserNode pub, NetworkingForConsumer thread_continue) {
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, NetworkingForConsumer thread_continue, int file_or_text) {
         System.out.println("Requesting for proper broker from the connection");
         notifyBrokersNewMessage(localoutputStream);
 
-        System.out.println("Please give the name of the topic");
-        String topic_name = sc.next();
+
         if (GeneralUtils.sendMessage(topic_name, localoutputStream) == null) {
             return null;
         }
@@ -423,13 +418,14 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                int choice = sc.nextInt();
                 System.out.println("0.Send file");
                 System.out.println("1.Send text message");
-                switch (choice){
+                Scanner sc;
+                switch (file_or_text){
                     case 0:
                         push_file(localoutputStream);
                         System.out.println("Give the name of the file");
+                        sc = new Scanner(System.in);
                         String filename = sc.next();
                         thread_continue.notifyThread();
                         MultimediaFile new_file = new MultimediaFile(filename, pub.getName());
@@ -438,6 +434,7 @@ public class UserNodeUtils {
                     case 1:
                         push_message(localoutputStream);
                         System.out.println("Type the contents of the text message");
+                        sc = new Scanner(System.in);
                         String contents = sc.next();
                         thread_continue.notifyThread();
                         Text_Message new_text = new Text_Message(pub.getName(),contents);

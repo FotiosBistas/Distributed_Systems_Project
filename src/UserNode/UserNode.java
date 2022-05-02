@@ -60,11 +60,12 @@ public class UserNode implements Serializable {
         try{
             NetworkingForConsumer consumer;
             Thread t1;
-            Scanner sc = new Scanner(System.in);
             int userinput = -1;
+            String topic_name;
+            Scanner sc;
             while (!exit) {
+                sc = new Scanner(System.in);
                 while(erroneousinput) {
-                    sc = new Scanner(System.in);
                     try {
                         System.out.println("0.Send Broker List");
                         System.out.println("1.Send ID list");
@@ -105,14 +106,17 @@ public class UserNode implements Serializable {
                         erroneousinput = true;
                         break;
                     case 3:
-                        // threads for consumer requests and responses from the first random broker
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 3);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 3,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
                         break;
                     case 4:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 4);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 4,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -124,7 +128,12 @@ public class UserNode implements Serializable {
                         erroneousinput = true;
                         break;
                     case 6:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 6);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        System.out.println("0.Publish message");
+                        System.out.println("1.Publish file");
+                        int operation = sc.nextInt();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 6,topic_name,operation);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
