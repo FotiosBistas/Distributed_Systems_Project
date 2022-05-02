@@ -196,6 +196,10 @@ public class  Broker{
     }
 
 
+    public void addToMessageQueue(Value val,Topic topic){
+
+    }
+
     /**
      * Sorts the broker list using bubblesort.
      * The mechanic behind this is an index list that changes according to the ids of the brokers.

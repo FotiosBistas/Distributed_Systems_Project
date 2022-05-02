@@ -104,6 +104,32 @@ public class BrokerUtils {
     }
 
     /**
+     * Receives the contents of a text message file along with its metadata.
+     * @param localinputStream  accepts the local input stream.
+     * @param socket accepts the corresponding socket of the streams.
+     * @return Returns -1 if everything worked properly.If it returns null there was an error.
+     */
+    public static Text_Message receiveTextMessage(ObjectInputStream localinputStream, Socket socket) {
+        System.out.println("Receiving text message...");
+        System.out.println("Receiving publisher");
+        String publisher;
+        if((publisher = GeneralUtils.readUTFString(localinputStream,socket)) == null) {
+            return null;
+        }
+        String date_created;
+        if((date_created = GeneralUtils.readUTFString(localinputStream,socket)) == null){
+            return null;
+        }
+        String contents;
+        if((contents = GeneralUtils.readUTFString(localinputStream,socket)) == null){
+            return null;
+        }
+        Text_Message new_text_message = new Text_Message(publisher,date_created,contents);
+        return new_text_message;
+    }
+
+
+    /**
      * Receives all the chunk for the specific file that is read from the input stream.
      * @param localinputStream  accepts the local input stream.
      * @param socket accepts the corresponding socket of the streams.
@@ -115,12 +141,17 @@ public class BrokerUtils {
         if (file_name == null) {
             return null;
         }
-        System.out.println("Receiving date...");
+        System.out.println("Receiving the date that the file was sent to the network...");
         String date_created = GeneralUtils.readUTFString(localinputStream,socket);
         if (date_created == null) {
             return null;
         }
-        System.out.println("Receiving profile name...");
+        System.out.println("Receiving the actual date of the file...");
+        String actual_date = GeneralUtils.readUTFString(localinputStream,socket);
+        if (actual_date == null) {
+            return null;
+        }
+        System.out.println("Receiving publisher name...");
         String profile_name = GeneralUtils.readUTFString(localinputStream,socket);
         if (profile_name == null) {
             return null;
@@ -137,8 +168,8 @@ public class BrokerUtils {
             return null;
         }
         System.out.println("You will receive: " + number_of_chunks + " chunks");
-        String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
-        System.out.println(path_for_broker + new_file);
+        //String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
+        //System.out.println(path_for_broker + new_file);
         //FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
         System.out.println("Receiving file...");
         Chunk received_chunk;
@@ -169,11 +200,10 @@ public class BrokerUtils {
             System.out.println("Chunks size now is: " + chunks.size());
         }
         System.out.println("Finished receiving file");
-        MultimediaFile new_m_file = new MultimediaFile(new_file,profile_name,date_created,length,chunks);
+        MultimediaFile new_m_file = new MultimediaFile(new_file,profile_name,date_created,actual_date,length,chunks);
         System.out.println(new_m_file);
         return new_m_file;
     }
-
 
     /**
      * Sends the broker list using a for loop. When sending each broker it must also send its two port numbers. The broker list contains Tuples of type <String,int[]> string being the IP and int[] are the ports.

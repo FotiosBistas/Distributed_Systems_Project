@@ -11,11 +11,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
-public class MultimediaFile implements Serializable {
+public class MultimediaFile extends Value implements Serializable {
     private String multimediaFileName;
-    private String profileName;
-    private String dateCreated;
     private long length;
+    private String actual_date;
     //private String framerate;
     //private String frameWidth;
     //private String frameHeight;
@@ -25,16 +24,12 @@ public class MultimediaFile implements Serializable {
         return multimediaFileName;
     }
 
-    public String getProfileName() {
-        return profileName;
-    }
-
-    public String getDateCreated() {
-        return dateCreated;
-    }
-
     public long getLength() {
         return length;
+    }
+
+    public String getActual_date() {
+        return actual_date;
     }
 
     public ArrayList<Chunk> getMultimediaFileChunk() {
@@ -42,8 +37,8 @@ public class MultimediaFile implements Serializable {
     }
 
     public MultimediaFile(String filename, String profileName){
+        super(profileName);
         this.multimediaFileName = filename;
-        this.profileName = profileName;
         System.out.println("Filename is: " + filename);
         System.out.println("User's profile is: " + profileName);
         Path path = FileSystems.getDefault().getPath(filename);
@@ -53,16 +48,17 @@ public class MultimediaFile implements Serializable {
             this.length = attr.size();
             long cTime = attr.creationTime().toMillis();
             ZonedDateTime t = Instant.ofEpochMilli(cTime).atZone(ZoneId.of("UTC"));
-            this.dateCreated = DateTimeFormatter.ofPattern("MM/dd/yyyy").format(t);
+            this.actual_date = DateTimeFormatter.ofPattern("MM/dd/yyyy").format(t);
         } catch (IOException e) {
             e.printStackTrace();
         }
         splitFile(new File(filename));
     }
 
-    public MultimediaFile(String multimediaFileName,String profileName,String dateCreated,long length,ArrayList<Chunk> multimediaFileChunk){
+    public MultimediaFile(String multimediaFileName,String profileName,String dateCreated,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
+        super(profileName, dateCreated);
         this.multimediaFileName = multimediaFileName;
-        this.dateCreated = dateCreated;
+        this.actual_date = actual_date;
         this.length = length;
         this.multimediaFileChunk = multimediaFileChunk;
     }
@@ -103,11 +99,10 @@ public class MultimediaFile implements Serializable {
 
     @Override
     public String toString() {
-        return "MultimediaFile{" +
+        return super.toString() + " MultimediaFile{" +
                 "multimediaFileName='" + multimediaFileName + '\'' +
-                ", profileName='" + profileName + '\'' +
-                ", dateCreated='" + dateCreated + '\'' +
                 ", length=" + length +
+                ", actual_date='" + actual_date + '\'' +
                 ", multimediaFileChunk=" + multimediaFileChunk +
                 '}';
     }

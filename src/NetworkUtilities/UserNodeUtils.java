@@ -17,10 +17,7 @@ public class UserNodeUtils {
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer showConversationData(ObjectOutputStream localoutputStream){
-        if(GeneralUtils.sendMessage(Messages.SHOW_CONVERSATION_DATA,localoutputStream) == null){
-            return null;
-        }
-        return -1;
+        return GeneralUtils.sendMessage(Messages.SHOW_CONVERSATION_DATA,localoutputStream);
     }
 
     /**
@@ -29,10 +26,7 @@ public class UserNodeUtils {
      * @return returns the exit value of the program -1 indicating success and null indicating error.
      */
     public static Integer getTopicList(ObjectOutputStream localoutputStream){
-        if(GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST,localoutputStream) == null){
-            return null;
-        }
-        return -1;
+        return GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST,localoutputStream);
     }
 
     /**
@@ -51,6 +45,24 @@ public class UserNodeUtils {
      */
     public static Integer push_file(ObjectOutputStream localoutputStream) {
         return GeneralUtils.sendMessage(Messages.PUSH_FILE,localoutputStream);
+    }
+
+    /**
+     * Sends a Message type PUSH_MESSAGE from the Messages ENUM found in the tools package.
+     * @param localoutputStream accepts the local output stream.
+     * @return returns the exit value of the program -1 indicating success and null indicating error.
+     */
+    public static Integer push_message(ObjectOutputStream localoutputStream) {
+        return GeneralUtils.sendMessage(Messages.PUSH_MESSAGE,localoutputStream);
+    }
+
+    /**
+     * Notifies the broker that there is a new message so publisher and broker can synchronize.
+     * @param localoutputStream Accepts the local output stream.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs.
+     */
+    public static Integer notifyBrokersNewMessage(ObjectOutputStream localoutputStream){
+        return GeneralUtils.sendMessage(Messages.NOTIFY,localoutputStream);
     }
 
     /**
@@ -265,25 +277,35 @@ public class UserNodeUtils {
         return -1;
     }
 
+    public static Integer notifyFailure() {
+        return -1;
+    }
+
+
     /**
-     * Notifies the broker that there is a new message so publisher and broker can synchronize.
+     * Sends a text message to the network using the output stream.
+     * @param message Accepts a text message class instance.
      * @param localoutputStream Accepts the local output stream.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer notifyBrokersNewMessage(ObjectOutputStream localoutputStream){
-        System.out.println("Notifying broker that there is a new message");
-        if(GeneralUtils.sendMessage(Messages.NOTIFY,localoutputStream) == null){
+    public static Integer sendTextMessage(Text_Message message, ObjectOutputStream localoutputStream) {
+        System.out.println("Sending the publisher of the text message");
+        if(GeneralUtils.sendMessage(message.getPublisher(),localoutputStream) == null) {
+            return null;
+        }
+        System.out.println("Sending the creation date for the message");
+        if(GeneralUtils.sendMessage(message.getDateCreated(),localoutputStream) == null) {
+            return null;
+        }
+        System.out.println("Sending the contents of the text message");
+        if(GeneralUtils.sendMessage(message.getContents(),localoutputStream) == null){
             return null;
         }
         return -1;
     }
 
-    public static Integer notifyFailure() {
-        return -1;
-    }
-
     /**
-     * Sends a multimedia file to the network using the output stream. Instead of sending the whole file it sends its chunks.
+     * Sends a multimedia file to the network using the output stream. Instead of sending the whole file it sends its chunks and its metadata.
      * @param file Accepts a multimedia file class instance.
      * @param localoutputStream Accepts the local output stream.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
@@ -295,12 +317,16 @@ public class UserNodeUtils {
         if(GeneralUtils.sendMessage(file.getMultimediaFileName(),localoutputStream) == null) {
             return null;
         }
-        System.out.println("Sending date created: " + file.getDateCreated());
+        System.out.println("Sending date that the file was sent to the network: " + file.getDateCreated());
         if(GeneralUtils.sendMessage(file.getDateCreated(),localoutputStream) == null){
             return null;
         }
-        System.out.println("Sending profile name: " + file.getProfileName());
-        if(GeneralUtils.sendMessage(file.getProfileName(),localoutputStream) == null){
+        System.out.println("Sending date that the file was created: " + file.getDateCreated());
+        if(GeneralUtils.sendMessage(file.getActual_date(),localoutputStream) == null){
+            return null;
+        }
+        System.out.println("Sending publisher name: " + file.getPublisher());
+        if(GeneralUtils.sendMessage(file.getPublisher(),localoutputStream) == null){
             return null;
         }
         System.out.println("Sending file's length: " + file.getLength());
@@ -397,12 +423,28 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                push_file(localoutputStream);
-                System.out.println("Give the name of the file");
-                String filename = sc.next();
-                thread_continue.notifyThread();
-                MultimediaFile new_file = new MultimediaFile(filename, "Fotis");
-                sendFile(new_file,localoutputStream);
+                int choice = sc.nextInt();
+                System.out.println("0.Send file");
+                System.out.println("1.Send text message");
+                switch (choice){
+                    case 0:
+                        push_file(localoutputStream);
+                        System.out.println("Give the name of the file");
+                        String filename = sc.next();
+                        thread_continue.notifyThread();
+                        MultimediaFile new_file = new MultimediaFile(filename, pub.getName());
+                        sendFile(new_file,localoutputStream);
+                        break;
+                    case 1:
+                        push_message(localoutputStream);
+                        System.out.println("Type the contents of the text message");
+                        String contents = sc.next();
+                        thread_continue.notifyThread();
+                        Text_Message new_text = new Text_Message(pub.getName(),contents);
+                        sendTextMessage(new_text,localoutputStream);
+                        break;
+                }
+
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
                 thread_continue.notifyThread();

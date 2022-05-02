@@ -6,6 +6,8 @@ import Logging.ConsoleColors;
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
+import Tools.MultimediaFile;
+import Tools.Text_Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -53,8 +55,23 @@ public class Publisher_Handler implements Runnable{
                     System.out.println("Received finished operation message");
                     break;
                 case PUSH_FILE:
+                    System.out.println(ConsoleColors.PURPLE + "Notified by publisher that there is a new file" + ConsoleColors.RESET);
+                    MultimediaFile new_file;
+                    if((new_file = BrokerUtils.receiveFile(localinputStream,publisher_connection)) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    //broker.addToMessageQueue(new_file);
+                    shutdownConnection();
+                    break;
+                case PUSH_MESSAGE:
                     System.out.println(ConsoleColors.PURPLE + "Notified by publisher that there is a new message" + ConsoleColors.RESET);
-                    if(BrokerUtils.receiveFile(localinputStream,publisher_connection) == null){
+                    Text_Message new_text_message;
+                    if((new_text_message = BrokerUtils.receiveTextMessage(localinputStream,publisher_connection)) == null){
                         shutdownConnection();
                         return;
                     }

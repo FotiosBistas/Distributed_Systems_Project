@@ -8,6 +8,7 @@ public enum Messages {
     GET_BROKER_LIST,
     GET_ID_LIST,
     SENDING_NICK_NAME,
+    PUSH_MESSAGE,
     PUSH,
     PULL,
     UNSUBSCRIBE,

@@ -61,7 +61,7 @@ public class Consumer_Handler implements Runnable {
             if(message == null){
                 shutdownConnection();
                 return;
-            }else if(message > 23){
+            }else if(message > Messages.values().length){
                 System.out.println("\033[0;31m" + "Out of enum bounds message received " + "\033[0m");
                 continue;
             }
