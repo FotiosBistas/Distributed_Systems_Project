@@ -2,6 +2,7 @@
 package Broker;
 
 
+import Logging.ConsoleColors;
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
@@ -42,13 +43,17 @@ public class Publisher_Handler implements Runnable{
             if(message == null){
                 shutdownConnection();
                 break;
+            }else if(message > Messages.values().length){
+                System.out.println(ConsoleColors.RED + "received erroneous index" + ConsoleColors.RESET);
+                continue;
             }
             Messages message_received = Messages.values()[message];
             switch (message_received){
                 case FINISHED_OPERATION:
                     System.out.println("Received finished operation message");
                     break;
-                case NOTIFY:
+                case PUSH_FILE:
+                    System.out.println(ConsoleColors.PURPLE + "Notified by publisher that there is a new message" + ConsoleColors.RESET);
                     if(BrokerUtils.receiveFile(localinputStream,publisher_connection) == null){
                         shutdownConnection();
                         return;
@@ -57,6 +62,7 @@ public class Publisher_Handler implements Runnable{
                         shutdownConnection();
                         return;
                     }
+                    shutdownConnection();
                     break;
                 case GET_TOPIC_LIST:
                     if(BrokerUtils.sendTopicList(localoutputStream,this.broker) == null){
@@ -68,9 +74,13 @@ public class Publisher_Handler implements Runnable{
                         return;
                     }
                     break;
-                case SEND_APPROPRIATE_BROKER:
+                case NOTIFY:
                     String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
                     if(topic_name == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         return;
                     }
@@ -82,6 +92,14 @@ public class Publisher_Handler implements Runnable{
                         shutdownConnection();
                         return;
                     }
+                    if(BrokerUtils.sendTopicList(localoutputStream,broker) == null){
+                        shutdownConnection();
+                        return;
+                    };
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    };
                     break;
                 default:
                     System.out.println("No known message type was received");
@@ -116,7 +134,9 @@ public class Publisher_Handler implements Runnable{
                 System.out.println("Shutting down local socket");
                 publisher_connection.close();
             }
-        } catch (IOException ioException) {
+        }catch (SocketException socketException){
+            System.out.println(ConsoleColors.RED + "Socket error while trying to shutdown publisher" + ConsoleColors.RESET);
+        }catch (IOException ioException) {
             System.out.println("Error while shutting down connection");
             ioException.printStackTrace();
         }

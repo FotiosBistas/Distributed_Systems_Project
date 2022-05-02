@@ -76,6 +76,29 @@ public class GeneralUtils {
     }
 
     /**
+     * Waits until an long input is read by the input stream using the inputStream.readInt() method.
+     * @param localinputStream  accepts the local input stream.
+     * @param socket accepts the corresponding socket of the streams.
+     * @return returns the input read from the local input stream. If it catches an exception it returns null.
+     */
+    public static Long readLong(ObjectInputStream localinputStream, Socket socket) {
+        try {
+            System.out.println("\033[0;32m" + "Waiting for node prompt" + "\033[0m");
+            Long message = localinputStream.readLong();
+            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
+            return message;
+        } catch (SocketException socketException) {
+            System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + "\033[0m");
+            socketException.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            System.out.println( "\033[1;31m" + "Error in wait for node prompt..." + "\033[0m");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Waits until an object input is read from the input stream using the inputStream.readObject() method.
      * @param localinputStream Accepts the local input stream.
      * @param socket Accepts the local socket.
@@ -170,6 +193,26 @@ public class GeneralUtils {
         }
     }
 
+    /**
+     * Sends long message type.
+     * @param message Accepts any int and sends it as a message.
+     * @param localoutputStream accepts the local output stream.
+     * @return Returns -1 if everything goes well. If an error occurs it returns null.
+     */
+    public static Integer sendMessage(long message,ObjectOutputStream localoutputStream) {
+        try {
+            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
+            localoutputStream.writeLong(message);
+            localoutputStream.flush();
+            return -1;
+        } catch (SocketException socketException) {
+            System.out.println( "\033[1;31m" + "Socket error in send message of int type..." + "\033[0m");
+            return null;
+        } catch (IOException e) {
+            System.out.println( "\033[1;31m" + "Error in send message of int type..." + "\033[0m");
+            return null;
+        }
+    }
 
     /**
      * Write a buffer array to the output stream.

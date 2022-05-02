@@ -21,16 +21,27 @@ public class MultimediaFile implements Serializable {
     //private String frameHeight;
     private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
 
-    public ArrayList<Chunk> getChunks(){
-        return multimediaFileChunk;
-    }
-
-    public String getMultimediaFileName(){
+    public String getMultimediaFileName() {
         return multimediaFileName;
     }
 
+    public String getProfileName() {
+        return profileName;
+    }
 
-    public MultimediaFile(String filename,String profileName){
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public long getLength() {
+        return length;
+    }
+
+    public ArrayList<Chunk> getMultimediaFileChunk() {
+        return multimediaFileChunk;
+    }
+
+    public MultimediaFile(String filename, String profileName){
         this.multimediaFileName = filename;
         this.profileName = profileName;
         System.out.println("Filename is: " + filename);
@@ -47,6 +58,13 @@ public class MultimediaFile implements Serializable {
             e.printStackTrace();
         }
         splitFile(new File(filename));
+    }
+
+    public MultimediaFile(String multimediaFileName,String profileName,String dateCreated,long length,ArrayList<Chunk> multimediaFileChunk){
+        this.multimediaFileName = multimediaFileName;
+        this.dateCreated = dateCreated;
+        this.length = length;
+        this.multimediaFileChunk = multimediaFileChunk;
     }
 
     public void splitFile(File f){
@@ -83,4 +101,14 @@ public class MultimediaFile implements Serializable {
         }
     }
 
+    @Override
+    public String toString() {
+        return "MultimediaFile{" +
+                "multimediaFileName='" + multimediaFileName + '\'' +
+                ", profileName='" + profileName + '\'' +
+                ", dateCreated='" + dateCreated + '\'' +
+                ", length=" + length +
+                ", multimediaFileChunk=" + multimediaFileChunk +
+                '}';
+    }
 }

@@ -45,6 +45,15 @@ public class UserNodeUtils {
     }
 
     /**
+     * Sends a Message type PUSH_FILE from the Messages ENUM found in the tools package.
+     * @param localoutputStream accepts the local output stream.
+     * @return returns the exit value of the program -1 indicating success and null indicating error.
+     */
+    public static Integer push_file(ObjectOutputStream localoutputStream) {
+        return GeneralUtils.sendMessage(Messages.PUSH_FILE,localoutputStream);
+    }
+
+    /**
      * Sends a Message type GET_ID_LIST from the Messages ENUM found in the tools package.
      * @param localoutputStream accepts the local output stream.
      * @return returns the exit value of the program -1 indicating success and null indicating error.
@@ -281,13 +290,25 @@ public class UserNodeUtils {
      */
     public static Integer sendFile(MultimediaFile file, ObjectOutputStream localoutputStream) {
 
-        ArrayList<Chunk> chunks = file.getChunks();
+        ArrayList<Chunk> chunks = file.getMultimediaFileChunk();
         System.out.println("Sending the file name: " + file.getMultimediaFileName());
         if(GeneralUtils.sendMessage(file.getMultimediaFileName(),localoutputStream) == null) {
             return null;
         }
-        System.out.println("Informing broker how many chunks there are: " + file.getChunks().size());
-        if(GeneralUtils.sendMessage(file.getChunks().size(),localoutputStream) == null){
+        System.out.println("Sending date created: " + file.getDateCreated());
+        if(GeneralUtils.sendMessage(file.getDateCreated(),localoutputStream) == null){
+            return null;
+        }
+        System.out.println("Sending profile name: " + file.getProfileName());
+        if(GeneralUtils.sendMessage(file.getProfileName(),localoutputStream) == null){
+            return null;
+        }
+        System.out.println("Sending file's length: " + file.getLength());
+        if(GeneralUtils.sendMessage(file.getLength(),localoutputStream) == null){
+            return null;
+        }
+        System.out.println("Informing broker how many chunks there are: " + file.getMultimediaFileChunk().size());
+        if(GeneralUtils.sendMessage(file.getMultimediaFileChunk().size(),localoutputStream) == null){
             return null;
         }
         for (int i = 0; i < chunks.size(); i++) {
@@ -300,7 +321,7 @@ public class UserNodeUtils {
                 return null;
             }
             System.out.println("Sending the chunk");
-            if(GeneralUtils.sendMessage(chunks.get(i).getChunk(),localoutputStream) == null){
+            if(GeneralUtils.sendMessage(chunks.get(i),localoutputStream) == null){
                 return null;
             }
         }
@@ -308,7 +329,7 @@ public class UserNodeUtils {
     }
 
     /**
-     * Does all the necessary operations in order to push a file given from the command line to the brokers:
+     * Does all the necessary operations in order to push a message or a file given from the command line to the brokers:
      * 1.) Finds the proper broker to push the data to
      * 2.) If the connected broker is the right broker it pushes the file.
      * @param localinputStream Accepts the local input stream.
@@ -317,13 +338,11 @@ public class UserNodeUtils {
      * @param sc Accepts a scanner instance in order to read from the command line.
      * @param pub Accepts a node to access its name and other necessary fiels.
      * @param thread_continue Resumes the thread for consumer in order to send the file in the background.
-     * @return Returns -1 if everything goes well. Returns null if an error occurs.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
     public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Scanner sc, UserNode pub, NetworkingForConsumer thread_continue) {
         System.out.println("Requesting for proper broker from the connection");
-        if (GeneralUtils.sendMessage(Messages.SEND_APPROPRIATE_BROKER, localoutputStream) == null) {
-            return null;
-        }
+        notifyBrokersNewMessage(localoutputStream);
 
         System.out.println("Please give the name of the topic");
         String topic_name = sc.next();
@@ -378,7 +397,7 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                notifyBrokersNewMessage(localoutputStream);
+                push_file(localoutputStream);
                 System.out.println("Give the name of the file");
                 String filename = sc.next();
                 thread_continue.notifyThread();
@@ -389,8 +408,10 @@ public class UserNodeUtils {
                 thread_continue.notifyThread();
                 return null;
             }
+            return -1;
+        }else{
+            return null;
         }
-        return -1;
     }
 
     /**
@@ -425,7 +446,6 @@ public class UserNodeUtils {
         System.out.println("The size of the list is: " + size);
         while (true) {
             System.out.println("Receiving topic list");
-            System.out.println("Received message that the topic list is being sent and now accepting elements");
             messagebroker = GeneralUtils.waitForNodePrompt(localinputStream,socket);
             if(messagebroker == null){
                 return null;

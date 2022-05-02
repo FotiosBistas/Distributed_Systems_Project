@@ -81,6 +81,7 @@ public class NetworkingForConsumer implements Runnable{
         NetworkingForConsumer new_connection = null;
         try {
             new_connection = new NetworkingForConsumer(new Socket(IP,port),cons,operation);
+            shutdownConnection();
         } catch (ConnectException connectException){
             System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
         } catch (IOException ioException) {

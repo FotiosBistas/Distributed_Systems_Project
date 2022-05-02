@@ -3,9 +3,12 @@
 package UserNode;
 
 
+import Logging.ConsoleColors;
 import NetworkUtilities.UserNodeUtils;
+import Tools.Tuple;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Scanner;
@@ -48,13 +51,42 @@ public class NetworkingForPublisher implements Runnable {
         }
     }
 
-
+    public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+        shutdownConnection();
+        String IP = new_broker.getValue1();
+        System.out.println("New connection IP: " + IP);
+        int port = new_broker.getValue2()[1];
+        System.out.println("New broker port: " + port);
+        NetworkingForPublisher new_connection = null;
+        try {
+            new_connection = new NetworkingForPublisher(new Socket(IP,port),pub,thread_continue);
+            shutdownConnection();
+        } catch (ConnectException connectException){
+            System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+            System.out.println(ConsoleColors.RED + "IO error while trying to connect to the new broker" + ConsoleColors.RESET);
+        }
+        Thread t = new Thread(new_connection);
+        t.start();
+    }
 
     @Override
     public void run() {
         System.out.println("New publisher was created");
-        UserNodeUtils.push(localinputStream,localoutputStream,connection,sc,pub,thread_continue);
-        shutdownConnection();
+        Integer index;
+        if((index = UserNodeUtils.push(localinputStream,localoutputStream,connection,sc,pub,thread_continue)) == null){
+            System.out.println(ConsoleColors.RED + "Error while trying to push file" + ConsoleColors.RESET);
+            shutdownConnection();
+            return;
+        }else if(index == -1){
+            System.out.println(ConsoleColors.PURPLE + "Finished the push file operation" + ConsoleColors.RESET);
+            shutdownConnection();
+            return;
+        }else{
+            Tuple<String,int[]> brk = pub.getBrokerList().get(index);
+            startNewConnection(brk,0);
+        }
     }
 
     /**

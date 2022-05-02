@@ -2,9 +2,7 @@ package NetworkUtilities;
 
 
 import Broker.Broker;
-import Tools.Messages;
-import Tools.Topic;
-import Tools.Tuple;
+import Tools.*;
 import UserNode.UserNode;
 import SHA1.SHA1;
 
@@ -111,58 +109,69 @@ public class BrokerUtils {
      * @param socket accepts the corresponding socket of the streams.
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
      */
-    public static Integer receiveFile(ObjectInputStream localinputStream,Socket socket) {
-        try {
-            System.out.println("Receiving file...");
-            String file_name = GeneralUtils.readUTFString(localinputStream,socket);
-            if (file_name == null) {
-                return null;
-            }
-            String new_file = file_name.substring(file_name.lastIndexOf("\\") + 1);
-            System.out.println("Received file: " + new_file);
-            Integer number_of_chunks = GeneralUtils.waitForNodePrompt(localinputStream,socket);
-            if (number_of_chunks == null) {
-                return null;
-            }
-            System.out.println("You will receive: " + number_of_chunks + " chunks");
-            String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
-            System.out.println(path_for_broker + new_file);
-            FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
-            System.out.println("Receiving file...");
-            byte[] buffer = new byte[512 * 1024];
-            ArrayList<byte[]> chunks = new ArrayList<>();
-            while (true) {
-                //if you received all the chunks end the operation
-                if (number_of_chunks == chunks.size()) {
-                    System.out.println("Finished receiving: " + chunks.size() + "chunks");
-                    fileOutputStream.close();
-                    break;
-                }
-                Integer index = GeneralUtils.waitForNodePrompt(localinputStream,socket);
-                if(index == null){
-                    return null;
-                }
-                System.out.println("You are receiving chunk: " + index);
-                Integer actual_size = GeneralUtils.waitForNodePrompt(localinputStream,socket);
-                if(actual_size == null){
-                    return null;
-                }
-                System.out.println("Actual size of the incoming chunk is: " + actual_size);
-                if((buffer = GeneralUtils.readBuffer(localinputStream,buffer,0,actual_size)) == null){
-                    return null;
-                }
-                byte[] temp = buffer.clone();
-                fileOutputStream.write(temp, 0, actual_size);
-                fileOutputStream.flush();
-                chunks.add(temp);
-                System.out.println("Chunks size now is: " + chunks.size());
-            }
-            System.out.println("Finished receiving file");
-            return -1;
-        } catch (IOException ioException) {
-            System.out.println("asdfasdf");
+    public static MultimediaFile receiveFile(ObjectInputStream localinputStream, Socket socket) {
+        System.out.println("Receiving file...");
+        String file_name = GeneralUtils.readUTFString(localinputStream,socket);
+        if (file_name == null) {
             return null;
         }
+        System.out.println("Receiving date...");
+        String date_created = GeneralUtils.readUTFString(localinputStream,socket);
+        if (date_created == null) {
+            return null;
+        }
+        System.out.println("Receiving profile name...");
+        String profile_name = GeneralUtils.readUTFString(localinputStream,socket);
+        if (profile_name == null) {
+            return null;
+        }
+        System.out.println("Receiving file's length name...");
+        Long length = GeneralUtils.readLong(localinputStream,socket);
+        if (length == null) {
+            return null;
+        }
+        String new_file = file_name.substring(file_name.lastIndexOf("\\") + 1);
+        System.out.println("Received file: " + new_file);
+        Integer number_of_chunks = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+        if (number_of_chunks == null) {
+            return null;
+        }
+        System.out.println("You will receive: " + number_of_chunks + " chunks");
+        String path_for_broker = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\";
+        System.out.println(path_for_broker + new_file);
+        //FileOutputStream fileOutputStream = new FileOutputStream(new File(path_for_broker + new_file));
+        System.out.println("Receiving file...");
+        Chunk received_chunk;
+        ArrayList<Chunk> chunks = new ArrayList<>();
+        while (true) {
+            //if you received all the chunks end the operation
+            if (number_of_chunks == chunks.size()) {
+                System.out.println("Finished receiving: " + chunks.size() + "chunks");
+                //fileOutputStream.close();
+                break;
+            }
+            Integer index = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(index == null){
+                return null;
+            }
+            System.out.println("You are receiving chunk: " + index);
+            Integer actual_size = GeneralUtils.waitForNodePrompt(localinputStream,socket);
+            if(actual_size == null){
+                return null;
+            }
+            System.out.println("Actual size of the incoming chunk is: " + actual_size);
+            if((received_chunk = (Chunk) GeneralUtils.readObject(localinputStream,socket)) == null){
+                return null;
+            }
+            //fileOutputStream.write(temp, 0, actual_size);
+            //fileOutputStream.flush();
+            chunks.add(received_chunk);
+            System.out.println("Chunks size now is: " + chunks.size());
+        }
+        System.out.println("Finished receiving file");
+        MultimediaFile new_m_file = new MultimediaFile(new_file,profile_name,date_created,length,chunks);
+        System.out.println(new_m_file);
+        return new_m_file;
     }
 
 
