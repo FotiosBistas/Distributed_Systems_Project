@@ -24,7 +24,6 @@ public class  Broker{
 
     private List<Topic> Topics = new ArrayList<>();
     private HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
-    private HashMap<String, Value> message_queue = new HashMap<>();
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> id_list = new ArrayList<>();
@@ -97,14 +96,6 @@ public class  Broker{
 
     public void setBrokers_Topics(HashMap<Integer, ArrayList<Topic>> brokers_Topics) {
         Brokers_Topics = brokers_Topics;
-    }
-
-    public HashMap<String, Value> getMessage_queue() {
-        return message_queue;
-    }
-
-    public void setMessage_queue(HashMap<String, Value> message_queue) {
-        this.message_queue = message_queue;
     }
 
     public List<Tuple<String, int[]>> getBrokerList() {
@@ -196,8 +187,18 @@ public class  Broker{
     }
 
 
-    public void addToMessageQueue(Value val,Topic topic){
-
+    public void addToMessageQueue(Value val,String topic_name){
+        Topic temp = null;
+        for (Topic topic:Topics) {
+            if(topic.getName().equals(topic_name)){
+                temp = topic;
+                break;
+            }
+        }
+        if(temp == null){
+            System.out.println(ConsoleColors.RED + "No topic with the name: " + topic_name + " was found" + ConsoleColors.RESET);
+        }
+        temp.addToMessageQueue(val);
     }
 
     /**

@@ -21,6 +21,7 @@ public class Publisher_Handler implements Runnable{
     private ObjectOutputStream localoutputStream;
     private final int chunksize = 512*1024;
     private final Broker broker;
+    private String topic_name;
 
     public Publisher_Handler(Socket publisher_connection, Broker broker){
         this.publisher_connection = publisher_connection;
@@ -65,7 +66,7 @@ public class Publisher_Handler implements Runnable{
                         shutdownConnection();
                         return;
                     }
-                    //broker.addToMessageQueue(new_file);
+                    broker.addToMessageQueue(new_file,topic_name);
                     shutdownConnection();
                     break;
                 case PUSH_MESSAGE:
@@ -79,6 +80,7 @@ public class Publisher_Handler implements Runnable{
                         shutdownConnection();
                         return;
                     }
+                    broker.addToMessageQueue(new_text_message,topic_name);
                     shutdownConnection();
                     break;
                 case GET_TOPIC_LIST:
@@ -92,7 +94,7 @@ public class Publisher_Handler implements Runnable{
                     }
                     break;
                 case NOTIFY:
-                    String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
+                    topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,publisher_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
