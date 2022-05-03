@@ -37,13 +37,17 @@ public class Topic implements Serializable{
     }
 
     public synchronized void addSubscription(String new_cons){
-        subscribedUsers.add(new_cons);
-        last_message.put(new_cons,0);
+        if(!isUserSubscribed(new_cons)){
+            subscribedUsers.add(new_cons);
+            last_message.put(new_cons, 0);
+        }
     }
 
     public synchronized void removeSubscription(String new_cons){
-        subscribedUsers.remove(new_cons);
-        last_message.remove(new_cons);
+        if(isUserSubscribed(new_cons)) {
+            subscribedUsers.remove(new_cons);
+            last_message.remove(new_cons);
+        }
     }
 
     public synchronized void addToMessageQueue(Value message){

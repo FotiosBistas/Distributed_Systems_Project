@@ -1,6 +1,7 @@
 package UserNode;
 
 import Logging.ConsoleColors;
+import Tools.Topic;
 import Tools.Tuple;
 import Tools.Value;
 
@@ -22,6 +23,7 @@ public class UserNode implements Serializable {
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
     private HashMap<String, Value> message_list;
+    private List<String> SubscribedTopics = new ArrayList<>();
 
     UserNode(String ip,int port,String name){
         this.ip = ip;
@@ -123,7 +125,9 @@ public class UserNode implements Serializable {
                         erroneousinput = true;
                         break;
                     case 5:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 5);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 5,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -177,6 +181,26 @@ public class UserNode implements Serializable {
         message_list.put(topic_name, new_value);
     }
 
+    public synchronized void addNewSubscription(String topic_name){
+        SubscribedTopics.add(topic_name);
+    }
+
+    public synchronized void removeSubscription(String topic_name){
+        SubscribedTopics.remove(topic_name);
+    }
+
+
+    /**
+     * uses the topic class to get the subscribed users and sends them the latest message
+     */
+    public void pull(String topic){
+        Topic temp;
+        for (String value : SubscribedTopics) {
+            //start a connection with the appropriate broker and ask it for the topic's message list and the topic itself
+
+        }
+        //with temp scan all the consumer connection list and send the new values
+    }
 
     /**
      * Sends a pull request periodically to the corresponding broker port.

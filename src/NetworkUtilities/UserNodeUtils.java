@@ -543,4 +543,68 @@ public class UserNodeUtils {
         return -1;
     }
 
+
+
+    public static Integer receiveConversationData(ObjectOutputStream localoutputStream,ObjectInputStream localinputStream,Socket socket,String topic_name){
+        System.out.println("Requesting for proper broker from the connection");
+        if(showConversationData(localoutputStream) == null){
+            return null;
+        }
+
+
+        if (GeneralUtils.sendMessage(topic_name, localoutputStream) == null) {
+            return null;
+        }
+        System.out.println("Waiting to receive finished operation message that the broker received the topic name");
+        Integer broker_message;
+        if ((broker_message = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+            return null;
+        } else if (broker_message == Messages.FINISHED_OPERATION.ordinal()) {
+            System.out.println("Broker received the topic name");
+        }
+        System.out.println("Waiting to receive correct broker message from the broker");
+        if ((broker_message = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+            return null;
+        } else if (Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal() == broker_message) {
+            //waiting for broker to send the index of the correct broker in the broker list
+            System.out.println("Receiving the index for the correct broker");
+            Integer index;
+            if ((index = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+                return null;
+            }
+            System.out.println("The index received is: " + index);
+            return index;
+        } else if (Messages.I_AM_THE_CORRECT_BROKER.ordinal() == broker_message) {
+            if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                return null;
+            }
+            System.out.println("Requesting for topic list from the broker");
+            if(GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST,localoutputStream) == null){
+                return null;
+            }
+            ArrayList<Topic> topics = receiveTopicList(localoutputStream,localinputStream,socket);
+            if(topics == null){
+                return null;
+            }else if(topics.isEmpty()){
+                System.out.println("\033[0;31m" + "Received empty list" + "\033[0m");
+                return null;
+            }
+            Topic temp = null;
+            for (Topic topic : topics) {
+                if (topic.getName().equals(topic_name)) {
+                    System.out.println("Found the right topic: " + topic.getName());
+                    temp = topic;
+                    break;
+                }
+            }
+            if(temp == null){
+                System.out.println(ConsoleColors.RED + "There isn't a topic with topic name: " + topic_name + ConsoleColors.RESET);
+                return null;
+            }
+            System.out.println(ConsoleColors.PURPLE + "Showing message queue: " + ConsoleColors.RESET);
+            System.out.println(temp.getMessage_queue());
+        }
+        return -1;
+    }
+
 }

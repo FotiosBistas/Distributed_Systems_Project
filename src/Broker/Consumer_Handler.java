@@ -3,6 +3,7 @@ package Broker;
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
+import Tools.Topic;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -122,10 +123,31 @@ public class Consumer_Handler implements Runnable {
                     }
                     break;
                 case SHOW_CONVERSATION_DATA:
+                    String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
+                    if(topic_name == null){
+                        shutdownConnection();
+                        return;
+                    }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         return;
                     }
+                    Boolean correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
+                    if(correct == null){
+                        shutdownConnection();
+                        return;
+                    } else if(!correct){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(BrokerUtils.sendTopicList(localoutputStream,broker) == null){
+                        shutdownConnection();
+                        return;
+                    };
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    };
                     break;
                 default:
                     System.out.println("No known message type was received");

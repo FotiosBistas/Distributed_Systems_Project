@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Scanner;
 public class NetworkingForConsumer implements Runnable{
 
     private ObjectOutputStream localoutputStream;
@@ -21,7 +20,6 @@ public class NetworkingForConsumer implements Runnable{
     private UserNode cons;
     boolean exit = false;
     private int operation;
-    private int publisher_operation;
     private String topic_name = null;
 
 
@@ -63,31 +61,6 @@ public class NetworkingForConsumer implements Runnable{
     }
 
 
-    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation,String topic_name, int publisher_operation){
-        this.request_socket = request_socket;
-        this.cons = cons;
-        this.operation = operation;
-        this.topic_name = topic_name;
-        this.publisher_operation = publisher_operation;
-        try {
-            localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
-            localinputStream = new ObjectInputStream(request_socket.getInputStream());
-        }catch (SocketException socketException) {
-            System.out.println("\033[0;31m" + "Socket Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }catch (IOException e) {
-            System.out.println("\033[0;31m" + "Error while constructing networking for consumer" + "\033[0m");
-            shutdownConnection();
-            return;
-        }
-    }
-
-
-    public synchronized void notifyThread(){
-        System.out.println("Waking up networking for consumer");
-        notifyAll();
-    }
 
 
     public void pull(String topic){
@@ -167,6 +140,7 @@ public class NetworkingForConsumer implements Runnable{
                     shutdownConnection();
                     break;
                 }else if(index == -1){
+                    cons.addNewSubscription(topic_name);
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
@@ -183,6 +157,7 @@ public class NetworkingForConsumer implements Runnable{
                     shutdownConnection();
                     return;
                 }else if(index == -1){
+                    cons.removeSubscription(topic_name);
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         break;
@@ -193,17 +168,21 @@ public class NetworkingForConsumer implements Runnable{
                     startNewConnection(brk,4);
                     break;
                 }
-
             case 5:
-                if(UserNodeUtils.showConversationData(localoutputStream) == null){
+                if((index = UserNodeUtils.receiveConversationData(localoutputStream,localinputStream,request_socket,topic_name)) == null){
                     shutdownConnection();
                     return;
+                }else if(index == -1){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                }else{
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,5);
+                    break;
                 }
-                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                    shutdownConnection();
-                    return;
-                }
-                break;
             default:
                 System.out.println("Invalid Request... Try again");
                 shutdownConnection();

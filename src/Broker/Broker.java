@@ -408,18 +408,6 @@ public class  Broker{
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
     }
 
-    /**
-     * uses the topic class to get the subscribed users and sends them the latest message
-     */
-    public void pull(String topic){
-        Topic temp;
-        for (Topic value : Topics) {
-            if (value.getName().equals(topic)) {
-                temp = value;
-            }
-        }
-        //with temp scan all the consumer connection list and send the new values
-    }
 
     /**
      * Shutdowns socket connection in broker that tried to communicate with other brokers.
@@ -456,12 +444,25 @@ public class  Broker{
             return null;
         }
         System.out.println("The identifier for the topic: " + topic + " is: " + identifier);
-        int index = 0;
+        Integer index = null;
         ArrayList<Integer> temp = new ArrayList<>();
         for(int i = 0 ; i < id_list.size() ; i++){
-            temp.add(id_list.get(i) - identifier);
+
+            if(i == 0){
+                if (id_list.get(i) < identifier && identifier < id_list.get(i) + 100) {
+                    index = i;
+                    break;
+                }
+            }else {
+                if (id_list.get(i) + 1 < identifier && identifier < id_list.get(i) + 100) {
+                    index = i;
+                    break;
+                }
+            }
         }
-        index = temp.indexOf(Collections.max(temp));
+        if(index == null){
+            index = id_list.size() - 1;
+        }
         System.out.println("The correct Broker is: " + Arrays.toString(BrokerList.get(index).getValue2()) + " and id: " + id_list.get(index));
         return index;
     }
