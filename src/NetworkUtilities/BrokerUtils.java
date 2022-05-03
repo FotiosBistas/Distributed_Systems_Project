@@ -362,7 +362,6 @@ public class BrokerUtils {
      * @return Returns the nickname if everything worked properly.If it returns null there was an error.
      */
     public static String receiveNickname(ObjectInputStream localinputStream, Socket socket) {
-
         System.out.println( "\033[0;32m" + "Receiving client's nickname" + "\033[0m");
         String nickname;
         if((nickname = SHA1.encrypt(GeneralUtils.readUTFString(localinputStream,socket))) == null){
@@ -372,7 +371,29 @@ public class BrokerUtils {
         return nickname;
     }
 
-    public static Integer servePullRequest(){
+
+    /**
+     * Serves the pull request for the specific topic in the parameter list. It sends its message queue.
+     * @param localinputStream Accepts the local input stream.
+     * @param socket Accepts the local socket.
+     * @param topic_name Accepts the topic name we want to serve the topic request for.
+     * @return Returns -1 if everything goes well. If it returns null there was an error.
+     */
+    public static Integer servePullRequest(ObjectOutputStream localoutputStream,ObjectInputStream localinputStream,Socket socket,String topic_name,Broker broker){
+        System.out.println("Topic name: " + topic_name);
+        Topic topic = null;
+        for (int i = 0; i < broker.getTopics().size(); i++) {
+            if (topic_name.equals(broker.getTopics().get(i).getName())) {
+                topic = broker.getTopics().get(i);
+            }
+        }
+        if(topic == null){
+            System.out.println( "\033[0;31m" + "There is no such topic in the topic list of the broker" + "\033[0m");
+            return null;
+        }
+        if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+            return null;
+        }
         return -1;
     }
 

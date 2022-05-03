@@ -4,6 +4,7 @@ import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
 import Tools.Topic;
+import UserNode.UserNode;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -66,6 +67,8 @@ public class Consumer_Handler implements Runnable {
                 System.out.println("\033[0;31m" + "Out of enum bounds message received " + "\033[0m");
                 continue;
             }
+            String topic_name;
+            Boolean correct;
             System.out.println("\033[0;35m" + "Received index: " + message + "\033[0m");
             Messages message_received = Messages.values()[message];
             switch (message_received){
@@ -123,9 +126,7 @@ public class Consumer_Handler implements Runnable {
                     }
                     break;
                 case PULL:
-
-                case SHOW_CONVERSATION_DATA:
-                    String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
@@ -134,7 +135,29 @@ public class Consumer_Handler implements Runnable {
                         shutdownConnection();
                         return;
                     }
-                    Boolean correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
+                    correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
+                    if(correct == null){
+                        shutdownConnection();
+                        return;
+                    } else if(!correct){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(BrokerUtils.servePullRequest(localoutputStream,localinputStream,consumer_connection,topic_name,broker) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                case SHOW_CONVERSATION_DATA:
+                    topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
+                    if(topic_name == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
                     if(correct == null){
                         shutdownConnection();
                         return;

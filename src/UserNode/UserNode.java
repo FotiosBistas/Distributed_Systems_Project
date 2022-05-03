@@ -222,11 +222,11 @@ public class UserNode implements Serializable {
             }
         }
 
-        public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+        public void startNewConnection(Tuple<String,int[]> new_broker){
             System.out.println("The new IP is: " + new_broker.getValue1());
             String IP = new_broker.getValue1();
             System.out.println("The new port is: " + new_broker.getValue2()[1]);
-            Integer port = new_broker.getValue2()[1];
+            Integer port = new_broker.getValue2()[0];
             Pull_Request new_request = null;
             try {
                 new_request = new Pull_Request(topic,new Socket(IP,port));
@@ -248,10 +248,43 @@ public class UserNode implements Serializable {
         public void pull(String topic){
 
             //start a connection with the appropriate broker and ask it for the topic's message list and the topic itself
-            if(GeneralUtils.sendMessage(Messages.PULL,localoutputStream) == null){
-                shutdownConnection();
-                return;
+            while(true) {
+                if (GeneralUtils.sendMessage(Messages.PULL, localoutputStream) == null) {
+                    shutdownConnection();
+                    return;
+                }
+                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
+                if(message_broker == null){
+                    shutdownConnection();
+                    return;
+                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
+                    break;
+                }
             }
+            Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
+            if(message_broker == null){
+                return;
+            }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
+                Topic temp_topic = (Topic) GeneralUtils.readObject(localinputStream,pull_request);
+                if(temp_topic == null){
+                    return;
+                }else{
+                    ArrayList<Value> messages = temp_topic.findLatestMessages(getName());
+                    for (Value val:messages) {
+                        addNewMessage(topic,val);
+                    }
+                }
+            }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {
+                //waiting for broker to send the index of the correct broker in the broker list
+                System.out.println("Receiving the index for the correct broker");
+                Integer index;
+                if ((index = GeneralUtils.waitForNodePrompt(localinputStream, pull_request)) == null) {
+                    return;
+                }
+                System.out.println("The index received is: " + index);
+                startNewConnection(BrokerList.get(index));
+            }
+
         }
 
         @Override
@@ -284,17 +317,16 @@ public class UserNode implements Serializable {
      * Sends a pull request periodically to the corresponding broker port.
      */
     public void checkMessageList(){
-        while(true) {
-            for(String topic: SubscribedTopics) {
-                try {
-                    Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
-                    Thread thread = new Thread(request);
-                    thread.start();
-                } catch (IOException ioException) {
-                    System.out.println(ConsoleColors.RED + "Error constructing pull request for topic: " + topic + ConsoleColors.RESET);
-                }
+        for(String topic: SubscribedTopics) {
+            try {
+                Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
+                Thread thread = new Thread(request);
+                thread.start();
+            } catch (IOException ioException) {
+                System.out.println(ConsoleColors.RED + "Error constructing pull request for topic: " + topic + ConsoleColors.RESET);
             }
         }
+
     }
 
 

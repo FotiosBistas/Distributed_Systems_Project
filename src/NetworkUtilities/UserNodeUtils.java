@@ -544,7 +544,14 @@ public class UserNodeUtils {
     }
 
 
-
+    /**
+     *
+     * @param localoutputStream Accepts the local input stream.
+     * @param localinputStream Accepts the local output stream.
+     * @param socket Accepts the local socket.
+     * @param topic_name Accepts the topic name that we want to see the conversation data for.
+     * @return Returns -1 if everything goes well. It returns null if there is an error.
+     */
     public static Integer receiveConversationData(ObjectOutputStream localoutputStream,ObjectInputStream localinputStream,Socket socket,String topic_name){
         System.out.println("Requesting for proper broker from the connection");
         if(showConversationData(localoutputStream) == null){
