@@ -4,30 +4,32 @@ import java.util.*;
 public class Topic implements Serializable{
 
     private String name;
-    private String publisher;
     private ArrayList<String> subscribedUsers;
     //user and index of message queue
     private HashMap<String,Integer> last_message;
     private ArrayList<Value> message_queue;
 
-    public Topic(String name,String publisher){
+    public Topic(String name){
         this.name = name;
-        this.publisher = publisher;
         this.subscribedUsers = new ArrayList<>();
         this.last_message = new HashMap<>();
         this.message_queue = new ArrayList<>();
     }
 
-    public String getName(){
+    public String getName() {
         return name;
     }
 
-    public String getPublisher(){
-        return publisher;
+    public ArrayList<String> getSubscribedUsers() {
+        return subscribedUsers;
     }
 
-    public ArrayList<String> getSubscribedUsers(){
-        return subscribedUsers;
+    public HashMap<String, Integer> getLast_message() {
+        return last_message;
+    }
+
+    public ArrayList<Value> getMessage_queue() {
+        return message_queue;
     }
 
     public void printSubscribers(){
@@ -67,7 +69,6 @@ public class Topic implements Serializable{
     public String toString() {
         return "Topic{" +
                 "name='" + name + '\'' +
-                ", publisher='" + publisher + '\'' +
                 '}';
     }
 }

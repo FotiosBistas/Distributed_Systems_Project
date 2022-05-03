@@ -63,6 +63,7 @@ public class Publisher_Handler implements Runnable{
                         return;
                     }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        broker.addToMessageQueue(new_file,topic_name);
                         shutdownConnection();
                         return;
                     }
@@ -77,6 +78,7 @@ public class Publisher_Handler implements Runnable{
                         return;
                     }
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        broker.addToMessageQueue(new_text_message,topic_name);
                         shutdownConnection();
                         return;
                     }

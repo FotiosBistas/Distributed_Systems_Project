@@ -188,10 +188,12 @@ public class  Broker{
 
 
     public void addToMessageQueue(Value val,String topic_name){
+        System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
         Topic temp = null;
         for (Topic topic:Topics) {
             if(topic.getName().equals(topic_name)){
                 temp = topic;
+                System.out.println(ConsoleColors.BLUE + "Found the topic" + ConsoleColors.RESET);
                 break;
             }
         }
@@ -199,6 +201,7 @@ public class  Broker{
             System.out.println(ConsoleColors.RED + "No topic with the name: " + topic_name + " was found" + ConsoleColors.RESET);
         }
         temp.addToMessageQueue(val);
+        System.out.println(temp.getMessage_queue());
     }
 
     /**
@@ -273,6 +276,16 @@ public class  Broker{
         }
     }
 
+    //public void CreateTopics(){
+    //    Topic topic1 = new Topic("Distributed_Systems");
+    //    Topic topic2 = new Topic("Operating_Systems");
+    //    Topic topic3 = new Topic("Programming with python");
+    //    Topic topic4 = new Topic("C++");
+    //    int index;
+    //    index = hashTopic(topic1.getName());
+        
+    //}
+
     /**
      * Starts three separate threads for each possible service.
      * The three types of service are: Consumer service, Publisher service and Broker service
@@ -282,31 +295,14 @@ public class  Broker{
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("It also listens to port: " + this.broker_port + " for broker communication");
             System.out.println("IP address: " + this.ip);
-
-            Topic temp = new Topic("something","Fotis");
-            temp.addSubscription("Fotis");
-            Topics.add(temp);
-            Topics.add(new Topic("something else","Tasos"));
-
-            /*listener for receiving messages from other brokers*/
-            /*new Thread(() -> {
-                try {
-                    broker_listener_service = new ServerSocket(broker_port);
-                    System.out.println("Opened thread to receive broker connections");
-                    while(!broker_listener_service.isClosed()){
-                        Socket broker_connection = broker_listener_service.accept();
-                        Broker_Handler broker_handler = new Broker_Handler(broker_connection,Broker.this);
-                        Thread t3 = new Thread(broker_handler);
-                        t3.start();
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println("Could not open listener service for brokers");
-                    shutdownBroker();
-                }
-            }).start();*/
-
+            Topic topic1 = new Topic("Distributed_Systems");
+            Topic topic2 = new Topic("Operating_Systems");
+            Topic topic3 = new Topic("Programming with python");
+            Topic topic4 = new Topic("C++");
+            Topics.add(topic1);
+            Topics.add(topic2);
+            Topics.add(topic3);
+            Topics.add(topic4);
             /* separate thread for receiving consumer connections */
             new Thread(() -> {
                 try {
