@@ -53,7 +53,6 @@ public class NetworkingForPublisher implements Runnable {
     }
 
     public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
-        shutdownConnection();
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         int port = new_broker.getValue2()[1];
@@ -64,9 +63,10 @@ public class NetworkingForPublisher implements Runnable {
             shutdownConnection();
         } catch (ConnectException connectException){
             System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
+            shutdownConnection();
         } catch (IOException ioException) {
-            ioException.printStackTrace();
             System.out.println(ConsoleColors.RED + "IO error while trying to connect to the new broker" + ConsoleColors.RESET);
+            shutdownConnection();
         }
         Thread t = new Thread(new_connection);
         t.start();

@@ -249,7 +249,7 @@ public class UserNodeUtils {
                 }
                 System.out.println("Received port: " + port);
                 port_list.add(port);
-                if(port_list.size()>=3){
+                if(port_list.size()>=2){
                     while(true) {
                         System.out.println("Waiting for finished operation message by the broker in the while loop for sending port array");
                         messagebroker = GeneralUtils.waitForNodePrompt(localinputStream, socket);
@@ -262,7 +262,7 @@ public class UserNodeUtils {
                     }
                 }
             }
-            int[] ports = new int[3];
+            int[] ports = new int[2];
             for (int i = 0; i < port_list.size(); i++) {
                 ports[i] = port_list.get(i);
             }

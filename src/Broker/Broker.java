@@ -41,17 +41,15 @@ public class  Broker{
     private final String ip;
     private final int consumer_port;
     private final int publisher_port;
-    private final int broker_port;
     private Integer id;
 
 
 
-    public Broker(String ip,int consumer_port , int publisher_port , int broker_port){
+    public Broker(String ip,int consumer_port , int publisher_port){
         this.ip = ip;
         this.consumer_port = consumer_port;
         this.publisher_port = publisher_port;
-        this.broker_port = broker_port;
-        if((this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + broker_port + ip),300)) == null){
+        if((this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + ip),300)) == null){
             System.out.println("\033[0;31m" + "Error while constructing broker" + "\033[0m");
             return;
         }
@@ -174,9 +172,6 @@ public class  Broker{
         return publisher_port;
     }
 
-    public int getBroker_port() {
-        return broker_port;
-    }
 
     public int getId() {
         return id;
@@ -259,14 +254,13 @@ public class  Broker{
             while((line = br.readLine()) != null) {
                 String[] splitted = line.split("\\s+");
                 System.out.println(Arrays.toString(splitted));
-                int [] array = new int[3];
+                int [] array = new int[2];
                 array[0] = Integer.parseInt(splitted[1]);
                 array[1] = Integer.parseInt(splitted[2]);
-                array[2] = Integer.parseInt(splitted[3]);
-                System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections and " + array[2] + " for broker connections");
+                System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections");
                 BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
                 System.out.println("Broker list size now is: " + BrokerList.size());
-                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),300));
+                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + ip),300));
                 System.out.println("Running in while loop");
             }
             sortBrokerList();
@@ -293,7 +287,6 @@ public class  Broker{
     public void startBroker() {
         try {
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
-            System.out.println("It also listens to port: " + this.broker_port + " for broker communication");
             System.out.println("IP address: " + this.ip);
             Topic topic1 = new Topic("Distributed_Systems");
             Topic topic2 = new Topic("Operating_Systems");
@@ -322,8 +315,6 @@ public class  Broker{
                     shutdownBroker();
                 }
             }).start();
-
-            //TODO you can do this with a datagram socket interbroker communication
 
 
             /* separate thread for receiving publisher connections*/
@@ -468,15 +459,14 @@ public class  Broker{
     }
 
     public static void main(String[] args) {
-        if(args.length <= 3) {
+        if(args.length <= 2) {
             System.out.println("You did not provide an ip address or appropriate port numbers");
         }
         else {
             String ip = args[0];
             int consumer_port = Integer.parseInt(args[1]);
             int service_port = Integer.parseInt(args[2]);
-            int broker_port = Integer.parseInt(args[3]);
-            Broker broker = new Broker(ip, consumer_port,service_port,broker_port);
+            Broker broker = new Broker(ip, consumer_port,service_port);
             broker.startBroker();
         }
     }

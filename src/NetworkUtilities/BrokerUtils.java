@@ -57,7 +57,7 @@ public class BrokerUtils {
         if (brk.getValue1().equals(broker.getIp())) {
             System.out.println("They have equal IPs");
             if (broker.getConsumer_port() == brk.getValue2()[0] &&
-                    broker.getPublisher_port() == brk.getValue2()[1] && broker.getBroker_port() == brk.getValue2()[2]) {
+                    broker.getPublisher_port() == brk.getValue2()[1]) {
                 System.out.println("The broker is correct. Sending index of the broker.");
                 if (GeneralUtils.sendMessage(Messages.I_AM_THE_CORRECT_BROKER,localoutputStream) == null) {
                     return null;
@@ -235,7 +235,7 @@ public class BrokerUtils {
                     return null;
                 }
             }
-            if (i == 3) {
+            if (i == 2) {
                 System.out.println("\033[0;32m" + "Finished sending ports" + "\033[0m");
                 if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                     return null;
@@ -277,7 +277,7 @@ public class BrokerUtils {
      * @param broker Accepts the broker that is responsible for the handler.
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
      */
-    public static Integer ServerUnsubscribeRequest(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Broker broker){
+    public static Integer ServeUnsubscribeRequest(ObjectInputStream localinputStream,ObjectOutputStream localoutputStream,Socket socket,Broker broker){
 
         System.out.println("\033[0;32m" + "Serving unsubscribe request" + "\033[0m");
         String topic_name;
@@ -371,4 +371,9 @@ public class BrokerUtils {
         System.out.println("\033[0;32m" + "Client's nickname is: " + nickname + "\033[0m");
         return nickname;
     }
+
+    public static Integer servePullRequest(){
+        return -1;
+    }
+
 }

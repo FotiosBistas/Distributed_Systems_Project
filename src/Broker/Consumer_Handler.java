@@ -113,7 +113,7 @@ public class Consumer_Handler implements Runnable {
                     }
                     break;
                 case UNSUBSCRIBE:
-                    if(BrokerUtils.ServerUnsubscribeRequest(localinputStream,localoutputStream,consumer_connection,this.broker) == null){
+                    if(BrokerUtils.ServeUnsubscribeRequest(localinputStream,localoutputStream,consumer_connection,this.broker) == null){
                         shutdownConnection();
                         return;
                     }
@@ -122,6 +122,8 @@ public class Consumer_Handler implements Runnable {
                         return;
                     }
                     break;
+                case PULL:
+
                 case SHOW_CONVERSATION_DATA:
                     String topic_name =  BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
                     if(topic_name == null){

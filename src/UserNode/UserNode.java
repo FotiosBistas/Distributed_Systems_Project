@@ -1,21 +1,29 @@
 package UserNode;
 
 import Logging.ConsoleColors;
+import NetworkUtilities.GeneralUtils;
+import Tools.Messages;
 import Tools.Topic;
 import Tools.Tuple;
 import Tools.Value;
 
+import java.awt.*;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
+import java.util.List;
 
 public class UserNode implements Serializable {
 
     private String ip;
     private int port;
     private String name;
+
     private ProfileName prof_name;
     private boolean exit;
     private boolean erroneousinput = true;
@@ -190,27 +198,103 @@ public class UserNode implements Serializable {
     }
 
 
-    /**
-     * uses the topic class to get the subscribed users and sends them the latest message
-     */
-    public void pull(String topic){
-        Topic temp;
-        for (String value : SubscribedTopics) {
-            //start a connection with the appropriate broker and ask it for the topic's message list and the topic itself
+    private class Pull_Request implements Runnable{
 
+        private String topic;
+
+        private Socket pull_request;
+        private ObjectOutputStream localoutputStream;
+        private ObjectInputStream localinputStream;
+
+
+        Pull_Request(String topic,Socket socket){
+            this.topic = topic;
+            try{
+                pull_request = socket;
+                localoutputStream = new ObjectOutputStream(pull_request.getOutputStream());
+                localinputStream = new ObjectInputStream(pull_request.getInputStream());
+            }catch (SocketException socketException){
+                System.out.println(ConsoleColors.RED + "Socket error in pull request" + ConsoleColors.RESET);
+                shutdownConnection();
+            } catch (IOException ioException) {
+                System.out.println(ConsoleColors.RED + "IO error in pull request" + ConsoleColors.RESET);
+                shutdownConnection();
+            }
         }
-        //with temp scan all the consumer connection list and send the new values
+
+        public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+            System.out.println("The new IP is: " + new_broker.getValue1());
+            String IP = new_broker.getValue1();
+            System.out.println("The new port is: " + new_broker.getValue2()[1]);
+            Integer port = new_broker.getValue2()[1];
+            Pull_Request new_request = null;
+            try {
+                new_request = new Pull_Request(topic,new Socket(IP,port));
+                shutdownConnection();
+            } catch (ConnectException connectException){
+                System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
+                shutdownConnection();
+            } catch (IOException ioException) {
+                System.out.println(ConsoleColors.RED + "IO error while trying to connect to the new broker" + ConsoleColors.RESET);
+                shutdownConnection();
+            }
+            Thread t = new Thread(new_request);
+            t.start();
+        }
+
+        /**
+         * uses the topic class to get the subscribed users and sends them the latest message
+         */
+        public void pull(String topic){
+
+            //start a connection with the appropriate broker and ask it for the topic's message list and the topic itself
+            if(GeneralUtils.sendMessage(Messages.PULL,localoutputStream) == null){
+                shutdownConnection();
+                return;
+            }
+        }
+
+        @Override
+        public void run() {
+            pull(topic);
+        }
+
+        public void shutdownConnection(){
+            System.out.println(ConsoleColors.RED + "Shutting down connection in pull request" + ConsoleColors.RESET);
+            try{
+                if(pull_request != null){
+                    pull_request.close();
+                }
+                if(localinputStream != null){
+                    localinputStream.close();
+                }
+                if(localoutputStream != null){
+                    localoutputStream.close();
+                }
+            }catch (SocketException socketException){
+                System.out.println(ConsoleColors.RED + "Socket error while trying to shutdown connection. The socket might have been already closed");
+            }catch (IOException ioException){
+                System.out.println(ConsoleColors.RED + "Error while trying to shutdown connection.");
+            }
+        }
     }
+
 
     /**
      * Sends a pull request periodically to the corresponding broker port.
      */
     public void checkMessageList(){
-        new Thread(()->{
-            while (true) {
-
+        while(true) {
+            for(String topic: SubscribedTopics) {
+                try {
+                    Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
+                    Thread thread = new Thread(request);
+                    thread.start();
+                } catch (IOException ioException) {
+                    System.out.println(ConsoleColors.RED + "Error constructing pull request for topic: " + topic + ConsoleColors.RESET);
+                }
             }
-        }).start();
+        }
     }
 
 
