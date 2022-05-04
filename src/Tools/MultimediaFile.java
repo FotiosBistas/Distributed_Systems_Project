@@ -12,13 +12,14 @@ import java.util.ArrayList;
 
 
 public class MultimediaFile extends Value implements Serializable {
-    private String multimediaFileName;
+    private final String multimediaFileName;
     private long length;
     private String actual_date;
     //private String framerate;
     //private String frameWidth;
     //private String frameHeight;
     private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
+    private final int identifier;
 
     public String getMultimediaFileName() {
         return multimediaFileName;
@@ -53,6 +54,7 @@ public class MultimediaFile extends Value implements Serializable {
             e.printStackTrace();
         }
         splitFile(new File(filename));
+        this.identifier = hashCode();
     }
 
     public MultimediaFile(String multimediaFileName,String profileName,String dateCreated,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
@@ -61,6 +63,7 @@ public class MultimediaFile extends Value implements Serializable {
         this.actual_date = actual_date;
         this.length = length;
         this.multimediaFileChunk = multimediaFileChunk;
+        this.identifier = hashCode();
     }
 
     public void splitFile(File f){
@@ -99,24 +102,36 @@ public class MultimediaFile extends Value implements Serializable {
 
     @Override
     public String toString() {
-        return super.toString() + " MultimediaFile{" +
+        return  super.toString() + "MultimediaFile{" +
                 "multimediaFileName='" + multimediaFileName + '\'' +
                 ", length=" + length +
                 ", actual_date='" + actual_date + '\'' +
                 ", multimediaFileChunk=" + multimediaFileChunk +
+                ", identifier=" + identifier +
                 '}';
     }
 
     @Override
-    public boolean equals(Object o) {
-        if(o == null){
+    public int hashCode(){
+        int result = 1;
+        final int prime = 31;
+        result = prime*result + this.getPublisher().hashCode() + this.getDateCreated().hashCode() + this.getMultimediaFileName().hashCode() + this.getActual_date().hashCode() + this.getMultimediaFileChunk().hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null){
             return false;
         }
 
-        if(o.getClass() != this.getClass()){
+        if(obj.getClass() != this.getClass()){
             return false;
         }
-        final MultimediaFile file = (MultimediaFile) o;
-        return true;
+        final MultimediaFile file = (MultimediaFile) obj;
+        if(this.identifier == file.identifier){
+            return true;
+        }
+        return false;
     }
 }

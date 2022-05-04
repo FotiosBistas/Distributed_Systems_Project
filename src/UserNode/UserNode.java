@@ -6,6 +6,7 @@ import Tools.Messages;
 import Tools.Topic;
 import Tools.Tuple;
 import Tools.Value;
+import sun.nio.ch.ThreadPool;
 
 import java.awt.*;
 import java.io.IOException;
@@ -17,6 +18,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class UserNode implements Serializable {
 
@@ -30,7 +34,7 @@ public class UserNode implements Serializable {
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
-    private HashMap<String, Value> message_list;
+    private HashMap<String, ArrayList<Value>> message_list = new HashMap<>();
     private List<String> SubscribedTopics = new ArrayList<>();
 
     UserNode(String ip,int port,String name){
@@ -67,10 +71,24 @@ public class UserNode implements Serializable {
     public void tryagain(){connect();}
 
     public void connect(){
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(this::checkMessageList,0,10, TimeUnit.SECONDS);
         try{
             NetworkingForConsumer consumer;
             NetworkingForPublisher publisher;
             Thread t1;
+            ArrayList<Thread> temp = new ArrayList<>();
+            for (int i = 4; i < 7; i++) {
+                consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, i);
+                t1 = new Thread(consumer);
+                t1.start();
+                temp.add(t1);
+            }
+            for (int i = 0; i < temp.size(); i++)
+            {
+                temp.get(i).join();
+            }
+            erroneousinput = true;
             int userinput = -1;
             String topic_name;
             Scanner sc;
@@ -78,14 +96,11 @@ public class UserNode implements Serializable {
                 sc = new Scanner(System.in);
                 while(erroneousinput) {
                     try {
-                        System.out.println("0.Send Broker List");
-                        System.out.println("1.Send ID list");
-                        System.out.println("2.Send Nickname");
-                        System.out.println("3.Register to topic");
-                        System.out.println("4.Unsubscribe from topic");
-                        System.out.println("5.Show conversation data");
-                        System.out.println("6.Push");
-                        System.out.println("7.Exit");
+                        System.out.println("1.Register to topic");
+                        System.out.println("2.Unsubscribe from topic");
+                        System.out.println("3.Show conversation data");
+                        System.out.println("4.Push");
+                        System.out.println("5.Exit");
                         System.out.println("Enter an int from the above options");
                         userinput = sc.nextInt();
                         erroneousinput = false;
@@ -98,20 +113,18 @@ public class UserNode implements Serializable {
                     continue;
                 }
                 switch (userinput) {
-                    case 0:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 0);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
                     case 1:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 1);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 1,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
                         break;
                     case 2:
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 2);
+                        System.out.println("Give the topic name...");
+                        topic_name = sc.next();
+                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 2,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -125,22 +138,6 @@ public class UserNode implements Serializable {
                         erroneousinput = true;
                         break;
                     case 4:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 4,topic_name);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
-                    case 5:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 5,topic_name);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
-                    case 6:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
                         System.out.println("0.Publish message");
@@ -163,7 +160,7 @@ public class UserNode implements Serializable {
                         t.start();
                         erroneousinput = true;
                         break;
-                    case 7:
+                    case 5:
                         exit = true;
                         break;
                     default:
@@ -174,7 +171,7 @@ public class UserNode implements Serializable {
         }catch(ConnectException e){
             System.out.println(ConsoleColors.RED + "No response from broker try again" + ConsoleColors.RESET);
             try {
-                Thread.sleep(40000);
+                Thread.sleep(20000);
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             }
@@ -182,11 +179,24 @@ public class UserNode implements Serializable {
         } catch (IOException e) {
             System.out.println(ConsoleColors.RED + "Terminating client..." + ConsoleColors.RESET);
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
     public synchronized void addNewMessage(String topic_name, Value new_value) {
-        message_list.put(topic_name, new_value);
+        if(message_list.containsKey(topic_name)) {
+            ArrayList<Value> values = message_list.get(topic_name);
+            for (int i = 0; i < values.size(); i++) {
+                if(values.get(i).equals(new_value)){
+                    return;
+                }
+            }
+            message_list.get(topic_name).add(new_value);
+        }else{
+            message_list.put(topic_name,new ArrayList<Value>());
+            message_list.get(topic_name).add(new_value);
+        }
     }
 
     public synchronized void addNewSubscription(String topic_name){
@@ -258,6 +268,21 @@ public class UserNode implements Serializable {
                     shutdownConnection();
                     return;
                 }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
+                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
+                    break;
+                }
+            }
+            while(true) {
+                if (GeneralUtils.sendMessage(topic, localoutputStream) == null) {
+                    shutdownConnection();
+                    return;
+                }
+                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
+                if(message_broker == null){
+                    shutdownConnection();
+                    return;
+                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
+                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
                     break;
                 }
             }
@@ -269,19 +294,20 @@ public class UserNode implements Serializable {
                 if(temp_topic == null){
                     return;
                 }else{
-                    ArrayList<Value> messages = temp_topic.findLatestMessages(getName());
+                    ArrayList<Value> messages = temp_topic.getMessage_queue();
                     for (Value val:messages) {
                         addNewMessage(topic,val);
                     }
+                    System.out.println(message_list);
                 }
             }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {
                 //waiting for broker to send the index of the correct broker in the broker list
-                System.out.println("Receiving the index for the correct broker");
+                //System.out.println("Receiving the index for the correct broker");
                 Integer index;
                 if ((index = GeneralUtils.waitForNodePrompt(localinputStream, pull_request)) == null) {
                     return;
                 }
-                System.out.println("The index received is: " + index);
+                //System.out.println("The index received is: " + index);
                 startNewConnection(BrokerList.get(index));
             }
 

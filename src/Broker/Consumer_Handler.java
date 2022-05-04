@@ -126,6 +126,10 @@ public class Consumer_Handler implements Runnable {
                     }
                     break;
                 case PULL:
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    }
                     topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,consumer_connection);
                     if(topic_name == null){
                         shutdownConnection();

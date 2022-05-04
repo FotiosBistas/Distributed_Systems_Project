@@ -288,9 +288,9 @@ public class  Broker{
         try {
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("IP address: " + this.ip);
-            Topic topic1 = new Topic("Distributed_Systems");
-            Topic topic2 = new Topic("Operating_Systems");
-            Topic topic3 = new Topic("Programming with python");
+            Topic topic1 = new Topic("DSystems");
+            Topic topic2 = new Topic("OSystems");
+            Topic topic3 = new Topic("Programmingpython");
             Topic topic4 = new Topic("C++");
             Topics.add(topic1);
             Topics.add(topic2);
