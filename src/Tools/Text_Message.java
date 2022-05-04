@@ -25,4 +25,6 @@ public class Text_Message extends Value implements Serializable {
                 "contents='" + contents + '\'' +
                 '}';
     }
+
+
 }

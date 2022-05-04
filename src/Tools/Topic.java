@@ -50,6 +50,12 @@ public class Topic implements Serializable{
         }
     }
 
+    public synchronized void addTheLastMessage(String cons,int increment){
+        System.out.println(last_message.get(cons));
+        last_message.put(cons,last_message.get(cons) + increment);
+        System.out.println(last_message.get(cons));
+    }
+
     public synchronized void addToMessageQueue(Value message){
         message_queue.add(message);
     }
@@ -59,13 +65,19 @@ public class Topic implements Serializable{
     }
 
     public ArrayList<Value> findLatestMessages(String user){
+        System.out.println("User is: " + user);
         int index = last_message.get(user);
         System.out.println("Later message index: " + index);
         ArrayList<Value> temp = new ArrayList<>();
+        boolean entered_loop = false;
         for (int i = index; i < message_queue.size(); i++) {
             temp.add(message_queue.get(i));
+            entered_loop = true;
         }
-        last_message.put(user,message_queue.size());
+        if(entered_loop) {
+            System.out.println("Message queue size: " + temp.size());
+            addTheLastMessage(user, temp.size());
+        }
         return temp;
     }
 

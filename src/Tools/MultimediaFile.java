@@ -106,4 +106,17 @@ public class MultimediaFile extends Value implements Serializable {
                 ", multimediaFileChunk=" + multimediaFileChunk +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null){
+            return false;
+        }
+
+        if(o.getClass() != this.getClass()){
+            return false;
+        }
+        final MultimediaFile file = (MultimediaFile) o;
+        return true;
+    }
 }

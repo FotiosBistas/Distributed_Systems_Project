@@ -91,7 +91,55 @@ public class NetworkingForConsumer implements Runnable{
     public void run() {
         Integer index;
         switch (operation){
-            case 0:
+            case 1:
+                if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,topic_name,cons)) == null){
+                    shutdownConnection();
+                    break;
+                }else if(index == -1){
+                    cons.addNewSubscription(topic_name);
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                }else{
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,1);
+                    break;
+                }
+
+            case 2:
+                if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,topic_name,this.cons)) == null){
+                    shutdownConnection();
+                    return;
+                }else if(index == -1){
+                    cons.removeSubscription(topic_name);
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                }else{
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,2);
+                    break;
+                }
+            case 3:
+                if((index = UserNodeUtils.receiveConversationData(localoutputStream,localinputStream,request_socket,topic_name)) == null){
+                    shutdownConnection();
+                    return;
+                }else if(index == -1){
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        break;
+                    }
+                    break;
+                }else{
+                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                    startNewConnection(brk,3);
+                    break;
+                }
+            case 4:
                 if(UserNodeUtils.getBrokerList(localoutputStream) == null){
                     shutdownConnection();
                     return;
@@ -105,7 +153,7 @@ public class NetworkingForConsumer implements Runnable{
                     return;
                 }
                 break;
-            case 1:
+            case 5:
                 if(UserNodeUtils.getIDList(localoutputStream) == null){
                     shutdownConnection();
                     return;
@@ -119,7 +167,7 @@ public class NetworkingForConsumer implements Runnable{
                     return;
                 }
                 break;
-            case 2:
+            case 6:
                 if(UserNodeUtils.sendNickname(localoutputStream,cons) == null){
                     shutdownConnection();
                     return;
@@ -130,54 +178,6 @@ public class NetworkingForConsumer implements Runnable{
                 }
                 System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
                 break;
-            case 3:
-                if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,topic_name,cons)) == null){
-                    shutdownConnection();
-                    break;
-                }else if(index == -1){
-                    cons.addNewSubscription(topic_name);
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        break;
-                    }
-                    break;
-                }else{
-                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                    startNewConnection(brk,3);
-                    break;
-                }
-
-            case 4:
-                if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,topic_name,this.cons)) == null){
-                    shutdownConnection();
-                    return;
-                }else if(index == -1){
-                    cons.removeSubscription(topic_name);
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        break;
-                    }
-                    break;
-                }else{
-                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                    startNewConnection(brk,4);
-                    break;
-                }
-            case 5:
-                if((index = UserNodeUtils.receiveConversationData(localoutputStream,localinputStream,request_socket,topic_name)) == null){
-                    shutdownConnection();
-                    return;
-                }else if(index == -1){
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        break;
-                    }
-                    break;
-                }else{
-                    Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                    startNewConnection(brk,5);
-                    break;
-                }
             default:
                 System.out.println("Invalid Request... Try again");
                 shutdownConnection();
