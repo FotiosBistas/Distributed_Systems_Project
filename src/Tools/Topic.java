@@ -101,7 +101,7 @@ public class Topic implements Serializable{
 
     public ArrayList<Story> findLatestStory(String user){
         System.out.println("Finding newest stories for user: " + user);
-        int index = last_message.get(user);
+        int index = last_story.get(user);
         ArrayList<Story> new_stories = new ArrayList<>();
         boolean found_new_messages = false;
         for (int i = index; i < story_queue.size(); i++) {
@@ -109,21 +109,22 @@ public class Topic implements Serializable{
             found_new_messages = true;
         }
         System.out.println("The number of new stories are: " + new_stories.size());
-        System.out.println(last_message);
+        System.out.println(last_story);
         if(found_new_messages) {
-            last_message.put(user,last_message.getOrDefault(user,0) + new_stories.size());
+            last_story.put(user,last_story.getOrDefault(user,0) + new_stories.size());
         }
-        System.out.println(last_message);
+        System.out.println(last_story);
         return new_stories;
     }
 
-    public void ExpireStory(Story story){
+    public synchronized void ExpireStory(Story story){
         System.out.println("Checking time in story");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime story_time = LocalDateTime.parse(story.getExpiration_date(),dtf);
 
         if(now.isAfter(story_time)){
+            System.out.println("Story expired");
             story.setExpired(true);
         }
     }
