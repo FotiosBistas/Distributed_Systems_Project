@@ -60,7 +60,7 @@ public class MultimediaFile extends Value implements Serializable {
             e.printStackTrace();
         }
         splitFile(new File(multimediaFileName));
-        this.identifier = hashCode();
+        this.identifier = this.hashCode();
     }
 
     public MultimediaFile(String publisher,String dateCreated,String multimediaFileName,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
@@ -69,7 +69,7 @@ public class MultimediaFile extends Value implements Serializable {
         this.actual_date = actual_date;
         this.length = length;
         this.multimediaFileChunk = multimediaFileChunk;
-        this.identifier = hashCode();
+        this.identifier =  this.hashCode();
     }
 
     public void splitFile(File f){

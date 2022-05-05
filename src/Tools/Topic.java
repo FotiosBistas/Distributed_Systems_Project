@@ -121,10 +121,9 @@ public class Topic implements Serializable{
         System.out.println("Checking time in story");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
-        String current_time = now.format(dtf);
-        System.out.println(current_time);
-        System.out.println(story.getExpiration_date());
-        if(current_time.equals(story.getExpiration_date())){
+        LocalDateTime story_time = LocalDateTime.parse(story.getExpiration_date(),dtf);
+
+        if(now.isAfter(story_time)){
             story.setExpired(true);
         }
     }

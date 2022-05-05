@@ -13,7 +13,7 @@ public class Story extends MultimediaFile implements Serializable {
 
     private boolean isExpired = false;
     private final String expiration_date;
-    private final int identifier;
+    private int identifier;
 
 
     public boolean isExpired() {
@@ -41,13 +41,13 @@ public class Story extends MultimediaFile implements Serializable {
         LocalDateTime expiration_date = date.plusDays(1);
         System.out.println(expiration_date);
         this.expiration_date = expiration_date.format(formatter);
-        this.identifier = hashCode();
+        this.identifier = Hash();
     }
 
     public Story(String publisher, String date_created, String mutlimediaFileName, String actual_date, long length, ArrayList<Chunk> multimediaFileChunk, String expiration_date){
         super(publisher,date_created,mutlimediaFileName,actual_date,length,multimediaFileChunk);
         this.expiration_date = expiration_date;
-        this.identifier = hashCode();
+        this.identifier = Hash();
     }
 
     public Story(MultimediaFile multimediaFile){
@@ -57,15 +57,11 @@ public class Story extends MultimediaFile implements Serializable {
         LocalDateTime expiration_date = date.plusDays(1);
         System.out.println(expiration_date);
         this.expiration_date = expiration_date.format(formatter);
-        this.identifier = hashCode();
+        this.identifier = Hash();
     }
 
-
-    public int hashCode(){
-        int result = 1;
-        final int prime = 31;
-        result = prime*result + expiration_date.hashCode();
-        return result;
+    public int Hash(){
+        return expiration_date.hashCode() + super.getIdentifier();
     }
 
     @Override
@@ -89,6 +85,7 @@ public class Story extends MultimediaFile implements Serializable {
         return super.toString() + " Story{" +
                 "isExpired=" + isExpired +
                 ", expiration_date='" + expiration_date + '\'' +
+                ", identifier=" + identifier +
                 '}';
     }
 }
