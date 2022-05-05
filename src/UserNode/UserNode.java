@@ -203,7 +203,27 @@ public class UserNode implements Serializable {
         SubscribedTopics.remove(topic_name);
     }
 
+    /**
+     * For loops all the topics and sends a pull request to the first random broker that we choose. Then inside the pull request class it find the correct broker and servers the pull request.
+     */
+    public void checkMessageList(){
 
+        for(String topic: SubscribedTopics) {
+            System.out.println(SubscribedTopics);
+            try {
+                Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
+                Thread thread = new Thread(request);
+                thread.start();
+            } catch (IOException ioException) {
+                System.out.println(ConsoleColors.RED + "Error constructing pull request for topic: " + topic + ConsoleColors.RESET);
+            }
+        }
+
+    }
+
+    /**
+     * This class implements all the functionality needed for pulling new messages.
+     */
     private class Pull_Request implements Runnable{
 
         private String topic;
@@ -228,6 +248,10 @@ public class UserNode implements Serializable {
             }
         }
 
+        /**
+         * If the topic that we want to pull data from is assigned to a different broker then we want to open a connection with that new broker.
+         * @param new_broker Accepts the new broker that we want to establish a connection with.
+         */
         public void startNewConnection(Tuple<String,int[]> new_broker){
             System.out.println("The new IP is: " + new_broker.getValue1());
             String IP = new_broker.getValue1();
@@ -249,11 +273,12 @@ public class UserNode implements Serializable {
         }
 
         /**
-         * uses the topic class to get the subscribed users and sends them the latest message
+         * Does all the necessary operations needed to pull data for the specific topic.
+         * @param topic Accepts the topic we want to receive data for.
          */
         public void pull(String topic){
 
-            //start a connection with the appropriate broker and ask it for the topic's message list and the topic itself
+            //makes sure the broker received the pull request and they synchronize
             while(true) {
                 if (GeneralUtils.sendMessage(Messages.PULL, localoutputStream) == null) {
                     shutdownConnection();
@@ -268,6 +293,7 @@ public class UserNode implements Serializable {
                     break;
                 }
             }
+            //makes sure the broker received the topic name
             while(true) {
                 if (GeneralUtils.sendMessage(topic, localoutputStream) == null) {
                     shutdownConnection();
@@ -282,6 +308,7 @@ public class UserNode implements Serializable {
                     break;
                 }
             }
+            //makes sure the broker received the name of the publisher
             while(true) {
                 if (GeneralUtils.sendMessage(UserNode.this.name, localoutputStream) == null) {
                     shutdownConnection();
@@ -296,6 +323,7 @@ public class UserNode implements Serializable {
                     break;
                 }
             }
+            //if the broker is correct the pull request is served and we received the new data if there are any
             Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
             if(message_broker == null){
                 return;
@@ -312,14 +340,12 @@ public class UserNode implements Serializable {
                     }
                     System.out.println(message_list);
                 }
+            // if the broker is not correct we establish a connection with the new broker
             }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {
-                //waiting for broker to send the index of the correct broker in the broker list
-                //System.out.println("Receiving the index for the correct broker");
                 Integer index;
                 if ((index = GeneralUtils.waitForNodePrompt(localinputStream, pull_request)) == null) {
                     return;
                 }
-                //System.out.println("The index received is: " + index);
                 startNewConnection(BrokerList.get(index));
             }
 
@@ -351,23 +377,7 @@ public class UserNode implements Serializable {
     }
 
 
-    /**
-     * For loops all the topics and sends a pull request to the first random broker that we choose.
-     */
-    public void checkMessageList(){
 
-        for(String topic: SubscribedTopics) {
-            System.out.println(SubscribedTopics);
-            try {
-                Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
-                Thread thread = new Thread(request);
-                thread.start();
-            } catch (IOException ioException) {
-                System.out.println(ConsoleColors.RED + "Error constructing pull request for topic: " + topic + ConsoleColors.RESET);
-            }
-        }
-
-    }
 
 
     public static void main(String[] args) {
