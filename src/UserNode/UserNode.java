@@ -286,16 +286,31 @@ public class UserNode implements Serializable {
                     break;
                 }
             }
+            while(true) {
+                if (GeneralUtils.sendMessage(UserNode.this.name, localoutputStream) == null) {
+                    shutdownConnection();
+                    return;
+                }
+                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
+                if(message_broker == null){
+                    shutdownConnection();
+                    return;
+                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
+                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
+                    break;
+                }
+            }
             Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
             if(message_broker == null){
                 return;
             }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
-                Topic temp_topic = (Topic) GeneralUtils.readObject(localinputStream,pull_request);
-                if(temp_topic == null){
+                final ArrayList<Value> new_messages = (ArrayList<Value>) GeneralUtils.readObject(localinputStream,pull_request);
+                if(new_messages == null){
+                    return;
+                }else if(new_messages.isEmpty()){
                     return;
                 }else{
-                    ArrayList<Value> messages = temp_topic.getMessage_queue();
-                    for (Value val:messages) {
+                    for (Value val:new_messages) {
                         addNewMessage(topic,val);
                     }
                     System.out.println(message_list);

@@ -33,7 +33,6 @@ public class  Broker{
 
     private ServerSocket consumer_service;
     private ServerSocket publisher_service;
-    private ServerSocket broker_listener_service;
     private Socket connection_to_other_brokers;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
@@ -126,14 +125,6 @@ public class  Broker{
 
     public void setPublisher_service(ServerSocket publisher_service) {
         this.publisher_service = publisher_service;
-    }
-
-    public ServerSocket getBroker_listener_service() {
-        return broker_listener_service;
-    }
-
-    public void setBroker_listener_service(ServerSocket broker_listener_service) {
-        this.broker_listener_service = broker_listener_service;
     }
 
     public Socket getConnection_to_other_brokers() {
@@ -357,9 +348,6 @@ public class  Broker{
             }
             if(publisher_service != null){
                 publisher_service.close();
-            }
-            if(broker_listener_service != null){
-                broker_listener_service.close();
             }
         } catch (IOException e) {
             e.printStackTrace();

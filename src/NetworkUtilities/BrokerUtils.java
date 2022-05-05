@@ -379,7 +379,7 @@ public class BrokerUtils {
      * @param topic_name Accepts the topic name we want to serve the topic request for.
      * @return Returns -1 if everything goes well. If it returns null there was an error.
      */
-    public static Integer servePullRequest(ObjectOutputStream localoutputStream,ObjectInputStream localinputStream,Socket socket,String topic_name,Broker broker){
+    public static Integer servePullRequest(ObjectOutputStream localoutputStream,ObjectInputStream localinputStream,Socket socket,String topic_name,String user_name,Broker broker){
         System.out.println("Topic name: " + topic_name);
         Topic topic = null;
         for (int i = 0; i < broker.getTopics().size(); i++) {
@@ -391,7 +391,7 @@ public class BrokerUtils {
             System.out.println( "\033[0;31m" + "There is no such topic in the topic list of the broker" + "\033[0m");
             return null;
         }
-        if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+        if(GeneralUtils.sendMessage(topic.findLatestMessage(user_name),localoutputStream) == null){
             return null;
         }
         return -1;

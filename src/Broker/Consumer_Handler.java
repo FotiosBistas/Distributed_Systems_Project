@@ -139,6 +139,16 @@ public class Consumer_Handler implements Runnable {
                         shutdownConnection();
                         return;
                     }
+                    String user_name = GeneralUtils.readUTFString(localinputStream,consumer_connection);
+                    if(user_name == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        shutdownConnection();
+                        return;
+                    }
+
                     correct = BrokerUtils.isCorrectBroker(localoutputStream,this.broker,topic_name);
                     if(correct == null){
                         shutdownConnection();
@@ -147,7 +157,8 @@ public class Consumer_Handler implements Runnable {
                         shutdownConnection();
                         return;
                     }
-                    if(BrokerUtils.servePullRequest(localoutputStream,localinputStream,consumer_connection,topic_name,broker) == null){
+
+                    if(BrokerUtils.servePullRequest(localoutputStream,localinputStream,consumer_connection,topic_name,user_name,broker) == null){
                         shutdownConnection();
                         return;
                     }
