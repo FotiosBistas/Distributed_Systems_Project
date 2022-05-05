@@ -4,6 +4,7 @@ package UserNode;
 import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
+import Tools.Messages;
 import Tools.Tuple;
 
 import java.io.IOException;
@@ -90,16 +91,24 @@ public class NetworkingForConsumer implements Runnable{
     @Override
     public void run() {
         Integer index;
+        Integer success;
         switch (operation){
             case 1:
                 if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,topic_name,cons)) == null){
                     shutdownConnection();
                     break;
                 }else if(index == -1){
-                    cons.addNewSubscription(topic_name);
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        break;
+                    success = GeneralUtils.waitForNodePrompt(localinputStream,request_socket);
+                    if(success == null){
+                        return;
+                    }else if(success == Messages.NO_SUCH_TOPIC.ordinal()){
+                        return;
+                    }else if(success == Messages.FINISHED_OPERATION.ordinal()) {
+                        cons.addNewSubscription(topic_name);
+                        if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
+                            shutdownConnection();
+                            break;
+                        }
                     }
                     break;
                 }else{
@@ -113,10 +122,18 @@ public class NetworkingForConsumer implements Runnable{
                     shutdownConnection();
                     return;
                 }else if(index == -1){
-                    cons.removeSubscription(topic_name);
-                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
-                        shutdownConnection();
-                        break;
+                    success = GeneralUtils.waitForNodePrompt(localinputStream,request_socket);
+                    if(success == null){
+                        return;
+                    }else if(success == Messages.NO_SUCH_TOPIC.ordinal()){
+                        System.out.println(ConsoleColors.RED + "Broker couldn't subscribe you to the topic" + ConsoleColors.RESET);
+                        return;
+                    }else if(success == Messages.FINISHED_OPERATION.ordinal()) {
+                        cons.removeSubscription(topic_name);
+                        if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
+                            shutdownConnection();
+                            break;
+                        }
                     }
                     break;
                 }else{

@@ -6,6 +6,7 @@ import Tools.Messages;
 import Tools.Topic;
 import Tools.Tuple;
 import Tools.Value;
+import jdk.internal.loader.AbstractClassLoaderValue;
 import sun.nio.ch.ThreadPool;
 
 import java.awt.*;
@@ -187,12 +188,7 @@ public class UserNode implements Serializable {
     public synchronized void addNewMessage(String topic_name, Value new_value) {
         if(message_list.containsKey(topic_name)) {
             ArrayList<Value> values = message_list.get(topic_name);
-            for (int i = 0; i < values.size(); i++) {
-                if(values.get(i).equals(new_value)){
-                    return;
-                }
-            }
-            message_list.get(topic_name).add(new_value);
+            values.add(new_value);
         }else{
             message_list.put(topic_name,new ArrayList<Value>());
             message_list.get(topic_name).add(new_value);
@@ -308,6 +304,7 @@ public class UserNode implements Serializable {
                 if(new_messages == null){
                     return;
                 }else if(new_messages.isEmpty()){
+                    System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
                     return;
                 }else{
                     for (Value val:new_messages) {
@@ -355,10 +352,12 @@ public class UserNode implements Serializable {
 
 
     /**
-     * Sends a pull request periodically to the corresponding broker port.
+     * For loops all the topics and sends a pull request to the first random broker that we choose.
      */
     public void checkMessageList(){
+
         for(String topic: SubscribedTopics) {
+            System.out.println(SubscribedTopics);
             try {
                 Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
                 Thread thread = new Thread(request);
@@ -377,7 +376,6 @@ public class UserNode implements Serializable {
         }else {
             UserNode user = new UserNode(args[0], Integer.parseInt(args[1]),args[2]);
             user.connect();
-            //user.checkMessageList();
         }
     }
 
