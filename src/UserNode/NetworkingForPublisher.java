@@ -78,7 +78,7 @@ public class NetworkingForPublisher implements Runnable {
         Integer index;
         switch (operation) {
             case 0:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub,0,contents_file_name)) == null) {
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 0, contents_file_name)) == null) {
                     System.out.println(ConsoleColors.RED + "Error while trying to push file" + ConsoleColors.RESET);
                     shutdownConnection();
                     return;
@@ -92,7 +92,7 @@ public class NetworkingForPublisher implements Runnable {
                 }
                 break;
             case 1:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub,1,contents_file_name)) == null) {
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 1, contents_file_name)) == null) {
                     System.out.println(ConsoleColors.RED + "Error while trying to push message" + ConsoleColors.RESET);
                     shutdownConnection();
                     return;
@@ -103,6 +103,21 @@ public class NetworkingForPublisher implements Runnable {
                 } else {
                     Tuple<String, int[]> brk = pub.getBrokerList().get(index);
                     startNewConnection(brk, 1);
+                }
+                break;
+
+            case 2:
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 2, contents_file_name)) == null) {
+                    System.out.println(ConsoleColors.RED + "Error while trying to push message" + ConsoleColors.RESET);
+                    shutdownConnection();
+                    return;
+                } else if (index == -1) {
+                    System.out.println(ConsoleColors.PURPLE + "Finished the push message operation" + ConsoleColors.RESET);
+                    shutdownConnection();
+                    return;
+                } else {
+                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                    startNewConnection(brk, 2);
                 }
                 break;
         }

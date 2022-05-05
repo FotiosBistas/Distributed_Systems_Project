@@ -65,6 +65,10 @@ public class UserNodeUtils {
         return GeneralUtils.sendMessage(Messages.NOTIFY,localoutputStream);
     }
 
+    private static Integer push_story(ObjectOutputStream localoutputStream) {
+        return GeneralUtils.sendMessage(Messages.PUSH_STORY,localoutputStream);
+    }
+
     /**
      * Sends a Message type GET_ID_LIST from the Messages ENUM found in the tools package.
      * @param localoutputStream accepts the local output stream.
@@ -301,6 +305,16 @@ public class UserNodeUtils {
     }
 
     /**
+     * Sends a story to the network using the output stream. Instead of sending the whole story it sends its chunks and its metadata.
+     * @param story Accepts a story class instance.
+     * @param localoutputStream Accepts the local output stream.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs.
+     */
+    public static Integer sendStory(Story story, ObjectOutputStream localoutputStream) {
+        return sendFile(story,localoutputStream);
+    }
+
+    /**
      * Sends a multimedia file to the network using the output stream. Instead of sending the whole file it sends its chunks and its metadata.
      * @param file Accepts a multimedia file class instance.
      * @param localoutputStream Accepts the local output stream.
@@ -317,7 +331,7 @@ public class UserNodeUtils {
         if(GeneralUtils.sendMessage(file.getDateCreated(),localoutputStream) == null){
             return null;
         }
-        System.out.println("Sending date that the file was created: " + file.getDateCreated());
+        System.out.println("Sending date that the file was created: " + file.getActual_date());
         if(GeneralUtils.sendMessage(file.getActual_date(),localoutputStream) == null){
             return null;
         }
@@ -417,8 +431,6 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                System.out.println("0.Send file");
-                System.out.println("1.Send text message");
                 Scanner sc;
                 switch (file_or_text){
                     case 0:
@@ -428,8 +440,13 @@ public class UserNodeUtils {
                         break;
                     case 1:
                         push_file(localoutputStream);
-                        MultimediaFile new_file = new MultimediaFile(contents_file_name, pub.getName());
+                        MultimediaFile new_file = new MultimediaFile(pub.getName(),contents_file_name);
                         sendFile(new_file,localoutputStream);
+                        break;
+                    case 2:
+                        push_story(localoutputStream);
+                        Story new_story = new Story(pub.getName(),contents_file_name);
+                        sendStory(new_story,localoutputStream);
                         break;
                 }
 

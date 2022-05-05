@@ -2,10 +2,7 @@ package UserNode;
 
 import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
-import Tools.Messages;
-import Tools.Topic;
-import Tools.Tuple;
-import Tools.Value;
+import Tools.*;
 import jdk.internal.loader.AbstractClassLoaderValue;
 import sun.nio.ch.ThreadPool;
 
@@ -36,6 +33,7 @@ public class UserNode implements Serializable {
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
     private HashMap<String, ArrayList<Value>> message_list = new HashMap<>();
+    private HashMap<String, ArrayList<Value>> story_list = new HashMap<>();
     private List<String> SubscribedTopics = new ArrayList<>();
 
     UserNode(String ip,int port,String name){
@@ -141,9 +139,24 @@ public class UserNode implements Serializable {
                     case 4:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        System.out.println("0.Publish message");
-                        System.out.println("1.Publish file");
-                        int operation = sc.nextInt();
+                        boolean error = true;
+                        int operation = -1;
+                        while(error) {
+                            sc = new Scanner(System.in);
+                            try {
+                                System.out.println("0.Publish message");
+                                System.out.println("1.Publish file");
+                                System.out.println("2.Publish story");
+                                operation = sc.nextInt();
+                                error = false;
+                            } catch (InputMismatchException inputMismatchException) {
+                                System.out.println(ConsoleColors.RED + "You gave a wrong input while trying to push" + ConsoleColors.RESET);
+                                break;
+                            }
+                        }
+                        if(error){
+                            continue;
+                        }
                         String con_file_name = null;
                         switch (operation){
                             case 0:
@@ -154,7 +167,10 @@ public class UserNode implements Serializable {
                                 System.out.println("Give the file name");
                                 con_file_name = sc.next();
                                 break;
-
+                            case 2:
+                                System.out.println("Give the file name you want to publish as a story");
+                                con_file_name = sc.next();
+                                break;
                         }
                         NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), this,topic_name,operation,con_file_name);
                         Thread t = new Thread(publish);
@@ -195,6 +211,16 @@ public class UserNode implements Serializable {
         }
     }
 
+    public synchronized void addNewStory(String topic_name,Story new_story){
+        if(story_list.containsKey(topic_name)) {
+            ArrayList<Value> values = story_list.get(topic_name);
+            values.add(new_story);
+        }else{
+            story_list.put(topic_name,new ArrayList<Value>());
+            story_list.get(topic_name).add(new_story);
+        }
+    }
+
     public synchronized void addNewSubscription(String topic_name){
         SubscribedTopics.add(topic_name);
     }
@@ -207,7 +233,6 @@ public class UserNode implements Serializable {
      * For loops all the topics and sends a pull request to the first random broker that we choose. Then inside the pull request class it find the correct broker and servers the pull request.
      */
     public void checkMessageList(){
-
         for(String topic: SubscribedTopics) {
             System.out.println(SubscribedTopics);
             try {
@@ -329,16 +354,26 @@ public class UserNode implements Serializable {
                 return;
             }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
                 final ArrayList<Value> new_messages = (ArrayList<Value>) GeneralUtils.readObject(localinputStream,pull_request);
+                final ArrayList<Story> new_stories = (ArrayList<Story>) GeneralUtils.readObject(localinputStream,pull_request);
                 if(new_messages == null){
                     return;
                 }else if(new_messages.isEmpty()){
                     System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
-                    return;
                 }else{
                     for (Value val:new_messages) {
                         addNewMessage(topic,val);
                     }
                     System.out.println(message_list);
+                }
+                if(new_stories == null){
+                    return;
+                }else if(new_stories.isEmpty()){
+                    System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
+                }else{
+                    for (Story story:new_stories) {
+                        addNewStory(topic,story);
+                    }
+                    System.out.println(story_list);
                 }
             // if the broker is not correct we establish a connection with the new broker
             }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {

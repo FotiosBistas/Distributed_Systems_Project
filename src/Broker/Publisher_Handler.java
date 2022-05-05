@@ -7,6 +7,7 @@ import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
 import Tools.Messages;
 import Tools.MultimediaFile;
+import Tools.Story;
 import Tools.Text_Message;
 
 import java.io.IOException;
@@ -83,6 +84,21 @@ public class Publisher_Handler implements Runnable{
                         return;
                     }
                     broker.addToMessageQueue(new_text_message,topic_name);
+                    shutdownConnection();
+                    break;
+                case PUSH_STORY:
+                    System.out.println(ConsoleColors.PURPLE + "Notified by publisher that there is a new story" + ConsoleColors.RESET);
+                    Story new_story;
+                    if((new_story = BrokerUtils.receiveStory(localinputStream,publisher_connection)) == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                        broker.addToMessageQueue(new_story,topic_name);
+                        shutdownConnection();
+                        return;
+                    }
+                    broker.addToMessageQueue(new_story,topic_name);
                     shutdownConnection();
                     break;
                 case GET_TOPIC_LIST:

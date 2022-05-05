@@ -13,6 +13,7 @@ public enum Messages {
     PULL,
     UNSUBSCRIBE,
     NO_SUCH_TOPIC,
+    PUSH_STORY,
     SENDING_BROKER_LIST,
     SHOW_CONVERSATION_DATA,
     SENDING_ID_LIST,

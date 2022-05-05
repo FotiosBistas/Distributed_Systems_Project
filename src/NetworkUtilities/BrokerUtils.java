@@ -153,8 +153,8 @@ public class BrokerUtils {
             return null;
         }
         System.out.println("Receiving publisher name...");
-        String profile_name = GeneralUtils.readUTFString(localinputStream,socket);
-        if (profile_name == null) {
+        String publisher = GeneralUtils.readUTFString(localinputStream,socket);
+        if (publisher == null) {
             return null;
         }
         System.out.println("Receiving file's length name...");
@@ -201,9 +201,19 @@ public class BrokerUtils {
             System.out.println("Chunks size now is: " + chunks.size());
         }
         System.out.println("Finished receiving file");
-        MultimediaFile new_m_file = new MultimediaFile(new_file,profile_name,date_created,actual_date,length,chunks);
+        MultimediaFile new_m_file = new MultimediaFile(publisher,date_created,new_file,actual_date,length,chunks);
         System.out.println(new_m_file);
         return new_m_file;
+    }
+
+    public static Story receiveStory(ObjectInputStream localinputStream,Socket socket){
+        MultimediaFile new_file = receiveFile(localinputStream,socket);
+        if(new_file == null){
+            return null;
+        }
+        System.out.println(new_file);
+        Story new_Story = new Story(new_file);
+        return new_Story;
     }
 
     /**
@@ -403,6 +413,10 @@ public class BrokerUtils {
         if(GeneralUtils.sendMessage(topic.findLatestMessage(user_name),localoutputStream) == null){
             return null;
         }
+        if(GeneralUtils.sendMessage(topic.findLatestStory(user_name),localoutputStream) == null){
+            return null;
+        }
+
         return -1;
     }
 

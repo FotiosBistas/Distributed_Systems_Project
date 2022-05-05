@@ -1,5 +1,6 @@
 package Tools;
 import java.io.*;
+import java.lang.invoke.MutableCallSite;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +22,7 @@ public class MultimediaFile extends Value implements Serializable {
     private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
     private final int identifier;
 
+
     public String getMultimediaFileName() {
         return multimediaFileName;
     }
@@ -37,12 +39,16 @@ public class MultimediaFile extends Value implements Serializable {
         return multimediaFileChunk;
     }
 
-    public MultimediaFile(String filename, String profileName){
-        super(profileName);
-        this.multimediaFileName = filename;
-        System.out.println("Filename is: " + filename);
-        System.out.println("User's profile is: " + profileName);
-        Path path = FileSystems.getDefault().getPath(filename);
+    public int getIdentifier() {
+        return identifier;
+    }
+
+    public MultimediaFile(String publisher,String multimediaFileName){
+        super(publisher);
+        this.multimediaFileName = multimediaFileName;
+        System.out.println("Filename is: " + multimediaFileName);
+        System.out.println("User's profile is: " + publisher);
+        Path path = FileSystems.getDefault().getPath(multimediaFileName);
         BasicFileAttributes attr = null;
         try {
             attr = Files.readAttributes(path, BasicFileAttributes.class);
@@ -53,12 +59,12 @@ public class MultimediaFile extends Value implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        splitFile(new File(filename));
+        splitFile(new File(multimediaFileName));
         this.identifier = hashCode();
     }
 
-    public MultimediaFile(String multimediaFileName,String profileName,String dateCreated,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
-        super(profileName, dateCreated);
+    public MultimediaFile(String publisher,String dateCreated,String multimediaFileName,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
+        super(publisher, dateCreated);
         this.multimediaFileName = multimediaFileName;
         this.actual_date = actual_date;
         this.length = length;
