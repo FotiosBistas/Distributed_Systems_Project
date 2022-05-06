@@ -3,14 +3,13 @@ package UserNode;
 import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
 import Tools.*;
-import jdk.internal.loader.AbstractClassLoaderValue;
-import sun.nio.ch.ThreadPool;
 
 import java.awt.*;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -29,7 +28,8 @@ public class UserNode implements Serializable {
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
-    private final HashMap<String, ArrayList<Value>> message_list = new HashMap<>();
+    private final HashMap<String, ArrayList<MultimediaFile>> file_list = new HashMap<>();
+    private final HashMap<String,ArrayList<Text_Message>> message_list = new HashMap<>();
     private final HashMap<String, ArrayList<Story>> story_list = new HashMap<>();
     private final List<String> SubscribedTopics = new ArrayList<>();
 
@@ -68,9 +68,10 @@ public class UserNode implements Serializable {
 
     public void connect(){
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate(this::checkMessageList,0,10, TimeUnit.SECONDS);
-        executor.scheduleAtFixedRate(this::clearMessageQueue,0,10,TimeUnit.SECONDS);
-        executor.scheduleAtFixedRate(this::clearStoryQueue,0,10,TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::checkMessageList,0,30, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::clearMessageQueue,0,30,TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::clearStoryQueue,0,30,TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::clearFileQueue,0,30,TimeUnit.SECONDS);
         try{
             NetworkingForConsumer consumer;
             NetworkingForPublisher publisher;
@@ -200,19 +201,44 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void addNewMessage(String topic_name, Value new_value) {
+    public synchronized void addNewMessage(String topic_name, Text_Message new_text_message) {
         if(message_list.containsKey(topic_name)) {
-            ArrayList<Value> values = message_list.get(topic_name);
-            values.add(new_value);
+            ArrayList<Text_Message> values = message_list.get(topic_name);
+            values.add(new_text_message);
         }else{
-            message_list.put(topic_name,new ArrayList<Value>());
-            message_list.get(topic_name).add(new_value);
+            message_list.put(topic_name,new ArrayList<Text_Message>());
+            message_list.get(topic_name).add(new_text_message);
         }
     }
 
-    public synchronized void removeFromMessageQueue(String topic_name,Value old_value){
-        ArrayList<Value> temp = message_list.get(topic_name);
-        temp.remove(old_value);
+    public synchronized void addNewStory(String topic_name,Story new_story){
+        if(story_list.containsKey(topic_name)) {
+            ArrayList<Story> stories = story_list.get(topic_name);
+            stories.add(new_story);
+        }else{
+            story_list.put(topic_name,new ArrayList<Story>());
+            story_list.get(topic_name).add(new_story);
+        }
+    }
+
+    public synchronized void addNewFile(String topic_name,MultimediaFile new_file){
+        if(file_list.containsKey(topic_name)) {
+            ArrayList<MultimediaFile> files = file_list.get(topic_name);
+            files.add(new_file);
+        }else{
+            file_list.put(topic_name,new ArrayList<MultimediaFile>());
+            file_list.get(topic_name).add(new_file);
+        }
+    }
+
+    public synchronized void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
+        ArrayList<Text_Message> temp = message_list.get(topic_name);
+        temp.remove(old_text_message);
+    }
+
+    public synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
+        ArrayList<Text_Message> temp = message_list.get(topic_name);
+        temp.remove(old_file);
     }
 
     public synchronized void removeFromStoryQueue(String topic_name,Story old_story){
@@ -220,7 +246,7 @@ public class UserNode implements Serializable {
         temp.remove(old_story);
     }
 
-    public void writeChunks(ArrayList<Chunk> chunks,File file){
+    public synchronized void writeStoryChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -235,17 +261,14 @@ public class UserNode implements Serializable {
         }
     }
 
-    public void writeTextMessage(Text_Message message,File file){
-        FileWriter fos = null;
-        BufferedWriter bw = null;
-        try{
-            fos = new FileWriter(file);
-            bw = new BufferedWriter(fos);
-            bw.write(message.getPublisher() + "\n");
-            bw.write(message.getDateCreated() + "\n");
-            bw.write(message.getContents() + "\n");
+    public synchronized void writeFileChunks(ArrayList<Chunk> chunks,File file){
+        try(FileOutputStream fos = new FileOutputStream (file)) {
+            for (Chunk chunk : chunks) {
+                System.out.println("Writing chunk: ");
+                System.out.println(chunk);
+                fos.write(chunk.getChunk(),0,chunk.getActual_length());
+            }
             fos.close();
-            bw.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException ioException) {
@@ -253,13 +276,18 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void addNewStory(String topic_name,Story new_story){
-        if(story_list.containsKey(topic_name)) {
-            ArrayList<Story> stories = story_list.get(topic_name);
-            stories.add(new_story);
-        }else{
-            story_list.put(topic_name,new ArrayList<Story>());
-            story_list.get(topic_name).add(new_story);
+    public synchronized void writeTextMessage(Text_Message message,File file){
+        try{
+            System.out.println("Writing text message");
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write((message.getPublisher() + "\n").getBytes(StandardCharsets.UTF_8));
+            fos.write((message.getDateCreated() + "\n").getBytes(StandardCharsets.UTF_8));
+            fos.write((message.getContents() + "\n").getBytes(StandardCharsets.UTF_8));
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
         }
     }
 
@@ -273,81 +301,95 @@ public class UserNode implements Serializable {
 
 
     public synchronized void clearStoryQueue() {
-        System.out.println(story_list);
+        System.out.println("Clearing story queue");
         for (Map.Entry entry : story_list.entrySet()) {
             String topic = (String) entry.getKey();
             ArrayList<Story> temp = (ArrayList<Story>) entry.getValue();
             for (Story value : temp) {
                 Story story = (Story) value;
-                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
+                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\stories\\" + topic;
                 String file_name = story.getMultimediaFileName();
                 File dir = new File(file_dir);
                 if (!dir.exists()) {
                     boolean was_created = dir.mkdir();
                 }
-                file_dir = "\\" + file_dir + "\\" + this.name + "\\";
+                file_dir = file_dir + "\\" + this.name + "\\";
                 dir = new File(file_dir);
                 if (!dir.exists()) {
                     boolean was_created = dir.mkdir();
                 }
                 File file = new File(dir, file_name);
-                System.out.println(file.getAbsolutePath());
+                System.out.println("Writing to directory: " + file_dir);
+                System.out.println("Writing story: " + file_name);
                 try {
                     file.createNewFile();
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeChunks(story.getMultimediaFileChunk(), file);
+                writeStoryChunks(story.getMultimediaFileChunk(), file);
                 removeFromStoryQueue(topic, value);
             }
         }
     }
 
+    public synchronized void clearFileQueue(){
+        System.out.println("Clearing file queue");
+        for(Map.Entry entry : file_list.entrySet()){
+            String topic = (String)entry.getKey();
+            ArrayList<MultimediaFile> temp = (ArrayList<MultimediaFile>) entry.getValue();
+            for (MultimediaFile value:temp) {
+                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
+                String file_name = value.getIdentifier() + value.getMultimediaFileName();
+                File dir = new File(file_dir);
+                if(!dir.exists()){
+                    boolean was_created = dir.mkdir();
+                }
+                file_dir = file_dir +  "\\" + this.name + "\\";
+                dir = new File(file_dir);
+                if(!dir.exists()){
+                    boolean was_created = dir.mkdir();
+                }
+                File file = new File(dir,file_name);
+                System.out.println("Writing to directory: " + file_dir);
+                System.out.println("Writing multimedia file: " + file_name);
+                try {
+                    file.createNewFile();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                writeFileChunks(value.getMultimediaFileChunk(),file);
+                removeFromFileQueue(topic,value);
+            }
+        }
+    }
+
     public synchronized void clearMessageQueue(){
-        System.out.println(message_list);
+        System.out.println("Clearing message queue");
         for(Map.Entry entry : message_list.entrySet()){
             String topic = (String)entry.getKey();
-            ArrayList<Value> temp = (ArrayList<Value>) entry.getValue();
-            for (Value value:temp) {
-                if(value instanceof Text_Message){
-                    Text_Message text_message = (Text_Message) value;
-                    String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
-                    String filename = text_message.getDateCreated() + ".txt";
-                    File dir = new File(text_message_dir);
-                    if(!dir.exists()){
-                        boolean was_created = dir.mkdir();
-                    }
-                    text_message_dir = "\\" + text_message_dir +  "\\" + this.name + "\\";
-                    dir = new File(text_message_dir);
-                    if(!dir.exists()){
-                        boolean was_created = dir.mkdir();
-                    }
-                    File file = new File(text_message_dir + "\\" + filename);
-                    writeTextMessage(text_message,file);
-                    removeFromMessageQueue(topic,value);
-                }else if(value instanceof MultimediaFile){
-                    MultimediaFile multimediafile = (MultimediaFile) value;
-                    String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
-                    String file_name = multimediafile.getMultimediaFileName();
-                    File dir = new File(file_dir);
-                    if(!dir.exists()){
-                        boolean was_created = dir.mkdir();
-                    }
-                    file_dir = "\\" + file_dir +  "\\" + this.name + "\\";
-                    dir = new File(file_dir);
-                    if(!dir.exists()){
-                        boolean was_created = dir.mkdir();
-                    }
-                    File file = new File(dir,file_name);
-                    System.out.println(file.getAbsolutePath());
-                    try {
-                        file.createNewFile();
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                    writeChunks(multimediafile.getMultimediaFileChunk(),file);
-                    removeFromMessageQueue(topic,value);
+            ArrayList<Text_Message> temp = (ArrayList<Text_Message>) entry.getValue();
+            for (Text_Message value:temp) {
+                String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
+                String filename = value.getIdentifier()  + ".txt";
+                File dir = new File(text_message_dir);
+                if(!dir.exists()){
+                    boolean was_created = dir.mkdir();
                 }
+                text_message_dir = text_message_dir +  "\\" + this.name + "\\";
+                dir = new File(text_message_dir);
+                if(!dir.exists()){
+                    boolean was_created = dir.mkdir();
+                }
+                File file = new File(text_message_dir,filename);
+                System.out.println("Writing to directory: " + text_message_dir);
+                System.out.println("Writing text message: " + filename);
+                try {
+                    file.createNewFile();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                writeTextMessage(value,file);
+                removeFromMessageQueue(topic,value);
             }
         }
     }
@@ -437,7 +479,7 @@ public class UserNode implements Serializable {
                     shutdownConnection();
                     return;
                 }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
-                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
+                    System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
                     break;
                 }
             }
@@ -484,9 +526,12 @@ public class UserNode implements Serializable {
                     System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
                 }else{
                     for (Value val:new_messages) {
-                        addNewMessage(topic,val);
+                        if(val instanceof Text_Message) {
+                            addNewMessage(topic, (Text_Message) val);
+                        }else if(val instanceof MultimediaFile){
+                            addNewFile(topic,(MultimediaFile) val);
+                        }
                     }
-                    System.out.println(message_list);
                 }
                 if(new_stories == null){
                     return;
@@ -496,7 +541,6 @@ public class UserNode implements Serializable {
                     for (Story story:new_stories) {
                         addNewStory(topic,story);
                     }
-                    System.out.println(story_list);
                 }
             // if the broker is not correct we establish a connection with the new broker
             }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {

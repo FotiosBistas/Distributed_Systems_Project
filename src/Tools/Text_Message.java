@@ -10,6 +10,8 @@ public class Text_Message extends Value implements Serializable {
         return contents;
     }
 
+    public int getIdentifier(){return identifier;}
+
     public Text_Message(String publisher, String date_created,String contents){
         super(publisher,date_created);
         this.contents = contents;

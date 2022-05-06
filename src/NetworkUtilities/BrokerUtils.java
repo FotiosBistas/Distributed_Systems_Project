@@ -124,7 +124,7 @@ public class BrokerUtils {
         if((contents = GeneralUtils.readUTFString(localinputStream,socket)) == null){
             return null;
         }
-        Text_Message new_text_message = new Text_Message(date_created,publisher,contents);
+        Text_Message new_text_message = new Text_Message(publisher,date_created,contents);
         System.out.println(new_text_message);
         return new_text_message;
     }
