@@ -14,8 +14,9 @@ public class Topic implements Serializable{
 
 
     private final HashMap<String,Integer> last_message = new HashMap<>();
-    private final ArrayList<Value> message_queue = new ArrayList<>();
-
+    private final HashMap<String,Integer> last_file = new HashMap<>();
+    private final ArrayList<Text_Message> message_queue = new ArrayList<>();
+    private final ArrayList<MultimediaFile> file_queue = new ArrayList<>();
 
     private final ArrayList<Story> story_queue = new ArrayList<>();
     private final HashMap<String,Integer> last_story = new HashMap<>();
@@ -39,8 +40,12 @@ public class Topic implements Serializable{
         return last_message;
     }
 
-    public ArrayList<Value> getMessage_queue() {
+    public ArrayList<Text_Message> getMessage_queue() {
         return message_queue;
+    }
+
+    public ArrayList<MultimediaFile> getFile_queue() {
+        return file_queue;
     }
 
     public ArrayList<Story> getStory_queue() {
@@ -60,6 +65,7 @@ public class Topic implements Serializable{
             subscribedUsers.add(new_cons);
             last_message.put(new_cons,0);
             last_story.put(new_cons,0);
+            last_file.put(new_cons,0);
         }
     }
 
@@ -68,13 +74,16 @@ public class Topic implements Serializable{
             subscribedUsers.remove(new_cons);
             last_message.remove(new_cons);
             last_story.remove(new_cons);
+            last_file.remove(new_cons);
         }
     }
 
 
-    public synchronized void addToMessageQueue(Value message){
+    public synchronized void addToMessageQueue(Text_Message message){
         message_queue.add(message);
     }
+
+    public synchronized void addToFileQueue(MultimediaFile file){file_queue.add(file);}
 
     public synchronized void addToStoryQueue(Story story){ story_queue.add(story);}
 
@@ -82,10 +91,10 @@ public class Topic implements Serializable{
         return subscribedUsers.contains(user);
     }
 
-    public ArrayList<Value> findLatestMessage(String user){
+    public ArrayList<Text_Message> findLatestMessage(String user){
         System.out.println("Finding newest messages for user: " + user);
         int index = last_message.get(user);
-        ArrayList<Value> new_messages = new ArrayList<>();
+        ArrayList<Text_Message> new_messages = new ArrayList<>();
         boolean found_new_messages = false;
         for (int i = index; i < message_queue.size(); i++) {
             new_messages.add(message_queue.get(i));
@@ -98,6 +107,24 @@ public class Topic implements Serializable{
         }
         System.out.println(last_message);
         return new_messages;
+    }
+
+    public ArrayList<MultimediaFile> findLatestFile(String user){
+        System.out.println("Finding newest files for user: " + user);
+        int index = last_file.get(user);
+        ArrayList<MultimediaFile> new_files = new ArrayList<>();
+        boolean found_new_messages = false;
+        for (int i = index; i < file_queue.size(); i++) {
+            new_files.add(file_queue.get(i));
+            found_new_messages = true;
+        }
+        System.out.println("The number of new messages are: " + new_files.size());
+        System.out.println(last_file);
+        if(found_new_messages) {
+            last_file.put(user,last_file.getOrDefault(user,0) + new_files.size());
+        }
+        System.out.println(last_file);
+        return new_files;
     }
 
     public ArrayList<Story> findLatestStory(String user){

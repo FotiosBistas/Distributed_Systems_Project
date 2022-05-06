@@ -413,6 +413,9 @@ public class BrokerUtils {
         if(GeneralUtils.sendMessage(topic.findLatestMessage(user_name),localoutputStream) == null){
             return null;
         }
+        if(GeneralUtils.sendMessage(topic.findLatestFile(user_name),localoutputStream) == null){
+            return null;
+        }
         if(GeneralUtils.sendMessage(topic.findLatestStory(user_name),localoutputStream) == null){
             return null;
         }

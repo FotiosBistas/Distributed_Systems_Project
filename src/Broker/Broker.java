@@ -2,10 +2,7 @@
 package Broker;
 
 import Logging.ConsoleColors;
-import Tools.Story;
-import Tools.Topic;
-import Tools.Tuple;
-import Tools.Value;
+import Tools.*;
 import UserNode.UserNode;
 import SHA1.SHA1;
 
@@ -174,8 +171,8 @@ public class  Broker{
     }
 
 
-    public void addToMessageQueue(Value val,String topic_name){
-        if(val instanceof Story){
+    public void addToMessageQueue(Value val,String topic_name) {
+        if (val instanceof Story) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert story: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
             for (Topic topic : Topics) {
@@ -189,9 +186,25 @@ public class  Broker{
                 System.out.println(ConsoleColors.RED + "No topic with the name: " + topic_name + " was found" + ConsoleColors.RESET);
                 return;
             }
-            temp.addToStoryQueue((Story)val);
+            temp.addToStoryQueue((Story) val);
             System.out.println(temp.getStory_queue());
-        }else {
+        } else if (val instanceof MultimediaFile) {
+            System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
+            Topic temp = null;
+            for (Topic topic : Topics) {
+                if (topic.getName().equals(topic_name)) {
+                    temp = topic;
+                    System.out.println(ConsoleColors.BLUE + "Found the topic" + ConsoleColors.RESET);
+                    break;
+                }
+            }
+            if (temp == null) {
+                System.out.println(ConsoleColors.RED + "No topic with the name: " + topic_name + " was found" + ConsoleColors.RESET);
+                return;
+            }
+            temp.addToFileQueue((MultimediaFile) val);
+            System.out.println(temp.getFile_queue());
+        } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
             for (Topic topic : Topics) {
@@ -205,11 +218,10 @@ public class  Broker{
                 System.out.println(ConsoleColors.RED + "No topic with the name: " + topic_name + " was found" + ConsoleColors.RESET);
                 return;
             }
-            temp.addToMessageQueue(val);
+            temp.addToMessageQueue((Text_Message) val);
             System.out.println(temp.getMessage_queue());
         }
     }
-
     /**
      * Sorts the broker list using bubblesort.
      * The mechanic behind this is an index list that changes according to the ids of the brokers.

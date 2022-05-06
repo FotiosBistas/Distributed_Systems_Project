@@ -627,6 +627,8 @@ public class UserNodeUtils {
             }
             System.out.println(ConsoleColors.PURPLE + "Showing message queue: " + ConsoleColors.RESET);
             System.out.println(temp.getMessage_queue());
+            System.out.println(temp.getStory_queue());
+            System.out.println(temp.getFile_queue());
         }
         return -1;
     }

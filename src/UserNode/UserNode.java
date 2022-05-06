@@ -231,22 +231,22 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
+    public void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
         ArrayList<Text_Message> temp = message_list.get(topic_name);
         temp.remove(old_text_message);
     }
 
-    public synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
+    public void removeFromFileQueue(String topic_name,MultimediaFile old_file){
         ArrayList<MultimediaFile> temp = file_list.get(topic_name);
         temp.remove(old_file);
     }
 
-    public synchronized void removeFromStoryQueue(String topic_name,Story old_story){
+    public void removeFromStoryQueue(String topic_name,Story old_story){
         ArrayList<Story> temp = story_list.get(topic_name);
         temp.remove(old_story);
     }
 
-    public synchronized void writeStoryChunks(ArrayList<Chunk> chunks,File file){
+    public void writeStoryChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -261,7 +261,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void writeFileChunks(ArrayList<Chunk> chunks,File file){
+    public void writeFileChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -276,7 +276,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void writeTextMessage(Text_Message message,File file){
+    public void writeTextMessage(Text_Message message,File file){
         try{
             System.out.println("Writing text message");
             FileOutputStream fos = new FileOutputStream(file);
@@ -300,14 +300,16 @@ public class UserNode implements Serializable {
     }
 
 
-    public synchronized void clearStoryQueue() {
+    public void clearStoryQueue() {
         System.out.println("Clearing story queue");
-        for (Map.Entry entry : story_list.entrySet()) {
-            String topic = (String) entry.getKey();
-            ArrayList<Story> temp = (ArrayList<Story>) entry.getValue();
-            System.out.println(temp);
-            for (int i = 0; i < temp.size(); i++) {
-                System.out.println(i);
+        for (Map.Entry<String,ArrayList<Story>> entry : story_list.entrySet()) {
+            String topic = entry.getKey();
+            ArrayList<Story> temp = entry.getValue();
+            int i = 0;
+            while(true) {
+                if(i >= temp.size()){
+                    break;
+                }
                 String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\stories\\" + topic;
                 String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
                 File dir = new File(file_dir);
@@ -333,14 +335,17 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void clearFileQueue(){
+    public void clearFileQueue(){
         System.out.println("Clearing file queue");
-        for(Map.Entry entry : file_list.entrySet()){
-            String topic = (String)entry.getKey();
-            ArrayList<MultimediaFile> temp = (ArrayList<MultimediaFile>) entry.getValue();
+        for(Map.Entry<String,ArrayList<MultimediaFile>> entry : file_list.entrySet()){
+            String topic = entry.getKey();
+            ArrayList<MultimediaFile> temp = entry.getValue();
             System.out.println(temp);
-            for (int i = 0; i < temp.size(); i++) {
-                System.out.println(i);
+            int i = 0;
+            while(true) {
+                if(i >= temp.size()){
+                    break;
+                }
                 String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
                 String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
                 File dir = new File(file_dir);
@@ -366,13 +371,16 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void clearMessageQueue(){
+    public void clearMessageQueue(){
         System.out.println("Clearing message queue");
-        for(Map.Entry entry : message_list.entrySet()){
-            String topic = (String)entry.getKey();
-            ArrayList<Text_Message> temp = (ArrayList<Text_Message>) entry.getValue();
-            for (int i = 0; i < temp.size(); i++) {
-                System.out.println(i);
+        for(Map.Entry<String,ArrayList<Text_Message>> entry : message_list.entrySet()){
+            String topic = entry.getKey();
+            ArrayList<Text_Message> temp = entry.getValue();
+            int i = 0;
+            while(true) {
+                if(i >= temp.size()){
+                    break;
+                }
                 String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
                 String filename = temp.get(i).getIdentifier()  + ".txt";
                 File dir = new File(text_message_dir);
@@ -522,19 +530,25 @@ public class UserNode implements Serializable {
             if(message_broker == null){
                 return;
             }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
-                final ArrayList<Value> new_messages = (ArrayList<Value>) GeneralUtils.readObject(localinputStream,pull_request);
+                final ArrayList<Text_Message> new_messages = (ArrayList<Text_Message>) GeneralUtils.readObject(localinputStream,pull_request);
+                final ArrayList<MultimediaFile> new_files = (ArrayList<MultimediaFile>) GeneralUtils.readObject(localinputStream,pull_request);
                 final ArrayList<Story> new_stories = (ArrayList<Story>) GeneralUtils.readObject(localinputStream,pull_request);
                 if(new_messages == null){
                     return;
                 }else if(new_messages.isEmpty()){
                     System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
                 }else{
-                    for (Value val:new_messages) {
-                        if(val instanceof Text_Message) {
-                            addNewMessage(topic, (Text_Message) val);
-                        }else if(val instanceof MultimediaFile){
-                            addNewFile(topic,(MultimediaFile) val);
-                        }
+                    for (Text_Message val:new_messages) {
+                        addNewMessage(topic,val);
+                    }
+                }
+                if(new_files == null){
+                    return;
+                }else if(new_files.isEmpty()){
+                    System.out.println(ConsoleColors.RED + "There are no new files" + ConsoleColors.RESET);
+                }else{
+                    for (MultimediaFile val:new_files) {
+                        addNewFile(topic,val);
                     }
                 }
                 if(new_stories == null){
