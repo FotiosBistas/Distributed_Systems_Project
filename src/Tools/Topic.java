@@ -20,9 +20,10 @@ public class Topic implements Serializable{
     private final ArrayList<Story> story_queue = new ArrayList<>();
     private final HashMap<String,Integer> last_story = new HashMap<>();
 
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+
     public Topic(String name){
         this.name = name;
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         executor.scheduleAtFixedRate(this::checkExpiredStories,0,20, TimeUnit.SECONDS);
     }
 

@@ -7,10 +7,7 @@ import jdk.internal.loader.AbstractClassLoaderValue;
 import sun.nio.ch.ThreadPool;
 
 import java.awt.*;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -32,9 +29,9 @@ public class UserNode implements Serializable {
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
-    private HashMap<String, ArrayList<Value>> message_list = new HashMap<>();
-    private HashMap<String, ArrayList<Value>> story_list = new HashMap<>();
-    private List<String> SubscribedTopics = new ArrayList<>();
+    private final HashMap<String, ArrayList<Value>> message_list = new HashMap<>();
+    private final HashMap<String, ArrayList<Story>> story_list = new HashMap<>();
+    private final List<String> SubscribedTopics = new ArrayList<>();
 
     UserNode(String ip,int port,String name){
         this.ip = ip;
@@ -72,6 +69,8 @@ public class UserNode implements Serializable {
     public void connect(){
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         executor.scheduleAtFixedRate(this::checkMessageList,0,10, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::clearMessageQueue,0,10,TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::clearStoryQueue,0,10,TimeUnit.SECONDS);
         try{
             NetworkingForConsumer consumer;
             NetworkingForPublisher publisher;
@@ -211,12 +210,55 @@ public class UserNode implements Serializable {
         }
     }
 
+    public synchronized void removeFromMessageQueue(String topic_name,Value old_value){
+        ArrayList<Value> temp = message_list.get(topic_name);
+        temp.remove(old_value);
+    }
+
+    public synchronized void removeFromStoryQueue(String topic_name,Story old_story){
+        ArrayList<Story> temp = story_list.get(topic_name);
+        temp.remove(old_story);
+    }
+
+    public void writeChunks(ArrayList<Chunk> chunks,File file){
+        try(FileOutputStream fos = new FileOutputStream (file)) {
+            for (Chunk chunk : chunks) {
+                System.out.println("Writing chunk: ");
+                System.out.println(chunk);
+                fos.write(chunk.getChunk(),0,chunk.getActual_length());
+            }
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+    }
+
+    public void writeTextMessage(Text_Message message,File file){
+        FileWriter fos = null;
+        BufferedWriter bw = null;
+        try{
+            fos = new FileWriter(file);
+            bw = new BufferedWriter(fos);
+            bw.write(message.getPublisher() + "\n");
+            bw.write(message.getDateCreated() + "\n");
+            bw.write(message.getContents() + "\n");
+            fos.close();
+            bw.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+    }
+
     public synchronized void addNewStory(String topic_name,Story new_story){
         if(story_list.containsKey(topic_name)) {
-            ArrayList<Value> values = story_list.get(topic_name);
-            values.add(new_story);
+            ArrayList<Story> stories = story_list.get(topic_name);
+            stories.add(new_story);
         }else{
-            story_list.put(topic_name,new ArrayList<Value>());
+            story_list.put(topic_name,new ArrayList<Story>());
             story_list.get(topic_name).add(new_story);
         }
     }
@@ -227,6 +269,87 @@ public class UserNode implements Serializable {
 
     public synchronized void removeSubscription(String topic_name){
         SubscribedTopics.remove(topic_name);
+    }
+
+
+    public synchronized void clearStoryQueue() {
+        System.out.println(story_list);
+        for (Map.Entry entry : story_list.entrySet()) {
+            String topic = (String) entry.getKey();
+            ArrayList<Story> temp = (ArrayList<Story>) entry.getValue();
+            for (Story value : temp) {
+                Story story = (Story) value;
+                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
+                String file_name = story.getMultimediaFileName();
+                File dir = new File(file_dir);
+                if (!dir.exists()) {
+                    boolean was_created = dir.mkdir();
+                }
+                file_dir = "\\" + file_dir + "\\" + this.name + "\\";
+                dir = new File(file_dir);
+                if (!dir.exists()) {
+                    boolean was_created = dir.mkdir();
+                }
+                File file = new File(dir, file_name);
+                System.out.println(file.getAbsolutePath());
+                try {
+                    file.createNewFile();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                writeChunks(story.getMultimediaFileChunk(), file);
+                removeFromStoryQueue(topic, value);
+            }
+        }
+    }
+
+    public synchronized void clearMessageQueue(){
+        System.out.println(message_list);
+        for(Map.Entry entry : message_list.entrySet()){
+            String topic = (String)entry.getKey();
+            ArrayList<Value> temp = (ArrayList<Value>) entry.getValue();
+            for (Value value:temp) {
+                if(value instanceof Text_Message){
+                    Text_Message text_message = (Text_Message) value;
+                    String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
+                    String filename = text_message.getDateCreated() + ".txt";
+                    File dir = new File(text_message_dir);
+                    if(!dir.exists()){
+                        boolean was_created = dir.mkdir();
+                    }
+                    text_message_dir = "\\" + text_message_dir +  "\\" + this.name + "\\";
+                    dir = new File(text_message_dir);
+                    if(!dir.exists()){
+                        boolean was_created = dir.mkdir();
+                    }
+                    File file = new File(text_message_dir + "\\" + filename);
+                    writeTextMessage(text_message,file);
+                    removeFromMessageQueue(topic,value);
+                }else if(value instanceof MultimediaFile){
+                    MultimediaFile multimediafile = (MultimediaFile) value;
+                    String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
+                    String file_name = multimediafile.getMultimediaFileName();
+                    File dir = new File(file_dir);
+                    if(!dir.exists()){
+                        boolean was_created = dir.mkdir();
+                    }
+                    file_dir = "\\" + file_dir +  "\\" + this.name + "\\";
+                    dir = new File(file_dir);
+                    if(!dir.exists()){
+                        boolean was_created = dir.mkdir();
+                    }
+                    File file = new File(dir,file_name);
+                    System.out.println(file.getAbsolutePath());
+                    try {
+                        file.createNewFile();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                    writeChunks(multimediafile.getMultimediaFileChunk(),file);
+                    removeFromMessageQueue(topic,value);
+                }
+            }
+        }
     }
 
     /**
