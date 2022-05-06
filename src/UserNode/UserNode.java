@@ -67,7 +67,7 @@ public class UserNode implements Serializable {
     public void tryagain(){connect();}
 
     public void connect(){
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
         executor.scheduleAtFixedRate(this::checkMessageList,0,30, TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(this::clearMessageQueue,0,30,TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(this::clearStoryQueue,0,30,TimeUnit.SECONDS);
@@ -237,7 +237,7 @@ public class UserNode implements Serializable {
     }
 
     public synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
-        ArrayList<Text_Message> temp = message_list.get(topic_name);
+        ArrayList<MultimediaFile> temp = file_list.get(topic_name);
         temp.remove(old_file);
     }
 
@@ -305,10 +305,11 @@ public class UserNode implements Serializable {
         for (Map.Entry entry : story_list.entrySet()) {
             String topic = (String) entry.getKey();
             ArrayList<Story> temp = (ArrayList<Story>) entry.getValue();
-            for (Story value : temp) {
-                Story story = (Story) value;
+            System.out.println(temp);
+            for (int i = 0; i < temp.size(); i++) {
+                System.out.println(i);
                 String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\stories\\" + topic;
-                String file_name = story.getMultimediaFileName();
+                String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
                 File dir = new File(file_dir);
                 if (!dir.exists()) {
                     boolean was_created = dir.mkdir();
@@ -326,8 +327,8 @@ public class UserNode implements Serializable {
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeStoryChunks(story.getMultimediaFileChunk(), file);
-                removeFromStoryQueue(topic, value);
+                writeStoryChunks(temp.get(i).getMultimediaFileChunk(), file);
+                removeFromStoryQueue(topic, temp.get(i));
             }
         }
     }
@@ -337,9 +338,11 @@ public class UserNode implements Serializable {
         for(Map.Entry entry : file_list.entrySet()){
             String topic = (String)entry.getKey();
             ArrayList<MultimediaFile> temp = (ArrayList<MultimediaFile>) entry.getValue();
-            for (MultimediaFile value:temp) {
+            System.out.println(temp);
+            for (int i = 0; i < temp.size(); i++) {
+                System.out.println(i);
                 String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
-                String file_name = value.getIdentifier() + value.getMultimediaFileName();
+                String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
                 File dir = new File(file_dir);
                 if(!dir.exists()){
                     boolean was_created = dir.mkdir();
@@ -357,8 +360,8 @@ public class UserNode implements Serializable {
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeFileChunks(value.getMultimediaFileChunk(),file);
-                removeFromFileQueue(topic,value);
+                writeFileChunks(temp.get(i).getMultimediaFileChunk(),file);
+                removeFromFileQueue(topic,temp.get(i));
             }
         }
     }
@@ -368,9 +371,10 @@ public class UserNode implements Serializable {
         for(Map.Entry entry : message_list.entrySet()){
             String topic = (String)entry.getKey();
             ArrayList<Text_Message> temp = (ArrayList<Text_Message>) entry.getValue();
-            for (Text_Message value:temp) {
+            for (int i = 0; i < temp.size(); i++) {
+                System.out.println(i);
                 String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
-                String filename = value.getIdentifier()  + ".txt";
+                String filename = temp.get(i).getIdentifier()  + ".txt";
                 File dir = new File(text_message_dir);
                 if(!dir.exists()){
                     boolean was_created = dir.mkdir();
@@ -388,8 +392,8 @@ public class UserNode implements Serializable {
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeTextMessage(value,file);
-                removeFromMessageQueue(topic,value);
+                writeTextMessage(temp.get(i),file);
+                removeFromMessageQueue(topic,temp.get(i));
             }
         }
     }
