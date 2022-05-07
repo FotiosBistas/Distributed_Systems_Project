@@ -529,6 +529,7 @@ public class UserNode implements Serializable {
             if(message_broker == null){
                 return;
             }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
+                System.out.println(ConsoleColors.PURPLE + "Received data for topic: " + topic + ConsoleColors.RESET);
                 final ArrayList<Text_Message> new_messages = (ArrayList<Text_Message>) GeneralUtils.readObject(localinputStream,pull_request);
                 final ArrayList<MultimediaFile> new_files = (ArrayList<MultimediaFile>) GeneralUtils.readObject(localinputStream,pull_request);
                 final ArrayList<Story> new_stories = (ArrayList<Story>) GeneralUtils.readObject(localinputStream,pull_request);
