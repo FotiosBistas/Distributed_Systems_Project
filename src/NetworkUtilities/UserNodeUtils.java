@@ -65,6 +65,11 @@ public class UserNodeUtils {
         return GeneralUtils.sendMessage(Messages.NOTIFY,localoutputStream);
     }
 
+    /**
+     * Sends a Message type PUSH_STORY from the Messages ENUM found in the tools package.
+     * @param localoutputStream accepts the local output stream.
+     * @return returns the exit value of the program -1 indicating success and null indicating error.
+     */
     private static Integer push_story(ObjectOutputStream localoutputStream) {
         return GeneralUtils.sendMessage(Messages.PUSH_STORY,localoutputStream);
     }
@@ -367,7 +372,7 @@ public class UserNodeUtils {
     /**
      * Does all the necessary operations in order to push a message or a file given from the command line to the brokers:
      * 1.) Finds the proper broker to push the data to
-     * 2.) If the connected broker is the right broker it pushes the file.
+     * 2.) If the connected broker is the right broker and the consumer is subscribed to the topic it pushes the file.
      * @param localinputStream Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket Accepts the local socket.

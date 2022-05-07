@@ -22,7 +22,6 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
 
-    private ProfileName prof_name;
     private boolean exit;
     private boolean erroneousinput = true;
     //Broker list should be sorted by ids of brokers

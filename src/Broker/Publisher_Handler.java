@@ -39,6 +39,10 @@ public class Publisher_Handler implements Runnable{
         }
     }
 
+    /**
+     * Receives the messages that have to do with the publisher services from the Messages ENUMERATOR and
+     * serves each request appropriately.
+     */
     @Override
     public void run() {
         System.out.println("Established connection with publisher: " + publisher_connection.getInetAddress());

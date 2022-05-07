@@ -327,7 +327,8 @@ public class BrokerUtils {
     }
 
     /**
-     * Serves subscribe request for the specific consumer that is read through the input stream to the corresponding topic that is read from the input stream.
+     * Serves subscribe request for the specific consumer that is read through the input stream to the corresponding topic that is read from the input stream. If the topic doesn't exist in the broker it creates a new one with the
+     * specific name.
      * @param localinputStream Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket Accepts the local socket.

@@ -13,7 +13,7 @@ public class Story extends MultimediaFile implements Serializable {
 
     private boolean isExpired = false;
     private final String expiration_date;
-    private int identifier;
+    private final int identifier;
 
 
     public boolean isExpired() {

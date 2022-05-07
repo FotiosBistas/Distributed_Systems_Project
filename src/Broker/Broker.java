@@ -296,7 +296,7 @@ public class  Broker{
 
     /**
      * Starts three separate threads for each possible service.
-     * The three types of service are: Consumer service, Publisher service and Broker service
+     * The three types of service are: Consumer service, Publisher service
      */
     public void startBroker() {
         try {
@@ -370,6 +370,12 @@ public class  Broker{
     }
 
 
+    /**
+     * Creates topic if the topic that was received by the consumer is not present in the broker's topic list.
+     * This is done when subscribe is called by the user node.
+     * @param topic_name The name of the topic.
+     * @param consumer The consumer that tried to subscribe to the topic.
+     */
     public void createTopic(String topic_name,String consumer){
        Topic new_topic = new Topic(topic_name);
        Topics.add(new_topic);
@@ -435,7 +441,7 @@ public class  Broker{
     /**
      * Hashes the topic with its name and returns the broker that will serve the request.
      * @param topic first parameter is the topic name
-     * @return returns a tuple instance of string, int[]
+     * @return returns the index of the broker in the broker list. Returns null if an error occurs.
      */
     public Integer hashTopic(String topic){
         // hash the topic and choose the correct broker

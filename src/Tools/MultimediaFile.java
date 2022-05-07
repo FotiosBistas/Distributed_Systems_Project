@@ -16,9 +16,6 @@ public class MultimediaFile extends Value implements Serializable {
     private final String multimediaFileName;
     private long length;
     private String actual_date;
-    //private String framerate;
-    //private String frameWidth;
-    //private String frameHeight;
     private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
     private final int identifier;
 

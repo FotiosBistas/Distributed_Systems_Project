@@ -1,12 +1,17 @@
 package NetworkUtilities;
 
 
+import Logging.ConsoleColors;
 import Tools.Messages;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 
+/**
+ * This is a class that contains static network methods that are used by the user node and the brokers.
+ * These are basic operations that are required by both the brokers and the users.
+ */
 public class GeneralUtils {
 
 
@@ -16,17 +21,17 @@ public class GeneralUtils {
      * @param buffer Accepts a byte buffer and writes the data from the input stream to the buffer.
      * @param offset Accepts the offset start reading the local input stream.
      * @param actual_size Accepts the amount of data to be read to the buffer. The actual size name here refers to actual size of the chunk being sent.
-     * @return Returns a byte array. This byte array is the array that the data will be read to. Remember because passes by value when you return the byte array assign it to the local byte array.
+     * @return Returns a byte array. This byte array is the array that the data will be read to. Remember because passes by value when you return the byte array assign it to the local byte array. If an error occurs it returns null.
      */
     public static byte[] readBuffer(ObjectInputStream localinputStream, byte[] buffer, int offset, Integer actual_size){
         try {
             localinputStream.readFully(buffer,0,actual_size);
             return buffer;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in read buffer..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in read buffer..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in read buffer..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in read buffer..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -34,20 +39,20 @@ public class GeneralUtils {
     /**
      * Reads a UTF string from the input stream using the inputStream.readUTF() method.
      * @param localinputStream  accepts the local input stream.
-     * @param socket            accepts the corresponding socket of the streams.
+     * @param socket  accepts the corresponding socket of the streams.
      * @return returns the input read from the local input stream. If it catches an exception it returns null as an error string.
      */
     public static String readUTFString(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println("\033[0;32m" + "Waiting to read UTF type" + "\033[0m");
+            System.out.println(ConsoleColors.PURPLE + "Waiting to read UTF type" + ConsoleColors.RESET);
             String message = localinputStream.readUTF();
-            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
+            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in read UTF string..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in read UTF string..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in read UTF string..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in read UTF string..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -60,16 +65,16 @@ public class GeneralUtils {
      */
     public static Integer waitForNodePrompt(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println("\033[0;32m" + "Waiting for node prompt" + "\033[0m");
+            System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting for integer type)" + ConsoleColors.RESET);
             int message = localinputStream.readInt();
-            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
+            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.GREEN);
             return message;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + "\033[0m");
+            System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + ConsoleColors.RESET);
             socketException.printStackTrace();
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in wait for node prompt..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in wait for node prompt..." + ConsoleColors.RESET);
             e.printStackTrace();
             return null;
         }
@@ -83,16 +88,16 @@ public class GeneralUtils {
      */
     public static Long readLong(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println("\033[0;32m" + "Waiting for node prompt" + "\033[0m");
+            System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting to read long type)" + ConsoleColors.RESET);
             Long message = localinputStream.readLong();
-            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
+            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in wait for node prompt..." + ConsoleColors.RESET);
             socketException.printStackTrace();
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in wait for node prompt..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in wait for node prompt..." + ConsoleColors.RESET);
             e.printStackTrace();
             return null;
         }
@@ -106,18 +111,18 @@ public class GeneralUtils {
      */
     public static Object readObject(ObjectInputStream localinputStream,Socket socket) {
         try {
-            System.out.println("\033[0;32m" + "Waiting to receive object from input stream" + "\033[0m");
+            System.out.println(ConsoleColors.PURPLE + "Waiting to receive object from input stream" + ConsoleColors.RESET);
             Object message = localinputStream.readObject();
-            System.out.println("\033[0;32m" + "Received message: " + message + " from node: " + socket.getInetAddress() + "\033[0m");
+            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         }catch (NotSerializableException notSerializableException){
-            System.out.println( "\033[1;31m" + "Not serializable error in read object..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Not serializable error in read object..." + ConsoleColors.RESET);
             return null;
         }catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in read object..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in read object..." + ConsoleColors.RESET);
             return null;
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println( "\033[1;31m" + "Error in read object..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in read object..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -130,15 +135,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(String message, ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeUTF(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of string type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of string type..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of string type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of string type..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -155,19 +160,19 @@ public class GeneralUtils {
             if(!(message instanceof Serializable)){
                 throw new NotSerializableException("The object is not serializable");
             }
-            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeObject(message);
             localoutputStream.flush();
             return -1;
         } catch(NotSerializableException notSerializableException){
-            System.out.println( "\033[1;31m" + "Not serializable object error in send message of Object type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Not serializable object error in send message of Object type..." + ConsoleColors.RESET);
             return null;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of Object type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of Object type..." + ConsoleColors.RESET);
             return null;
 
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of Object type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of Object type..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -180,15 +185,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(int message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeInt(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of int type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of int type..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of int type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of int type..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -201,15 +206,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(long message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( "\033[0;32m" + "Sending Message: " + message + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeLong(message);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of int type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of int type..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of int type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of int type..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -222,15 +227,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(byte[] buffer,ObjectOutputStream localoutputStream){
         try {
-            System.out.println( "\033[0;32m" + "Sending buffer: " + buffer + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending buffer: " + buffer + ConsoleColors.RESET);
             localoutputStream.write(buffer);
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of Message ENUM type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of Message ENUM type..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of Message ENUM type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of Message ENUM type..." + ConsoleColors.RESET);
             return null;
         }
     }
@@ -243,15 +248,15 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(Messages message_type, ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( "\033[0;32m" + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + "\033[0m");
+            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + ConsoleColors.RESET);
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
             return -1;
         } catch (SocketException socketException) {
-            System.out.println( "\033[1;31m" + "Socket error in send message of Message ENUM type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Socket error in send message of Message ENUM type..." + ConsoleColors.RESET);
             return null;
         } catch (IOException e) {
-            System.out.println( "\033[1;31m" + "Error in send message of Message ENUM type..." + "\033[0m");
+            System.out.println( ConsoleColors.RED + "Error in send message of Message ENUM type..." + ConsoleColors.RESET);
             return null;
         }
     }
