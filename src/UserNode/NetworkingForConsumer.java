@@ -102,6 +102,12 @@ public class NetworkingForConsumer implements Runnable{
                     if(success == null){
                         return;
                     }else if(success == Messages.NO_SUCH_TOPIC.ordinal()){
+                        System.out.println(ConsoleColors.RED + "Broker couldn't subscribe you to the topic so it will create a new one" + ConsoleColors.RESET);
+                        cons.addNewSubscription(topic_name);
+                        if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
+                            shutdownConnection();
+                            break;
+                        }
                         return;
                     }else if(success == Messages.FINISHED_OPERATION.ordinal()) {
                         cons.addNewSubscription(topic_name);
@@ -126,7 +132,7 @@ public class NetworkingForConsumer implements Runnable{
                     if(success == null){
                         return;
                     }else if(success == Messages.NO_SUCH_TOPIC.ordinal()){
-                        System.out.println(ConsoleColors.RED + "Broker couldn't subscribe you to the topic" + ConsoleColors.RESET);
+                        System.out.println(ConsoleColors.RED + "Broker couldn't unsubscribe from the topic" + ConsoleColors.RESET);
                         return;
                     }else if(success == Messages.FINISHED_OPERATION.ordinal()) {
                         cons.removeSubscription(topic_name);

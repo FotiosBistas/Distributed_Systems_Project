@@ -360,6 +360,8 @@ public class BrokerUtils {
                 if(GeneralUtils.sendMessage(Messages.NO_SUCH_TOPIC,localoutputStream) == null){
                     return null;
                 }
+                System.out.println("Creating new topic");
+                broker.createTopic(topic_name,new_cons.getName());
                 return null;
             }
             if(GeneralUtils.FinishedOperation(localoutputStream) == null){

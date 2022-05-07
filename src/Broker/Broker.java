@@ -293,15 +293,6 @@ public class  Broker{
         }
     }
 
-    //public void CreateTopics(){
-    //    Topic topic1 = new Topic("Distributed_Systems");
-    //    Topic topic2 = new Topic("Operating_Systems");
-    //    Topic topic3 = new Topic("Programming with python");
-    //    Topic topic4 = new Topic("C++");
-    //    int index;
-    //    index = hashTopic(topic1.getName());
-        
-    //}
 
     /**
      * Starts three separate threads for each possible service.
@@ -311,14 +302,6 @@ public class  Broker{
         try {
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("IP address: " + this.ip);
-            Topic topic1 = new Topic("DSystems");
-            Topic topic2 = new Topic("OSystems");
-            Topic topic3 = new Topic("Programmingpython");
-            Topic topic4 = new Topic("C++");
-            Topics.add(topic1);
-            Topics.add(topic2);
-            Topics.add(topic3);
-            Topics.add(topic4);
             /* separate thread for receiving consumer connections */
             new Thread(() -> {
                 try {
@@ -386,6 +369,13 @@ public class  Broker{
         }
     }
 
+
+    public void createTopic(String topic_name,String consumer){
+       Topic new_topic = new Topic(topic_name);
+       Topics.add(new_topic);
+       System.out.println("Created new topic: " + topic_name);
+       addConsumerToTopic(new_topic,consumer);
+    }
 
     /**
      * adds the subscriber to the subscribed users set in the topic class
