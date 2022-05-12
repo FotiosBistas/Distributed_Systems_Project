@@ -2,6 +2,7 @@ package UserNode;
 
 import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
+import NetworkUtilities.UserNodeUtils;
 import Tools.*;
 
 import java.awt.*;
@@ -22,6 +23,17 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
 
+
+
+    private final String receive_data_path = "C:\\Users\\fotis\\OneDrive\\Desktop";
+    private final String receive_files_directory;
+
+    private String messages_directory;
+    private String stories_directory;
+    private String files_directory;
+
+    private final String default_ip_address = "192.168.1.5";
+
     private boolean exit;
     private boolean erroneousinput = true;
     //Broker list should be sorted by ids of brokers
@@ -36,6 +48,50 @@ public class UserNode implements Serializable {
         this.ip = ip;
         this.port = port;
         this.name = name;
+        this.receive_files_directory = this.receive_data_path + "\\receive_files\\";
+        createDirectories();
+    }
+
+    private void createDirectories(){
+        File dir = new File(receive_files_directory);
+        Boolean was_created = false;
+        if(!dir.exists()) {
+            was_created = dir.mkdir();
+            if (!was_created) {
+                System.out.println(ConsoleColors.RED + "Directory: " + receive_files_directory + " was not created" + ConsoleColors.RESET);
+                return;
+            }
+        }
+        this.messages_directory = this.receive_files_directory + "\\messages\\";
+        dir = new File(messages_directory);
+        was_created = false;
+        if(!dir.exists()) {
+            was_created = dir.mkdir();
+            if (!was_created) {
+                System.out.println(ConsoleColors.RED + "Directory: " + messages_directory + " was not created" + ConsoleColors.RESET);
+                return;
+            }
+        }
+        this.stories_directory = this.receive_files_directory + "\\stories\\";
+        dir = new File(stories_directory);
+        was_created = false;
+        if(!dir.exists()) {
+            was_created = dir.mkdir();
+            if (!was_created) {
+                System.out.println(ConsoleColors.RED + "Directory: " + stories_directory + " was not created" + ConsoleColors.RESET);
+                return;
+            }
+        }
+        this.files_directory = this.receive_files_directory + "\\files\\";
+        dir = new File(files_directory);
+        was_created = false;
+        if(!dir.exists()) {
+            was_created = dir.mkdir();
+            if (!was_created) {
+                System.out.println(ConsoleColors.RED + "Directory: " + files_directory + " was not created" + ConsoleColors.RESET);
+                return;
+            }
+        }
     }
 
     public void setBrokerList(ArrayList<Tuple<String,int[]>> BrokerList){
@@ -63,11 +119,11 @@ public class UserNode implements Serializable {
     public String getName(){return name;}
 
 
-    public void tryagain(){connect();}
+    private void tryagain(){connect();}
 
     public void connect(){
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
-        executor.scheduleAtFixedRate(this::checkMessageList,0,30, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(this::checkMessageList,0,1, TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(this::clearMessageQueue,0,30,TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(this::clearStoryQueue,0,30,TimeUnit.SECONDS);
         executor.scheduleAtFixedRate(this::clearFileQueue,0,30,TimeUnit.SECONDS);
@@ -77,7 +133,7 @@ public class UserNode implements Serializable {
             Thread t1;
             ArrayList<Thread> temp = new ArrayList<>();
             for (int i = 4; i < 7; i++) {
-                consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, i);
+                consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, i);
                 t1 = new Thread(consumer);
                 t1.start();
                 temp.add(t1);
@@ -114,7 +170,7 @@ public class UserNode implements Serializable {
                     case 1:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 1,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 1,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -122,7 +178,7 @@ public class UserNode implements Serializable {
                     case 2:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 2,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 2,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -130,7 +186,7 @@ public class UserNode implements Serializable {
                     case 3:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket("192.168.1.5", 1234), this, 3,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 3,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -171,7 +227,7 @@ public class UserNode implements Serializable {
                                 con_file_name = sc.next();
                                 break;
                         }
-                        NetworkingForPublisher publish = new NetworkingForPublisher(new Socket("192.168.1.5", 1235), this,topic_name,operation,con_file_name);
+                        NetworkingForPublisher publish = new NetworkingForPublisher(new Socket(default_ip_address, 1235), this,topic_name,operation,con_file_name);
                         Thread t = new Thread(publish);
                         t.start();
                         erroneousinput = true;
@@ -230,22 +286,30 @@ public class UserNode implements Serializable {
         }
     }
 
-    public void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
+    public synchronized void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
         ArrayList<Text_Message> temp = message_list.get(topic_name);
         temp.remove(old_text_message);
     }
 
-    public void removeFromFileQueue(String topic_name,MultimediaFile old_file){
+    public synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
         ArrayList<MultimediaFile> temp = file_list.get(topic_name);
         temp.remove(old_file);
     }
 
-    public void removeFromStoryQueue(String topic_name,Story old_story){
+    public synchronized void removeFromStoryQueue(String topic_name,Story old_story){
         ArrayList<Story> temp = story_list.get(topic_name);
         temp.remove(old_story);
     }
 
-    public void writeStoryChunks(ArrayList<Chunk> chunks,File file){
+    public synchronized void addNewSubscription(String topic_name){
+        SubscribedTopics.add(topic_name);
+    }
+
+    public synchronized void removeSubscription(String topic_name){
+        SubscribedTopics.remove(topic_name);
+    }
+
+    private void writeStoryChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -260,7 +324,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    public void writeFileChunks(ArrayList<Chunk> chunks,File file){
+    private void writeFileChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -275,7 +339,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    public void writeTextMessage(Text_Message message,File file){
+    private void writeTextMessage(Text_Message message,File file){
         try{
             System.out.println("Writing text message");
             FileOutputStream fos = new FileOutputStream(file);
@@ -290,16 +354,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void addNewSubscription(String topic_name){
-        SubscribedTopics.add(topic_name);
-    }
-
-    public synchronized void removeSubscription(String topic_name){
-        SubscribedTopics.remove(topic_name);
-    }
-
-
-    public void clearStoryQueue() {
+    private void clearStoryQueue() {
         System.out.println("Clearing story queue");
         for (Map.Entry<String,ArrayList<Story>> entry : story_list.entrySet()) {
             String topic = entry.getKey();
@@ -309,19 +364,29 @@ public class UserNode implements Serializable {
                 if(i >= temp.size()){
                     break;
                 }
-                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\stories\\" + topic;
                 String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
-                File dir = new File(file_dir);
+
+
+                String stories_topic_directory = stories_directory + topic;
+                File dir = new File(stories_topic_directory);
                 if (!dir.exists()) {
                     boolean was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + stories_topic_directory + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
-                file_dir = file_dir + "\\" + this.name + "\\";
-                dir = new File(file_dir);
+                String user_stories_directory = stories_topic_directory + "\\" + this.name + "\\";
+                dir = new File(user_stories_directory);
                 if (!dir.exists()) {
                     boolean was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + user_stories_directory + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
                 File file = new File(dir, file_name);
-                System.out.println("Writing to directory: " + file_dir);
+                System.out.println("Writing to directory: " + user_stories_directory);
                 System.out.println("Writing story: " + file_name);
                 try {
                     file.createNewFile();
@@ -330,11 +395,12 @@ public class UserNode implements Serializable {
                 }
                 writeStoryChunks(temp.get(i).getMultimediaFileChunk(), file);
                 removeFromStoryQueue(topic, temp.get(i));
+                i++;
             }
         }
     }
 
-    public void clearFileQueue(){
+    private void clearFileQueue(){
         System.out.println("Clearing file queue");
         for(Map.Entry<String,ArrayList<MultimediaFile>> entry : file_list.entrySet()){
             String topic = entry.getKey();
@@ -345,19 +411,29 @@ public class UserNode implements Serializable {
                 if(i >= temp.size()){
                     break;
                 }
-                String file_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\files\\" + topic;
+
                 String file_name = temp.get(i).getIdentifier() + temp.get(i).getMultimediaFileName();
-                File dir = new File(file_dir);
+
+                String topic_file_directory = this.files_directory + topic;
+                File dir = new File(topic_file_directory);
                 if(!dir.exists()){
                     boolean was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + topic_file_directory + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
-                file_dir = file_dir +  "\\" + this.name + "\\";
-                dir = new File(file_dir);
+                String user_file_dir = topic_file_directory +  "\\" + this.name + "\\";
+                dir = new File(user_file_dir);
                 if(!dir.exists()){
                     boolean was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + user_file_dir + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
                 File file = new File(dir,file_name);
-                System.out.println("Writing to directory: " + file_dir);
+                System.out.println("Writing to directory: " + user_file_dir);
                 System.out.println("Writing multimedia file: " + file_name);
                 try {
                     file.createNewFile();
@@ -366,41 +442,61 @@ public class UserNode implements Serializable {
                 }
                 writeFileChunks(temp.get(i).getMultimediaFileChunk(),file);
                 removeFromFileQueue(topic,temp.get(i));
+                i++;
             }
         }
     }
 
-    public void clearMessageQueue(){
+    /**
+     * Clears the message queue every specific interval.
+     */
+    private void clearMessageQueue(){
         System.out.println("Clearing message queue");
         for(Map.Entry<String,ArrayList<Text_Message>> entry : message_list.entrySet()){
             String topic = entry.getKey();
             ArrayList<Text_Message> temp = entry.getValue();
             int i = 0;
             while(true) {
+                //declares the filename of the message
+                //the unique identifier for the message is the filename
+                String filename = temp.get(i).getIdentifier()  + ".txt";
                 if(i >= temp.size()){
                     break;
                 }
-                String text_message_dir = "C:\\Users\\fotis\\OneDrive\\Desktop\\receive_files\\messages\\" + topic;
-                String filename = temp.get(i).getIdentifier()  + ".txt";
-                File dir = new File(text_message_dir);
+                boolean was_created = false;
+                String topic_message_dir = messages_directory + topic;
+                File dir = new File(topic_message_dir);
                 if(!dir.exists()){
-                    boolean was_created = dir.mkdir();
+                    was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + topic_message_dir + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
-                text_message_dir = text_message_dir +  "\\" + this.name + "\\";
-                dir = new File(text_message_dir);
+                String user_message_directory = topic_message_dir + "\\" + this.name + "\\";
+                dir = new File(user_message_directory);
                 if(!dir.exists()){
-                    boolean was_created = dir.mkdir();
+                    was_created = dir.mkdir();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Directory: " + user_message_directory + " was not created" + ConsoleColors.RESET);
+                        return;
+                    }
                 }
-                File file = new File(text_message_dir,filename);
-                System.out.println("Writing to directory: " + text_message_dir);
+                File file = new File(dir,filename);
+                System.out.println("Writing to directory: " + user_message_directory);
                 System.out.println("Writing text message: " + filename);
                 try {
-                    file.createNewFile();
+                    was_created = file.createNewFile();
+                    if(!was_created){
+                        System.out.println(ConsoleColors.RED + "Were not able to construct text message: " + filename + ConsoleColors.RESET);
+                        return;
+                    }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
                 writeTextMessage(temp.get(i),file);
                 removeFromMessageQueue(topic,temp.get(i));
+                i++;
             }
         }
     }
@@ -408,11 +504,11 @@ public class UserNode implements Serializable {
     /**
      * For loops all the topics and sends a pull request to the first random broker that we choose. Then inside the pull request class it find the correct broker and servers the pull request.
      */
-    public void checkMessageList(){
+    private void checkMessageList(){
         for(String topic: SubscribedTopics) {
-            System.out.println(SubscribedTopics);
+            //System.out.println(SubscribedTopics);
             try {
-                Pull_Request request = new Pull_Request(topic,new Socket("192.168.1.5",1234));
+                Pull_Request request = new Pull_Request(topic,new Socket(default_ip_address,1234));
                 Thread thread = new Thread(request);
                 thread.start();
             } catch (IOException ioException) {
@@ -454,9 +550,9 @@ public class UserNode implements Serializable {
          * @param new_broker Accepts the new broker that we want to establish a connection with.
          */
         public void startNewConnection(Tuple<String,int[]> new_broker){
-            System.out.println("The new IP is: " + new_broker.getValue1());
+            //System.out.println("The new IP is: " + new_broker.getValue1());
             String IP = new_broker.getValue1();
-            System.out.println("The new port is: " + new_broker.getValue2()[1]);
+            //System.out.println("The new port is: " + new_broker.getValue2()[0]);
             Integer port = new_broker.getValue2()[0];
             Pull_Request new_request = null;
             try {
@@ -473,107 +569,17 @@ public class UserNode implements Serializable {
             t.start();
         }
 
-        /**
-         * Does all the necessary operations needed to pull data for the specific topic.
-         * @param topic Accepts the topic we want to receive data for.
-         */
-        public void pull(String topic){
-
-            //makes sure the broker received the pull request and they synchronize
-            while(true) {
-                if (GeneralUtils.sendMessage(Messages.PULL, localoutputStream) == null) {
-                    shutdownConnection();
-                    return;
-                }
-                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
-                if(message_broker == null){
-                    shutdownConnection();
-                    return;
-                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
-                    System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
-                    break;
-                }
-            }
-            //makes sure the broker received the topic name
-            while(true) {
-                if (GeneralUtils.sendMessage(topic, localoutputStream) == null) {
-                    shutdownConnection();
-                    return;
-                }
-                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
-                if(message_broker == null){
-                    shutdownConnection();
-                    return;
-                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
-                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
-                    break;
-                }
-            }
-            //makes sure the broker received the name of the publisher
-            while(true) {
-                if (GeneralUtils.sendMessage(UserNode.this.name, localoutputStream) == null) {
-                    shutdownConnection();
-                    return;
-                }
-                Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
-                if(message_broker == null){
-                    shutdownConnection();
-                    return;
-                }else if(message_broker == Messages.FINISHED_OPERATION.ordinal()){
-                    //System.out.println(ConsoleColors.PURPLE + "Received Finished Operation inside pull" + ConsoleColors.RESET);
-                    break;
-                }
-            }
-            //if the broker is correct the pull request is served and we received the new data if there are any
-            Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream,pull_request);
-            if(message_broker == null){
-                return;
-            }else if(message_broker == Messages.I_AM_THE_CORRECT_BROKER.ordinal()){
-                System.out.println(ConsoleColors.PURPLE + "Received data for topic: " + topic + ConsoleColors.RESET);
-                final ArrayList<Text_Message> new_messages = (ArrayList<Text_Message>) GeneralUtils.readObject(localinputStream,pull_request);
-                final ArrayList<MultimediaFile> new_files = (ArrayList<MultimediaFile>) GeneralUtils.readObject(localinputStream,pull_request);
-                final ArrayList<Story> new_stories = (ArrayList<Story>) GeneralUtils.readObject(localinputStream,pull_request);
-                if(new_messages == null){
-                    return;
-                }else if(new_messages.isEmpty()){
-                    System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
-                }else{
-                    for (Text_Message val:new_messages) {
-                        addNewMessage(topic,val);
-                    }
-                }
-                if(new_files == null){
-                    return;
-                }else if(new_files.isEmpty()){
-                    System.out.println(ConsoleColors.RED + "There are no new files" + ConsoleColors.RESET);
-                }else{
-                    for (MultimediaFile val:new_files) {
-                        addNewFile(topic,val);
-                    }
-                }
-                if(new_stories == null){
-                    return;
-                }else if(new_stories.isEmpty()){
-                    System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
-                }else{
-                    for (Story story:new_stories) {
-                        addNewStory(topic,story);
-                    }
-                }
-            // if the broker is not correct we establish a connection with the new broker
-            }else if(message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {
-                Integer index;
-                if ((index = GeneralUtils.waitForNodePrompt(localinputStream, pull_request)) == null) {
-                    return;
-                }
-                startNewConnection(BrokerList.get(index));
-            }
-
-        }
 
         @Override
         public void run() {
-            pull(topic);
+            Integer return_type = UserNodeUtils.pull(localoutputStream,localinputStream,pull_request,topic,UserNode.this);
+            if(return_type == null){
+                System.out.println(ConsoleColors.RED + "An error occured inside the run of the pull request" + ConsoleColors.RESET);
+                return;
+
+            }else if(return_type != -1) { // the pull method returned an index for the correct broker
+                startNewConnection(UserNode.this.BrokerList.get(return_type));
+            }
         }
 
         public void shutdownConnection(){
