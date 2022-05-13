@@ -654,6 +654,16 @@ public class UserNodeUtils {
         return -1;
     }
 
+
+    /**
+     * Does all the necessary operations required to receive new data for the specific topic in the parameter list.
+     * @param localoutputStream Accepts the local input stream.
+     * @param localinputStream Accepts the local output stream.
+     * @param pull_request Accepts the pull request socket.
+     * @param topic Accepts the topic that we will pull data for.
+     * @param userNode Accepts the user node that initiates the pull request.
+     * @return Returns -1 if everything goes well. If we must connect to another broker the method returns the index of the broker in the broker list. If an error occurs it returns null.
+     */
     public static Integer pull(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket pull_request, String topic, UserNode userNode) {
         //makes sure the broker received the pull request and they synchronize
         while (true) {

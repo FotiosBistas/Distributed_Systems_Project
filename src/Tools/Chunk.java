@@ -6,7 +6,7 @@ public class Chunk implements Serializable {
     private final int chunk_size = 512*1024;
     private final int sequence_number;
     private final int max_sequence_number;
-    private byte[] chunk = new byte[chunk_size];
+    private final byte[] chunk;
     private final int actual_length;
 
     public Chunk(int sequence_number,int actual_length, int max_sequence_number, byte[] chunk) {

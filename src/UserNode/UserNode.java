@@ -4,6 +4,7 @@ import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
 import Tools.*;
+import jdk.internal.loader.AbstractClassLoaderValue;
 
 import java.awt.*;
 import java.io.*;
@@ -121,6 +122,9 @@ public class UserNode implements Serializable {
 
     private void tryagain(){connect();}
 
+    /**
+     * Responsible for opening connections and sending requests other than pull to the brokers. It uses Networking for consumer class and networking for publisher to achieve that.
+     */
     public void connect(){
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
         executor.scheduleAtFixedRate(this::checkMessageList,0,1, TimeUnit.SECONDS);
@@ -138,8 +142,8 @@ public class UserNode implements Serializable {
                 t1.start();
                 temp.add(t1);
             }
-            for (int i = 0; i < temp.size(); i++)
-            {
+            //blocks until id list,broker list and send nickname finish
+            for (int i = 0; i < temp.size(); i++) {
                 temp.get(i).join();
             }
             erroneousinput = true;
@@ -256,6 +260,11 @@ public class UserNode implements Serializable {
         }
     }
 
+    /**
+     * Called in the pull method inside the user node utils class. Adds a new text message to the queue of the consumer.
+     * @param topic_name Accepts the topic that received a new message.
+     * @param new_text_message Accepts the text message object we received.
+     */
     public synchronized void addNewMessage(String topic_name, Text_Message new_text_message) {
         if(message_list.containsKey(topic_name)) {
             ArrayList<Text_Message> values = message_list.get(topic_name);
@@ -266,6 +275,11 @@ public class UserNode implements Serializable {
         }
     }
 
+    /**
+     * Called in the pull method inside the user node utils class. Adds a new story to the queue of the consumer.
+     * @param topic_name Accepts the topic that received a new message.
+     * @param new_story Accepts the story object we received.
+     */
     public synchronized void addNewStory(String topic_name,Story new_story){
         if(story_list.containsKey(topic_name)) {
             ArrayList<Story> stories = story_list.get(topic_name);
@@ -276,6 +290,11 @@ public class UserNode implements Serializable {
         }
     }
 
+    /**
+     * Called in the pull method inside the user node utils class. Adds a new file to the queue of the consumer.
+     * @param topic_name Accepts the topic that received a new message.
+     * @param new_file Accepts the file object we received.
+     */
     public synchronized void addNewFile(String topic_name,MultimediaFile new_file){
         if(file_list.containsKey(topic_name)) {
             ArrayList<MultimediaFile> files = file_list.get(topic_name);
@@ -286,30 +305,39 @@ public class UserNode implements Serializable {
         }
     }
 
-    public synchronized void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
+    private synchronized void removeFromMessageQueue(String topic_name,Text_Message old_text_message){
         ArrayList<Text_Message> temp = message_list.get(topic_name);
         temp.remove(old_text_message);
     }
 
-    public synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
+    private synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
         ArrayList<MultimediaFile> temp = file_list.get(topic_name);
         temp.remove(old_file);
     }
 
-    public synchronized void removeFromStoryQueue(String topic_name,Story old_story){
+    private synchronized void removeFromStoryQueue(String topic_name,Story old_story){
         ArrayList<Story> temp = story_list.get(topic_name);
         temp.remove(old_story);
     }
 
-    public synchronized void addNewSubscription(String topic_name){
-        SubscribedTopics.add(topic_name);
+    protected synchronized void addNewSubscription(String topic_name){
+        if(!SubscribedTopics.contains(topic_name)) {
+            SubscribedTopics.add(topic_name);
+        }
     }
 
-    public synchronized void removeSubscription(String topic_name){
-        SubscribedTopics.remove(topic_name);
+    protected synchronized void removeSubscription(String topic_name){
+        if(SubscribedTopics.contains(topic_name)) {
+            SubscribedTopics.remove(topic_name);
+        }
     }
 
-    private void writeStoryChunks(ArrayList<Chunk> chunks,File file){
+    /**
+     * Writes the buffer array of each object chunk,calling the chunk.getChunk() method,to the specific file in the parameter list. The chunks are for the multimedia files or stories received using the pull request class.
+     * @param chunks Accepts an array list containing chunk objects
+     * @param file Accepts the file that the data is going to get written to.
+     */
+    private void writeChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -324,21 +352,11 @@ public class UserNode implements Serializable {
         }
     }
 
-    private void writeFileChunks(ArrayList<Chunk> chunks,File file){
-        try(FileOutputStream fos = new FileOutputStream (file)) {
-            for (Chunk chunk : chunks) {
-                System.out.println("Writing chunk: ");
-                System.out.println(chunk);
-                fos.write(chunk.getChunk(),0,chunk.getActual_length());
-            }
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
-
+    /**
+     * Writes the metadata of a text message received by the pull request along with its contents.
+     * @param message Accepts the text message that was received by the pull request.
+     * @param file Accepts the file that the data is going to get written to.
+     */
     private void writeTextMessage(Text_Message message,File file){
         try{
             System.out.println("Writing text message");
@@ -354,6 +372,9 @@ public class UserNode implements Serializable {
         }
     }
 
+    /**
+     * Every interval that is defined in the connect() method this method clears the story queue and writes the stories in a specific directory.
+     */
     private void clearStoryQueue() {
         System.out.println("Clearing story queue");
         for (Map.Entry<String,ArrayList<Story>> entry : story_list.entrySet()) {
@@ -393,13 +414,16 @@ public class UserNode implements Serializable {
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeStoryChunks(temp.get(i).getMultimediaFileChunk(), file);
+                writeChunks(temp.get(i).getMultimediaFileChunk(), file);
                 removeFromStoryQueue(topic, temp.get(i));
                 i++;
             }
         }
     }
 
+    /**
+     * Every interval that is defined in the connect() method this method clears the file queue and writes the files in a specific directory.
+     */
     private void clearFileQueue(){
         System.out.println("Clearing file queue");
         for(Map.Entry<String,ArrayList<MultimediaFile>> entry : file_list.entrySet()){
@@ -440,7 +464,7 @@ public class UserNode implements Serializable {
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                writeFileChunks(temp.get(i).getMultimediaFileChunk(),file);
+                writeChunks(temp.get(i).getMultimediaFileChunk(),file);
                 removeFromFileQueue(topic,temp.get(i));
                 i++;
             }
@@ -448,7 +472,7 @@ public class UserNode implements Serializable {
     }
 
     /**
-     * Clears the message queue every specific interval.
+     * Every interval that is defined in the connect() method this method clears the file queue and writes the files in a specific directory.
      */
     private void clearMessageQueue(){
         System.out.println("Clearing message queue");
@@ -549,7 +573,7 @@ public class UserNode implements Serializable {
          * If the topic that we want to pull data from is assigned to a different broker then we want to open a connection with that new broker.
          * @param new_broker Accepts the new broker that we want to establish a connection with.
          */
-        public void startNewConnection(Tuple<String,int[]> new_broker){
+        private void startNewConnection(Tuple<String,int[]> new_broker){
             //System.out.println("The new IP is: " + new_broker.getValue1());
             String IP = new_broker.getValue1();
             //System.out.println("The new port is: " + new_broker.getValue2()[0]);
@@ -582,7 +606,10 @@ public class UserNode implements Serializable {
             }
         }
 
-        public void shutdownConnection(){
+        /**
+         * Closes the streams and the socket.
+         */
+        private void shutdownConnection(){
             System.out.println(ConsoleColors.RED + "Shutting down connection in pull request" + ConsoleColors.RESET);
             try{
                 if(pull_request != null){

@@ -44,9 +44,9 @@ public class GeneralUtils {
      */
     public static String readUTFString(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println(ConsoleColors.PURPLE + "Waiting to read UTF type" + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.PURPLE + "Waiting to read UTF type" + ConsoleColors.RESET);
             String message = localinputStream.readUTF();
-            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         } catch (SocketException socketException) {
             System.out.println( ConsoleColors.RED + "Socket error in read UTF string..." + ConsoleColors.RESET);
@@ -65,9 +65,9 @@ public class GeneralUtils {
      */
     public static Integer waitForNodePrompt(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting for integer type)" + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting for integer type)" + ConsoleColors.RESET);
             int message = localinputStream.readInt();
-            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.GREEN);
+            //System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.GREEN);
             return message;
         } catch (SocketException socketException) {
             System.out.println( "\033[1;31m" + "Socket error in wait for node prompt..." + ConsoleColors.RESET);
@@ -88,9 +88,9 @@ public class GeneralUtils {
      */
     public static Long readLong(ObjectInputStream localinputStream, Socket socket) {
         try {
-            System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting to read long type)" + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.PURPLE + "Waiting for node prompt (waiting to read long type)" + ConsoleColors.RESET);
             Long message = localinputStream.readLong();
-            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         } catch (SocketException socketException) {
             System.out.println( ConsoleColors.RED + "Socket error in wait for node prompt..." + ConsoleColors.RESET);
@@ -111,9 +111,9 @@ public class GeneralUtils {
      */
     public static Object readObject(ObjectInputStream localinputStream,Socket socket) {
         try {
-            System.out.println(ConsoleColors.PURPLE + "Waiting to receive object from input stream" + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.PURPLE + "Waiting to receive object from input stream" + ConsoleColors.RESET);
             Object message = localinputStream.readObject();
-            System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.GREEN + "Received message: " + message + " from node: " + socket.getInetAddress() + ConsoleColors.RESET);
             return message;
         }catch (NotSerializableException notSerializableException){
             System.out.println( ConsoleColors.RED + "Not serializable error in read object..." + ConsoleColors.RESET);
@@ -135,7 +135,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(String message, ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeUTF(message);
             localoutputStream.flush();
             return -1;
@@ -160,7 +160,7 @@ public class GeneralUtils {
             if(!(message instanceof Serializable)){
                 throw new NotSerializableException("The object is not serializable");
             }
-            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeObject(message);
             localoutputStream.flush();
             return -1;
@@ -185,7 +185,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(int message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeInt(message);
             localoutputStream.flush();
             return -1;
@@ -206,7 +206,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(long message,ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending Message: " + message + ConsoleColors.RESET);
             localoutputStream.writeLong(message);
             localoutputStream.flush();
             return -1;
@@ -227,7 +227,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(byte[] buffer,ObjectOutputStream localoutputStream){
         try {
-            System.out.println( ConsoleColors.GREEN + "Sending buffer: " + buffer + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending buffer: " + buffer + ConsoleColors.RESET);
             localoutputStream.write(buffer);
             localoutputStream.flush();
             return -1;
@@ -248,7 +248,7 @@ public class GeneralUtils {
      */
     public static Integer sendMessage(Messages message_type, ObjectOutputStream localoutputStream) {
         try {
-            System.out.println( ConsoleColors.GREEN + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + ConsoleColors.RESET);
+            //System.out.println( ConsoleColors.GREEN + "Sending Message: " + message_type + " with ordinal number: " + message_type.ordinal() + ConsoleColors.RESET);
             localoutputStream.writeInt(message_type.ordinal());
             localoutputStream.flush();
             return -1;

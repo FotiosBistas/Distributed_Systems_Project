@@ -152,14 +152,14 @@ public class Publisher_Handler implements Runnable{
     /**
      * Removes the connection from the array list of connections inside the broker class.
      */
-    public void removeConnection(){
+    private void removeConnection(){
         broker.getPublisher_Handlers().remove(this);
     }
 
     /**
      * Terminates the local socket along with it's corresponding input and output streams.It throws a IO exception if something goes wrong.
      */
-    public void shutdownConnection() {
+    private void shutdownConnection() {
         System.out.println("Shutting down connection");
         removeConnection();
         try {

@@ -17,7 +17,6 @@ public class  Broker{
 
     private List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
     private List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
-    private List<UserNode> registeredUsers = new ArrayList<>();
 
 
     private List<Topic> Topics = new ArrayList<>();
@@ -25,13 +24,9 @@ public class  Broker{
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> id_list = new ArrayList<>();
-    //private Map<String, Set<Consumer>> subscribedUsersToTopic = new HashMap<String,Set<Consumer>>();
-
-
 
     private ServerSocket consumer_service;
     private ServerSocket publisher_service;
-    private Socket connection_to_other_brokers;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
 
@@ -67,14 +62,6 @@ public class  Broker{
 
     public void setPublisher_Handlers(List<Publisher_Handler> publisher_Handlers) {
         this.publisher_Handlers = publisher_Handlers;
-    }
-
-    public List<UserNode> getRegisteredUsers() {
-        return registeredUsers;
-    }
-
-    public void setRegisteredUsers(List<UserNode> registeredUsers) {
-        this.registeredUsers = registeredUsers;
     }
 
     public List<Topic> getTopics() {
@@ -125,14 +112,6 @@ public class  Broker{
         this.publisher_service = publisher_service;
     }
 
-    public Socket getConnection_to_other_brokers() {
-        return connection_to_other_brokers;
-    }
-
-    public void setConnection_to_other_brokers(Socket connection_to_other_brokers) {
-        this.connection_to_other_brokers = connection_to_other_brokers;
-    }
-
     public ObjectOutputStream getLocaloutputStream() {
         return localoutputStream;
     }
@@ -171,6 +150,11 @@ public class  Broker{
     }
 
 
+    /**
+     * Receives a value class type and inserts it to the corresponding queue present in the topic.
+     * @param val Accepts the value class type (story,multimediafile,text_message).
+     * @param topic_name Accepts the topic.
+     */
     public void addToMessageQueue(Value val,String topic_name) {
         if (val instanceof Story) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert story: " + val + "into the message list of the topic: " + topic_name);
@@ -295,8 +279,8 @@ public class  Broker{
 
 
     /**
-     * Starts three separate threads for each possible service.
-     * The three types of service are: Consumer service, Publisher service
+     * Starts two separate threads for each possible service.
+     * The two types of service are: Consumer service, Publisher service
      */
     public void startBroker() {
         try {
@@ -321,7 +305,6 @@ public class  Broker{
                     shutdownBroker();
                 }
             }).start();
-
 
             /* separate thread for receiving publisher connections*/
             new Thread(() -> {
@@ -355,7 +338,7 @@ public class  Broker{
     /**
      * shutdown broker and close all the corresponding services
      */
-    public void shutdownBroker(){
+    private void shutdownBroker(){
         System.out.println("Shutting down broker with id: " + this.id);
         try {
             if(consumer_service != null) {
@@ -415,28 +398,6 @@ public class  Broker{
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
     }
 
-
-    /**
-     * Shutdowns socket connection in broker that tried to communicate with other brokers.
-     * Also shutdowns the corresponding streams.
-     */
-    public void shutdownConnection(){
-        System.out.println("Shutting down communication socket between brokers");
-        try {
-            if (localinputStream != null) {
-                localinputStream.close();
-            }
-            if(localoutputStream != null){
-                localoutputStream.close();
-            }
-            if(connection_to_other_brokers != null){
-                connection_to_other_brokers.close();
-            }
-        }catch(IOException e){
-            e.printStackTrace();
-            System.out.println("Error in shutting down connection");
-        }
-    }
 
     /**
      * Hashes the topic with its name and returns the broker that will serve the request.

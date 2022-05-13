@@ -62,8 +62,13 @@ public class NetworkingForConsumer implements Runnable{
     }
 
 
-
-    public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+    /**
+     * If the current broker that the user node is connected to is not the right broker for the topic a new connection is opened to serve the corresponding request
+     * for the specific topic.
+     * @param new_broker Accepts a tuple type that is the new broker's ip and port(port[0] because it is for consumer connections). The tuple broker is found in the broker list that the user received.
+     * @param operation Accepts the operation that the new connection must serve.
+     */
+    private void startNewConnection(Tuple<String,int[]> new_broker,int operation){
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         //port for connecting to broker for consumer traffic
@@ -132,7 +137,7 @@ public class NetworkingForConsumer implements Runnable{
                     if(success == null){
                         return;
                     }else if(success == Messages.NO_SUCH_TOPIC.ordinal()){
-                        System.out.println(ConsoleColors.RED + "Broker couldn't unsubscribe from the topic" + ConsoleColors.RESET);
+                        System.out.println(ConsoleColors.RED + "Broker couldn't unsubscribe you from the topic" + ConsoleColors.RESET);
                         return;
                     }else if(success == Messages.FINISHED_OPERATION.ordinal()) {
                         cons.removeSubscription(topic_name);
@@ -213,7 +218,7 @@ public class NetworkingForConsumer implements Runnable{
     /**
      * Terminates the local socket along with it's corresponding input and output streams.It throws a IO exception if something goes wrong.
      */
-    public void shutdownConnection(){
+    private void shutdownConnection(){
         System.out.println("Ending client: " + cons.getName());
         exit = true;
         try{

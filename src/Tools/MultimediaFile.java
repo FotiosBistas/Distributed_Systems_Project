@@ -13,11 +13,13 @@ import java.util.ArrayList;
 
 
 public class MultimediaFile extends Value implements Serializable {
+
     private final String multimediaFileName;
-    private long length;
+    private long size;
     private String actual_date;
     private ArrayList<Chunk> multimediaFileChunk = new ArrayList<>();
     private final int identifier;
+    private final int chunk_size = 512*1024;
 
 
     public String getMultimediaFileName() {
@@ -25,7 +27,7 @@ public class MultimediaFile extends Value implements Serializable {
     }
 
     public long getLength() {
-        return length;
+        return size;
     }
 
     public String getActual_date() {
@@ -49,7 +51,7 @@ public class MultimediaFile extends Value implements Serializable {
         BasicFileAttributes attr = null;
         try {
             attr = Files.readAttributes(path, BasicFileAttributes.class);
-            this.length = attr.size();
+            this.size = attr.size();
             long cTime = attr.creationTime().toMillis();
             ZonedDateTime t = Instant.ofEpochMilli(cTime).atZone(ZoneId.of("UTC"));
             this.actual_date = DateTimeFormatter.ofPattern("MM/dd/yyyy").format(t);
@@ -60,39 +62,38 @@ public class MultimediaFile extends Value implements Serializable {
         this.identifier = this.hashCode();
     }
 
-    public MultimediaFile(String publisher,String dateCreated,String multimediaFileName,String actual_date,long length,ArrayList<Chunk> multimediaFileChunk){
+    public MultimediaFile(String publisher,String dateCreated,String multimediaFileName,String actual_date,long size,ArrayList<Chunk> multimediaFileChunk){
         super(publisher, dateCreated);
         this.multimediaFileName = multimediaFileName;
         this.actual_date = actual_date;
-        this.length = length;
+        this.size = size;
         this.multimediaFileChunk = multimediaFileChunk;
         this.identifier =  this.hashCode();
     }
 
-    public void splitFile(File f){
-        int sizeofchunks = 512*1024;
+    /**
+     * Splits the file into chunks (by creating instances of the class Chunk). Calculates the actual size of the chunks in order
+     * to conserve memory.
+     * @param f Accepts the file that is going to created the chunks for.
+     */
+    private void splitFile(File f){
         try(FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis)) {
             int bytesAmount = 0;
-            byte[] buffer = new byte[sizeofchunks];
+            byte[] buffer = new byte[chunk_size];
             int counter = 1;
-            System.out.println("Length is: " + length);
-            double ceil = (double)(length)/(double)sizeofchunks;
+            double ceil = (double)(size)/(double)chunk_size;
             int max_seq = (int) Math.ceil(ceil);
-            System.out.println("Max sequence number is: " + max_seq);
-            while((bytesAmount = bis.read(buffer,0,sizeofchunks))>0){
+            while((bytesAmount = bis.read(buffer,0,chunk_size))>0){
                 if(counter != max_seq) {
-                    Chunk chunk = new Chunk(counter++,sizeofchunks, max_seq,buffer.clone());
+                    Chunk chunk = new Chunk(counter++,chunk_size, max_seq,buffer.clone());
                     multimediaFileChunk.add(chunk);
                 }else{
-                    int actual_size = (int) (sizeofchunks - ((long) sizeofchunks * max_seq - length) + 1);
+                    int actual_size = (int) (chunk_size - ((long) chunk_size * max_seq - size) + 1);
                     System.out.println(actual_size);
                     Chunk chunk = new Chunk(counter++, actual_size,max_seq,buffer.clone());
                     multimediaFileChunk.add(chunk);
                 }
-
-                System.out.println("Created chunk: " + multimediaFileChunk.size() +  " for file: " + multimediaFileName);
-
             }
             System.out.println("Created: " + multimediaFileChunk.size() + " chunks for file: " + multimediaFileName);
             bis.close();
@@ -107,7 +108,7 @@ public class MultimediaFile extends Value implements Serializable {
     public String toString() {
         return  super.toString() + "MultimediaFile{" +
                 "multimediaFileName='" + multimediaFileName + '\'' +
-                ", length=" + length +
+                ", size=" + size +
                 ", actual_date='" + actual_date + '\'' +
                 ", multimediaFileChunk=" + multimediaFileChunk +
                 ", identifier=" + identifier +

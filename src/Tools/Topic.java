@@ -60,6 +60,7 @@ public class Topic implements Serializable{
         System.out.println(subscribedUsers);
     }
 
+
     public synchronized void addSubscription(String new_cons){
         if(!isUserSubscribed(new_cons)){
             subscribedUsers.add(new_cons);
@@ -91,6 +92,11 @@ public class Topic implements Serializable{
         return subscribedUsers.contains(user);
     }
 
+    /**
+     * Finds the text messages that the specific user hasn't received.
+     * @param user Accepts the user name.
+     * @return returns the new text message found.
+     */
     public ArrayList<Text_Message> findLatestMessage(String user){
         System.out.println("Finding newest messages for user: " + user);
         int index = last_message.get(user);
@@ -101,14 +107,17 @@ public class Topic implements Serializable{
             found_new_messages = true;
         }
         System.out.println("The number of new messages are: " + new_messages.size());
-        System.out.println(last_message);
         if(found_new_messages) {
             last_message.put(user,last_message.getOrDefault(user,0) + new_messages.size());
         }
-        System.out.println(last_message);
         return new_messages;
     }
 
+    /**
+     * Finds the files that the specific user hasn't received.
+     * @param user Accepts the user name.
+     * @return returns the new text message found.
+     */
     public ArrayList<MultimediaFile> findLatestFile(String user){
         System.out.println("Finding newest files for user: " + user);
         int index = last_file.get(user);
@@ -119,14 +128,17 @@ public class Topic implements Serializable{
             found_new_messages = true;
         }
         System.out.println("The number of new messages are: " + new_files.size());
-        System.out.println(last_file);
         if(found_new_messages) {
             last_file.put(user,last_file.getOrDefault(user,0) + new_files.size());
         }
-        System.out.println(last_file);
         return new_files;
     }
 
+    /**
+     * Finds the stories that the specific user hasn't received.
+     * @param user Accepts the user name.
+     * @return returns the new text message found.
+     */
     public ArrayList<Story> findLatestStory(String user){
         System.out.println("Finding newest stories for user: " + user);
         int index = last_story.get(user);
@@ -137,27 +149,33 @@ public class Topic implements Serializable{
             found_new_messages = true;
         }
         System.out.println("The number of new stories are: " + new_stories.size());
-        System.out.println(last_story);
         if(found_new_messages) {
             last_story.put(user,last_story.getOrDefault(user,0) + new_stories.size());
         }
-        System.out.println(last_story);
         return new_stories;
     }
 
-    public synchronized void ExpireStory(Story story){
+    /**
+     * Checks if the current date is after the story expiration date and expires the story so it can be removed from the story list.
+     * @param story Accepts the specific story.
+     */
+    private synchronized void ExpireStory(Story story){
         System.out.println("Checking time in story");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime story_time = LocalDateTime.parse(story.getExpiration_date(),dtf);
 
         if(now.isAfter(story_time)){
-            System.out.println("Story expired");
+            System.out.println("Story expired: " + story);
             story.setExpired(true);
         }
     }
 
-    public void checkExpiredStories(){
+    /**
+     * Get's called every specific interval specified in the constructor of the topic.
+     * If a story is expired it removes it from the story queue.
+     */
+    private void checkExpiredStories(){
         System.out.println("Finding expired stories");
         for (Story story:story_queue) {
             ExpireStory(story);

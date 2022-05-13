@@ -5,15 +5,12 @@ package UserNode;
 
 import Logging.ConsoleColors;
 import NetworkUtilities.UserNodeUtils;
-import Tools.MultimediaFile;
-import Tools.Text_Message;
 import Tools.Tuple;
 
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Scanner;
 
 public class NetworkingForPublisher implements Runnable {
 
@@ -21,14 +18,9 @@ public class NetworkingForPublisher implements Runnable {
     private UserNode pub;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
-    private boolean exit = false;
-    private String topic_name;
-    private int operation;
-    private String contents_file_name;
-    //idea here is that the user node will open a connection with the broker it wants to communicate and keep it for while
-    //also its corresponding streams must be stored somewhere or not
-    //private List<Tuple<ObjectInputStream,ObjectOutputStream>> streams = new ArrayList<>();
-    //publisher doesn't need a while loop
+    private final String topic_name;
+    private final int operation;
+    private final String contents_file_name;
 
 
     public NetworkingForPublisher(Socket connection, UserNode pub, String topic_name, int operation, String contents_file_name) {
@@ -52,7 +44,13 @@ public class NetworkingForPublisher implements Runnable {
         }
     }
 
-    public void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+    /**
+     * If the current broker that the user node is connected to is not the right broker for the topic a new connection is opened to serve the corresponding request
+     * for the specific topic.
+     * @param new_broker Accepts a tuple type that is the new broker's ip and port(port[1] because it is for publisher connections). The tuple broker is found in the broker list that the user received.
+     * @param operation Accepts the operation that the new connection must serve.
+     */
+    private void startNewConnection(Tuple<String,int[]> new_broker,int operation){
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         int port = new_broker.getValue2()[1];
@@ -126,9 +124,8 @@ public class NetworkingForPublisher implements Runnable {
     /**
      * Terminates the local socket along with it's corresponding input and output streams.It throws a IO exception if something goes wrong.
      */
-    public void shutdownConnection(){
+    private void shutdownConnection(){
         System.out.println("Terminating publisher: " + pub.getName());
-        exit = true;
         try {
             if(connection != null){
                 connection.close();
