@@ -157,7 +157,7 @@ public class  Broker{
      */
     public void addToMessageQueue(Value val,String topic_name) {
         if (val instanceof Story) {
-            System.out.println(ConsoleColors.PURPLE + "Trying to insert story: " + val + "into the message list of the topic: " + topic_name);
+            System.out.println(ConsoleColors.PURPLE + "Trying to insert story: " + val + " into the message list of the topic: " + topic_name);
             Topic temp = null;
             for (Topic topic : Topics) {
                 if (topic.getName().equals(topic_name)) {
@@ -171,7 +171,6 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
-            System.out.println(temp.getStory_queue());
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -187,7 +186,6 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
-            System.out.println(temp.getFile_queue());
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -203,7 +201,6 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
-            System.out.println(temp.getMessage_queue());
         }
     }
     /**

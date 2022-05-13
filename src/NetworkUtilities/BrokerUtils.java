@@ -131,7 +131,7 @@ public class BrokerUtils {
 
 
     /**
-     * Receives all the chunk for the specific file that is read from the input stream.
+     * Receives all the chunks for the specific file that is read from the input stream.
      * @param localinputStream  accepts the local input stream.
      * @param socket accepts the corresponding socket of the streams.
      * @return Returns -1 if everything worked properly.If it returns null there was an error.
@@ -157,9 +157,9 @@ public class BrokerUtils {
         if (publisher == null) {
             return null;
         }
-        System.out.println("Receiving file's length name...");
-        Long length = GeneralUtils.readLong(localinputStream,socket);
-        if (length == null) {
+        System.out.println("Receiving file's size...");
+        Long size = GeneralUtils.readLong(localinputStream,socket);
+        if (size == null) {
             return null;
         }
         String new_file = file_name.substring(file_name.lastIndexOf("\\") + 1);
@@ -201,17 +201,22 @@ public class BrokerUtils {
             System.out.println("Chunks size now is: " + chunks.size());
         }
         System.out.println("Finished receiving file");
-        MultimediaFile new_m_file = new MultimediaFile(publisher,date_created,new_file,actual_date,length,chunks);
-        System.out.println(new_m_file);
+        MultimediaFile new_m_file = new MultimediaFile(publisher,date_created,new_file,actual_date,size,chunks);
         return new_m_file;
     }
 
+    /**
+     * Receives story by calling receive file and after it returns the file it creates the story.
+     * @param localinputStream Accepts the local input stream
+     * @param socket Accepts the local socket.
+     * @return Returns the new story if everything works properly. If an error occurs it returns null.
+     */
     public static Story receiveStory(ObjectInputStream localinputStream,Socket socket){
         MultimediaFile new_file = receiveFile(localinputStream,socket);
         if(new_file == null){
             return null;
         }
-        System.out.println(new_file);
+        System.out.println("Finished receiving story");
         Story new_Story = new Story(new_file);
         return new_Story;
     }

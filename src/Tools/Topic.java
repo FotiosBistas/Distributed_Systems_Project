@@ -1,4 +1,6 @@
 package Tools;
+import Logging.ConsoleColors;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -81,12 +83,19 @@ public class Topic implements Serializable{
 
 
     public synchronized void addToMessageQueue(Text_Message message){
+        System.out.println(ConsoleColors.PURPLE + "Adding new message to message queue" + ConsoleColors.RESET);
         message_queue.add(message);
     }
 
-    public synchronized void addToFileQueue(MultimediaFile file){file_queue.add(file);}
+    public synchronized void addToFileQueue(MultimediaFile file){
+        System.out.println(ConsoleColors.PURPLE + "Adding new file to file queue" + ConsoleColors.RESET);
+        file_queue.add(file);
+    }
 
-    public synchronized void addToStoryQueue(Story story){ story_queue.add(story);}
+    public synchronized void addToStoryQueue(Story story){
+        System.out.println(ConsoleColors.PURPLE + "Adding new story to story queue" + ConsoleColors.RESET);
+        story_queue.add(story);
+    }
 
     public boolean isUserSubscribed(String user){
         return subscribedUsers.contains(user);
@@ -166,8 +175,8 @@ public class Topic implements Serializable{
         LocalDateTime story_time = LocalDateTime.parse(story.getExpiration_date(),dtf);
 
         if(now.isAfter(story_time)){
-            System.out.println("Story expired: " + story);
             story.setExpired(true);
+            System.out.println("Story expired: " + story);
         }
     }
 

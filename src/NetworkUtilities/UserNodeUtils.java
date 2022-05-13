@@ -667,6 +667,7 @@ public class UserNodeUtils {
     public static Integer pull(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket pull_request, String topic, UserNode userNode) {
         //makes sure the broker received the pull request and they synchronize
         while (true) {
+            //System.out.println("sending pull request");
             if (GeneralUtils.sendMessage(Messages.PULL, localoutputStream) == null) {
                 return null;
             }
@@ -680,6 +681,7 @@ public class UserNodeUtils {
         }
         //makes sure the broker received the topic name
         while (true) {
+            //System.out.println("sending topic");
             if (GeneralUtils.sendMessage(topic, localoutputStream) == null) {
                 return null;
             }

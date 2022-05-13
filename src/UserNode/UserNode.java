@@ -53,6 +53,10 @@ public class UserNode implements Serializable {
         createDirectories();
     }
 
+
+    /**
+     * Creates all the directories needed to receive files.
+     */
     private void createDirectories(){
         File dir = new File(receive_files_directory);
         Boolean was_created = false;
@@ -599,18 +603,20 @@ public class UserNode implements Serializable {
             Integer return_type = UserNodeUtils.pull(localoutputStream,localinputStream,pull_request,topic,UserNode.this);
             if(return_type == null){
                 System.out.println(ConsoleColors.RED + "An error occured inside the run of the pull request" + ConsoleColors.RESET);
+                shutdownConnection();
                 return;
 
             }else if(return_type != -1) { // the pull method returned an index for the correct broker
                 startNewConnection(UserNode.this.BrokerList.get(return_type));
             }
+            shutdownConnection();
         }
 
         /**
          * Closes the streams and the socket.
          */
         private void shutdownConnection(){
-            System.out.println(ConsoleColors.RED + "Shutting down connection in pull request" + ConsoleColors.RESET);
+            //System.out.println(ConsoleColors.RED + "Shutting down connection in pull request" + ConsoleColors.RESET);
             try{
                 if(pull_request != null){
                     pull_request.close();
