@@ -14,8 +14,8 @@ import java.net.SocketException;
 
 public class NetworkingForPublisher implements Runnable {
 
-    private Socket connection;
-    private UserNode pub;
+    private final Socket connection;
+    private final UserNode pub;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
     private final String topic_name;
@@ -29,7 +29,6 @@ public class NetworkingForPublisher implements Runnable {
         this.topic_name = topic_name;
         this.operation = operation;
         this.contents_file_name = contents_file_name;
-        //connections.put(,connection);
         try {
             localoutputStream = new ObjectOutputStream(connection.getOutputStream());
             localinputStream = new ObjectInputStream(connection.getInputStream());
