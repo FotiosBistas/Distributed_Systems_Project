@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,15 +22,30 @@ class InterBrokerCommunications{
     private final String alive_message = "alive";
     private static ScheduledExecutorService executorCompletionService = Executors.newScheduledThreadPool(1);
     InterBrokerCommunications(Broker caller_broker){
-        this.caller_broker = caller_broker;
-        executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,5,5, TimeUnit.SECONDS);
-        new Thread(this::receiveAliveMessage).start();
         try {
+            this.caller_broker = caller_broker;
+            executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,5,5, TimeUnit.SECONDS);
+            executorCompletionService.scheduleAtFixedRate(this::setDead,8,5,TimeUnit.SECONDS);
+            new Thread(this::receiveAliveMessage).start();
             multicastSocket = new MulticastSocket(datagram_port);
             InetAddress group = InetAddress.getByName(multicast_host);
             multicastSocket.joinGroup(group);
+            initializeDatesandAlive();
         } catch (IOException e) {
+            closeSocket();
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Sets the dates as the current system time and makes the alive array false
+     */
+    private void initializeDatesandAlive(){
+        for (int i = 0; i < caller_broker.getLastTimeAlive().length; i++) {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+            LocalDateTime now = LocalDateTime.now();
+            caller_broker.getLastTimeAlive()[i] = dtf.format(now);
+            caller_broker.getAlive_brokers()[i] = false;
         }
     }
 
@@ -38,10 +55,39 @@ class InterBrokerCommunications{
      * @param msg_received
      */
     private void setAlive(String sender_id,String msg_received){
-        if(msg_received.equals("alive")){
-            int id = Integer.parseInt(sender_id);
-            int index = caller_broker.getId_list().indexOf(id);
+        try {
+            if (msg_received.equals("alive")) {
+                int id = Integer.parseInt(sender_id);
+                int index = caller_broker.getId_list().indexOf(id);
+                caller_broker.getAlive_brokers()[index] = true;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                LocalDateTime now = LocalDateTime.now();
+                //insert the last time the broker with the current id was alive
+                caller_broker.getLastTimeAlive()[index] = formatter.format(now);
+                System.out.println("Broker with ID: " + caller_broker.getId_list().get(index) + " is now alive");
+                System.out.println(Arrays.toString(caller_broker.getAlive_brokers()));
+                System.out.println(Arrays.toString(caller_broker.getLastTimeAlive()));
+            }
+        }catch (NumberFormatException numberFormatException){
+            System.out.println("Wrong input type was given");
+        }catch (IndexOutOfBoundsException indexOutOfBoundsException){
+            System.out.println("Wrong index");
+        }
+    }
 
+    /**
+     * Gets called every specific interval set in the constructor. If a certain time frame passes it sets the broker as dead.
+     */
+    private void setDead(){
+        for (int i = 0; i < caller_broker.getLastTimeAlive().length; i++) {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime broker_last_time_alive = LocalDateTime.parse(caller_broker.getLastTimeAlive()[i],dtf);
+            long seconds = ChronoUnit.SECONDS.between(broker_last_time_alive, now);
+            //if 30 seconds passed the set the current broker as dead
+            if(seconds > 30){
+                caller_broker.getAlive_brokers()[i] = false;
+            }
         }
     }
 
@@ -59,11 +105,9 @@ class InterBrokerCommunications{
                 multicastSocket.receive(packet);
                 //in order to identify which broker sent the alive message you need its ID
                 String sender_ID = new String(packet.getData(), StandardCharsets.UTF_8);
-                System.out.println("Sender ID: " + sender_ID);
                 packet = new DatagramPacket(alive_buffer, alive_buffer.length);
                 multicastSocket.receive(packet);
                 String alive_msg = new String(packet.getData(), StandardCharsets.UTF_8);
-                System.out.println("Alive message: " + alive_msg);
                 setAlive(sender_ID,alive_msg);
             }
         }catch (IOException ioException){

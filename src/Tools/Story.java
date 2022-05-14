@@ -37,9 +37,7 @@ public class Story extends MultimediaFile implements Serializable {
         super(publisher,multimediaFileName);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime date = LocalDateTime.parse(getDateCreated(),formatter);
-        System.out.println(date);
-        LocalDateTime expiration_date = date.plusDays(1);
-        System.out.println(expiration_date);
+        LocalDateTime expiration_date = date.plusMinutes(1);
         this.expiration_date = expiration_date.format(formatter);
         this.identifier = Hash();
     }
@@ -55,7 +53,6 @@ public class Story extends MultimediaFile implements Serializable {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime date = LocalDateTime.parse(getDateCreated(),formatter);
         LocalDateTime expiration_date = date.plusMinutes(1);
-        System.out.println(expiration_date);
         this.expiration_date = expiration_date.format(formatter);
         this.identifier = Hash();
     }

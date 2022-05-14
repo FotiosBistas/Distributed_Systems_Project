@@ -9,6 +9,7 @@ import SHA1.SHA1;
 
 import java.io.*;
 import java.net.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,6 +22,7 @@ public class  Broker{
 
     //this list is matching in indexes with the Broker list
     private final Boolean[] alive_brokers = new Boolean[3];
+    private final String[] LastTimeAlive = new String[3];
 
     private final List<Topic> Topics = new ArrayList<>();
     private final HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
@@ -51,6 +53,10 @@ public class  Broker{
 
     public Boolean[] getAlive_brokers() {
         return alive_brokers;
+    }
+
+    public String[] getLastTimeAlive() {
+        return LastTimeAlive;
     }
 
     public List<Consumer_Handler> getConsumer_Handlers() {
@@ -177,13 +183,19 @@ public class  Broker{
         for (int i = 0; i < indexes.length; i++) {
             temp_list.add(BrokerList.get(indexes[i]));
             if(i == 0){
-                if(id_list.get(i).equals(this.id)){
-                    id_list.set(i,0);
+                //change the local id to the new one for better distribution of topics
+                //this is used in the inter broker communications class
+                int id = id_list.get(i);
+                id_list.set(i,0);
+                if(id == this.id){
                     this.id = id_list.get(i);
                 }
             }else {
-                if(id_list.get(i).equals(this.id)){
-                    id_list.set(i,i*100);
+                //change the local id to the new one for better distribution of topics
+                //this is used in the inter broker communications class
+                int id = id_list.get(i);
+                id_list.set(i,i*100);
+                if(id == this.id){
                     this.id = id_list.get(i);
                 }
             }
