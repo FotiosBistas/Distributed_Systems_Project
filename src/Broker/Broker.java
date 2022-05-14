@@ -8,22 +8,25 @@ import SHA1.SHA1;
 
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-//broker implements serializable due to the list of brokers
 public class  Broker{
 
-    private List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
-    private List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
+    private final List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
+    private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
 
+    //this list is matching in indexes with the Broker list
+    private final Boolean[] alive_brokers = new Boolean[3];
 
-    private List<Topic> Topics = new ArrayList<>();
-    private HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
+    private final List<Topic> Topics = new ArrayList<>();
+    private final HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
-    private List<Integer> id_list = new ArrayList<>();
+    private final List<Integer> id_list = new ArrayList<>();
 
     private ServerSocket consumer_service;
     private ServerSocket publisher_service;
@@ -34,8 +37,6 @@ public class  Broker{
     private final int consumer_port;
     private final int publisher_port;
     private Integer id;
-
-
 
     public Broker(String ip,int consumer_port , int publisher_port){
         this.ip = ip;
@@ -48,84 +49,27 @@ public class  Broker{
         readBrokerListFromConfigFile();
     }
 
+    public Boolean[] getAlive_brokers() {
+        return alive_brokers;
+    }
+
     public List<Consumer_Handler> getConsumer_Handlers() {
         return consumer_Handlers;
     }
-
-    public void setConsumer_Handlers(List<Consumer_Handler> consumer_Handlers) {
-        this.consumer_Handlers = consumer_Handlers;
-    }
-
     public List<Publisher_Handler> getPublisher_Handlers() {
         return publisher_Handlers;
-    }
-
-    public void setPublisher_Handlers(List<Publisher_Handler> publisher_Handlers) {
-        this.publisher_Handlers = publisher_Handlers;
     }
 
     public List<Topic> getTopics() {
         return Topics;
     }
 
-    public void setTopics(List<Topic> topics) {
-        Topics = topics;
-    }
-
-    public HashMap<Integer, ArrayList<Topic>> getBrokers_Topics() {
-        return Brokers_Topics;
-    }
-
-    public void setBrokers_Topics(HashMap<Integer, ArrayList<Topic>> brokers_Topics) {
-        Brokers_Topics = brokers_Topics;
-    }
-
     public List<Tuple<String, int[]>> getBrokerList() {
         return BrokerList;
     }
 
-    public void setBrokerList(List<Tuple<String, int[]>> brokerList) {
-        BrokerList = brokerList;
-    }
-
     public List<Integer> getId_list() {
         return id_list;
-    }
-
-    public void setId_list(List<Integer> id_list) {
-        this.id_list = id_list;
-    }
-
-    public ServerSocket getConsumer_service() {
-        return consumer_service;
-    }
-
-    public void setConsumer_service(ServerSocket consumer_service) {
-        this.consumer_service = consumer_service;
-    }
-
-    public ServerSocket getPublisher_service() {
-        return publisher_service;
-    }
-
-    public void setPublisher_service(ServerSocket publisher_service) {
-        this.publisher_service = publisher_service;
-    }
-
-    public ObjectOutputStream getLocaloutputStream() {
-        return localoutputStream;
-    }
-
-    public void setLocaloutputStream(ObjectOutputStream localoutputStream) {
-        this.localoutputStream = localoutputStream;
-    }
-
-    public ObjectInputStream getLocalinputStream() {
-        return localinputStream;
-    }
-
-    public void setLocalinputStream(ObjectInputStream localinputStream) {
-        this.localinputStream = localinputStream;
     }
 
     public String getIp() {
@@ -233,9 +177,15 @@ public class  Broker{
         for (int i = 0; i < indexes.length; i++) {
             temp_list.add(BrokerList.get(indexes[i]));
             if(i == 0){
-                id_list.set(i,0);
+                if(id_list.get(i).equals(this.id)){
+                    id_list.set(i,0);
+                    this.id = id_list.get(i);
+                }
             }else {
-                id_list.set(i, i * 100);
+                if(id_list.get(i).equals(this.id)){
+                    id_list.set(i,i*100);
+                    this.id = id_list.get(i);
+                }
             }
         }
         BrokerList = temp_list;
@@ -302,7 +252,6 @@ public class  Broker{
                     shutdownBroker();
                 }
             }).start();
-
             /* separate thread for receiving publisher connections*/
             new Thread(() -> {
                 try {
@@ -323,6 +272,8 @@ public class  Broker{
                 }
             }).start();
 
+            //start the object to initiate broker communications.
+            InterBrokerCommunications interBrokerCommunications = new InterBrokerCommunications(this);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -333,7 +284,7 @@ public class  Broker{
     }
 
     /**
-     * shutdown broker and close all the corresponding services
+     * Shutdown broker and close all the corresponding services
      */
     private void shutdownBroker(){
         System.out.println("Shutting down broker with id: " + this.id);
