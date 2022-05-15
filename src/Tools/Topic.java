@@ -23,11 +23,8 @@ public class Topic implements Serializable{
     private final ArrayList<Story> story_queue = new ArrayList<>();
     private final HashMap<String,Integer> last_story = new HashMap<>();
 
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-
     public Topic(String name){
         this.name = name;
-        executor.scheduleAtFixedRate(this::checkExpiredStories,0,20, TimeUnit.SECONDS);
     }
 
     public String getName() {
@@ -181,19 +178,31 @@ public class Topic implements Serializable{
     }
 
     /**
-     * Get's called every specific interval specified in the constructor of the topic.
+     * Gets called every specific interval specified in the constructor of the topic.
      * If a story is expired it removes it from the story queue.
      */
-    private void checkExpiredStories(){
+    public void checkExpiredStories(){
         System.out.println("Finding expired stories");
-        for (Story story:story_queue) {
+        int i = 0;
+        while(true){
+            if(i >= story_queue.size()){
+                break;
+            }
+            Story story = story_queue.get(i);
             ExpireStory(story);
             if(story.isExpired()){
                 story_queue.remove(story);
-                for (String user:subscribedUsers) {
+                int j = 0;
+                while(true){
+                    if(j >= subscribedUsers.size()){
+                        break;
+                    }
+                    String user = subscribedUsers.get(j);
                     last_story.put(user, last_story.getOrDefault(user,0) -1);
+                    j++;
                 }
             }
+            i++;
         }
     }
 

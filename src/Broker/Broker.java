@@ -25,7 +25,9 @@ public class  Broker{
     private final String[] LastTimeAlive = new String[3];
 
     private final List<Topic> Topics = new ArrayList<>();
-    private final HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
+    private final HashMap<Integer,ArrayList<Topic>> Topics_From_Other_Brokers = new HashMap<>();
+
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private final List<Integer> id_list = new ArrayList<>();
@@ -321,6 +323,7 @@ public class  Broker{
      */
     public void createTopic(String topic_name,String consumer){
        Topic new_topic = new Topic(topic_name);
+       executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        Topics.add(new_topic);
        System.out.println("Created new topic: " + topic_name);
        addConsumerToTopic(new_topic,consumer);
@@ -358,6 +361,19 @@ public class  Broker{
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
     }
 
+    /**
+     * Inserts a new topic that was created in another broker so in case the broker dies this broker(or some other) can serve the requests for the topic.
+     * @param id Accepts the id of the broker that sent the topic.
+     * @param topic Accepts the topic from the broker.
+     */
+    public void addNewTopicReceivedFromOtherBroker(int id,Topic topic){
+        if(Topics_From_Other_Brokers.containsKey(id)){
+            Topics_From_Other_Brokers.get(id).add(topic);
+        }else{
+            Topics_From_Other_Brokers.put(id,new ArrayList<>());
+            Topics_From_Other_Brokers.get(id).add(topic);
+        }
+    }
 
     /**
      * Hashes the topic with its name and returns the broker that will serve the request.
