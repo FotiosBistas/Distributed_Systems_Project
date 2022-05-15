@@ -24,7 +24,7 @@ class InterBrokerCommunications{
     InterBrokerCommunications(Broker caller_broker){
         try {
             this.caller_broker = caller_broker;
-            executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,5,5, TimeUnit.SECONDS);
+            executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,0,5, TimeUnit.SECONDS);
             executorCompletionService.scheduleAtFixedRate(this::setDead,8,5,TimeUnit.SECONDS);
             new Thread(this::receiveAliveMessage).start();
             multicastSocket = new MulticastSocket(datagram_port);
@@ -82,7 +82,7 @@ class InterBrokerCommunications{
             LocalDateTime broker_last_time_alive = LocalDateTime.parse(caller_broker.getLastTimeAlive()[i],dtf);
             long seconds = ChronoUnit.SECONDS.between(broker_last_time_alive, now);
             //if 30 seconds passed the set the current broker as dead
-            if(seconds > 30){
+            if(seconds > 15){
                 caller_broker.getAlive_brokers()[i] = false;
             }
         }
