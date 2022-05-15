@@ -104,7 +104,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<Text_Message> findLatestMessage(String user){
-        System.out.println("Finding newest messages for user: " + user);
+        //System.out.println("Finding newest messages for user: " + user);
         int index = last_message.get(user);
         ArrayList<Text_Message> new_messages = new ArrayList<>();
         boolean found_new_messages = false;
@@ -112,7 +112,7 @@ public class Topic implements Serializable{
             new_messages.add(message_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new messages are: " + new_messages.size());
+        //System.out.println("The number of new messages are: " + new_messages.size());
         if(found_new_messages) {
             last_message.put(user,last_message.getOrDefault(user,0) + new_messages.size());
         }
@@ -125,7 +125,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<MultimediaFile> findLatestFile(String user){
-        System.out.println("Finding newest files for user: " + user);
+        //System.out.println("Finding newest files for user: " + user);
         int index = last_file.get(user);
         ArrayList<MultimediaFile> new_files = new ArrayList<>();
         boolean found_new_messages = false;
@@ -133,7 +133,7 @@ public class Topic implements Serializable{
             new_files.add(file_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new messages are: " + new_files.size());
+        //System.out.println("The number of new messages are: " + new_files.size());
         if(found_new_messages) {
             last_file.put(user,last_file.getOrDefault(user,0) + new_files.size());
         }
@@ -146,7 +146,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<Story> findLatestStory(String user){
-        System.out.println("Finding newest stories for user: " + user);
+        //System.out.println("Finding newest stories for user: " + user);
         int index = last_story.get(user);
         ArrayList<Story> new_stories = new ArrayList<>();
         boolean found_new_messages = false;
@@ -154,7 +154,7 @@ public class Topic implements Serializable{
             new_stories.add(story_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new stories are: " + new_stories.size());
+        //System.out.println("The number of new stories are: " + new_stories.size());
         if(found_new_messages) {
             last_story.put(user,last_story.getOrDefault(user,0) + new_stories.size());
         }

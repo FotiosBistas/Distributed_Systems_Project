@@ -1,6 +1,11 @@
 package Broker;
 
-import java.io.IOException;
+import Logging.ConsoleColors;
+import Tools.Topic;
+import UserNode.UserNode;
+
+import javax.xml.crypto.Data;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -13,28 +18,21 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 class InterBrokerCommunications{
-    private MulticastSocket multicastSocket = null;
     private final byte[] id_buffer = new byte[3];
     private final byte[] alive_buffer = new byte[5];
+    private final byte[] object_buffer = new byte[1024];
     private final String multicast_host = "225.6.7.8";
     private final Broker caller_broker;
-    private final int datagram_port = 9860;
+    private final int alive_port = 9860;
+    private final int topic_port = 7680;
     private final String alive_message = "alive";
     private static ScheduledExecutorService executorCompletionService = Executors.newScheduledThreadPool(1);
     InterBrokerCommunications(Broker caller_broker){
-        try {
-            this.caller_broker = caller_broker;
-            executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,0,5, TimeUnit.SECONDS);
-            executorCompletionService.scheduleAtFixedRate(this::setDead,8,5,TimeUnit.SECONDS);
-            new Thread(this::receiveAliveMessage).start();
-            multicastSocket = new MulticastSocket(datagram_port);
-            InetAddress group = InetAddress.getByName(multicast_host);
-            multicastSocket.joinGroup(group);
-            initializeDatesandAlive();
-        } catch (IOException e) {
-            closeSocket();
-            throw new RuntimeException(e);
-        }
+        this.caller_broker = caller_broker;
+        executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,0,5, TimeUnit.SECONDS);
+        executorCompletionService.scheduleAtFixedRate(this::setDead,8,5,TimeUnit.SECONDS);
+        new Thread(this::receiveAliveMessage).start();
+        initializeDatesandAlive();
     }
 
     /**
@@ -66,9 +64,78 @@ class InterBrokerCommunications{
                 caller_broker.getLastTimeAlive()[index] = formatter.format(now);
             }
         }catch (NumberFormatException numberFormatException){
-            System.out.println("Wrong input type was given");
+            System.out.println(ConsoleColors.RED + "Wrong input type was given" + ConsoleColors.RESET);
         }catch (IndexOutOfBoundsException indexOutOfBoundsException){
-            System.out.println("Wrong index");
+            System.out.println(ConsoleColors.RED + "Wrong index" + ConsoleColors.RESET);
+        }
+    }
+
+    public void sendObject(Object object){
+        System.setProperty("java.net.preferIPv4Stack","true");
+        try{
+
+            //create the output streams to send the topic
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+            objectOutputStream.writeObject(object);
+            //the byte array stream now contains the topic object
+            //we can now send it over a datagram socket
+            byte[] object_buffer = byteArrayOutputStream.toByteArray();
+            objectOutputStream.close();
+
+            InetAddress group = InetAddress.getByName(multicast_host);
+            MulticastSocket multicastSocket = new MulticastSocket();
+
+            String string_id = String.valueOf(caller_broker.getId());
+            DatagramPacket id_packet = new DatagramPacket(
+                    string_id.getBytes(),
+                    string_id.length(),
+                    group,
+                    topic_port
+            );
+
+            DatagramPacket object_packet = new DatagramPacket(
+                    object_buffer,
+                    object_buffer.length,
+                    group,
+                    topic_port
+            );
+            multicastSocket.send(id_packet);
+            multicastSocket.send(object_packet);
+            multicastSocket.close();
+        }catch (IOException ioException){
+            System.out.println(ConsoleColors.RED + "Error in send topic" + ConsoleColors.RESET);
+        }
+    }
+    private void receiveObject(){
+        try {
+            while (true) {
+                InetAddress group = InetAddress.getByName(multicast_host);
+                MulticastSocket multicastSocket = new MulticastSocket(topic_port);
+                //receives the id of the broker that sent the object
+                DatagramPacket id_packet = new DatagramPacket(id_buffer, id_buffer.length);
+                multicastSocket.receive(id_packet);
+                String sender_ID = new String(id_packet.getData(), StandardCharsets.UTF_8);
+                int id = Integer.parseInt(sender_ID);
+                //receives the object that the broker has sent
+                DatagramPacket object_packet = new DatagramPacket(object_buffer, object_buffer.length);
+                multicastSocket.receive(object_packet);
+                byte[] data = object_packet.getData();
+                ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(data));
+
+                Object object = objectInputStream.readObject();
+                if(object instanceof Topic){
+                    caller_broker.addNewTopicReceivedFromOtherBroker(id,(Topic)object);
+                }else if(object instanceof UserNode){
+
+                }
+
+            }
+        }catch (IOException ioException){
+            System.out.println(ConsoleColors.RED + "Error in receive topic" + ConsoleColors.RESET);
+        } catch (ClassNotFoundException e) {
+            System.out.println(ConsoleColors.RED + "Incorrect class was sent" + ConsoleColors.RESET);
+            throw new RuntimeException(e);
         }
     }
 
@@ -96,7 +163,7 @@ class InterBrokerCommunications{
         try{
             while(true) {
                 InetAddress group = InetAddress.getByName(multicast_host);
-                MulticastSocket multicastSocket = new MulticastSocket(datagram_port);
+                MulticastSocket multicastSocket = new MulticastSocket(alive_port);
                 DatagramPacket packet = new DatagramPacket(id_buffer, id_buffer.length);
                 multicastSocket.joinGroup(group);
                 multicastSocket.receive(packet);
@@ -108,9 +175,10 @@ class InterBrokerCommunications{
                 setAlive(sender_ID,alive_msg);
             }
         }catch (IOException ioException){
-            closeSocket();
+            System.out.println(ConsoleColors.RED + "Error in receive alive message" + ConsoleColors.RESET);
         }
     }
+
     /**
      * Sends an alive message every interval specified at broker start.
      */
@@ -119,30 +187,24 @@ class InterBrokerCommunications{
         try{
             InetAddress group = InetAddress.getByName(multicast_host);
             MulticastSocket multicastSocket = new MulticastSocket();
-            System.out.println("Sending alive message for broker: " + caller_broker.getId());
             String string_id = String.valueOf(caller_broker.getId());
-            DatagramPacket ip_packet = new DatagramPacket(
+            DatagramPacket id_packet = new DatagramPacket(
                     string_id.getBytes(),
                     string_id.length(),
                     group,
-                    datagram_port
+                    alive_port
             );
             DatagramPacket alive_packet = new DatagramPacket(
                     alive_message.getBytes(),
                     alive_message.length(),
                     group,
-                    datagram_port
+                    alive_port
             );
-            multicastSocket.send(ip_packet);
+            multicastSocket.send(id_packet);
             multicastSocket.send(alive_packet);
             multicastSocket.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-    private void closeSocket(){
-        if(multicastSocket != null) {
-            multicastSocket.close();
         }
     }
 

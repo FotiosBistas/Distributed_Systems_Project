@@ -20,6 +20,8 @@ public class  Broker{
     private final List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
     private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
 
+    InterBrokerCommunications interBrokerCommunications = null;
+
     //this list is matching in indexes with the Broker list
     private final Boolean[] alive_brokers = new Boolean[3];
     private final String[] LastTimeAlive = new String[3];
@@ -287,7 +289,7 @@ public class  Broker{
             }).start();
 
             //start the object to initiate broker communications.
-            InterBrokerCommunications interBrokerCommunications = new InterBrokerCommunications(this);
+            this.interBrokerCommunications = new InterBrokerCommunications(this);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -325,6 +327,7 @@ public class  Broker{
        Topic new_topic = new Topic(topic_name);
        executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        Topics.add(new_topic);
+       interBrokerCommunications.sendObject(new_topic);
        System.out.println("Created new topic: " + topic_name);
        addConsumerToTopic(new_topic,consumer);
     }
