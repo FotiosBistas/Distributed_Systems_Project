@@ -71,10 +71,7 @@ public class Story extends MultimediaFile implements Serializable {
             return false;
         }
         final Story story = (Story) obj;
-        if(this.identifier == story.identifier){
-            return true;
-        }
-        return false;
+        return this.identifier == story.identifier;
     }
 
     @Override

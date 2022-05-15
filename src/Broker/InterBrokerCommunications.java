@@ -1,6 +1,8 @@
 package Broker;
 
 import Logging.ConsoleColors;
+import Tools.MultimediaFile;
+import Tools.Story;
 import Tools.Topic;
 import UserNode.UserNode;
 
@@ -31,6 +33,7 @@ class InterBrokerCommunications{
         this.caller_broker = caller_broker;
         executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,0,5, TimeUnit.SECONDS);
         executorCompletionService.scheduleAtFixedRate(this::setDead,8,5,TimeUnit.SECONDS);
+        new Thread(this::receiveObject).start();
         new Thread(this::receiveAliveMessage).start();
         initializeDatesandAlive();
     }
@@ -44,29 +47,6 @@ class InterBrokerCommunications{
             LocalDateTime now = LocalDateTime.now();
             caller_broker.getLastTimeAlive()[i] = dtf.format(now);
             caller_broker.getAlive_brokers()[i] = false;
-        }
-    }
-
-    /**
-     * Sets alive the broker in its corresponding index position in the boolean array and sets the current time it received the message.
-     * @param sender_id Accepts the id of the broker that sent the specific message.
-     * @param msg_received Accepts the message received by the multicast socket.
-     */
-    private void setAlive(String sender_id,String msg_received){
-        try {
-            if (msg_received.equals("alive")) {
-                int id = Integer.parseInt(sender_id);
-                int index = caller_broker.getId_list().indexOf(id);
-                caller_broker.getAlive_brokers()[index] = true;
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-                LocalDateTime now = LocalDateTime.now();
-                //insert the last time the broker with the current id was alive
-                caller_broker.getLastTimeAlive()[index] = formatter.format(now);
-            }
-        }catch (NumberFormatException numberFormatException){
-            System.out.println(ConsoleColors.RED + "Wrong input type was given" + ConsoleColors.RESET);
-        }catch (IndexOutOfBoundsException indexOutOfBoundsException){
-            System.out.println(ConsoleColors.RED + "Wrong index" + ConsoleColors.RESET);
         }
     }
 
@@ -112,6 +92,7 @@ class InterBrokerCommunications{
             while (true) {
                 InetAddress group = InetAddress.getByName(multicast_host);
                 MulticastSocket multicastSocket = new MulticastSocket(topic_port);
+                multicastSocket.joinGroup(group);
                 //receives the id of the broker that sent the object
                 DatagramPacket id_packet = new DatagramPacket(id_buffer, id_buffer.length);
                 multicastSocket.receive(id_packet);
@@ -122,13 +103,12 @@ class InterBrokerCommunications{
                 multicastSocket.receive(object_packet);
                 byte[] data = object_packet.getData();
                 ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(data));
-
                 Object object = objectInputStream.readObject();
-                if(object instanceof Topic){
-                    caller_broker.addNewTopicReceivedFromOtherBroker(id,(Topic)object);
-                }else if(object instanceof UserNode){
-
+                if(object instanceof Topic) {
+                    System.out.println("yes");
+                    caller_broker.addNewTopicReceivedFromOtherBroker(id, (Topic) object);
                 }
+
 
             }
         }catch (IOException ioException){
@@ -152,6 +132,29 @@ class InterBrokerCommunications{
             if(seconds > 15){
                 caller_broker.getAlive_brokers()[i] = false;
             }
+        }
+    }
+
+    /**
+     * Sets alive the broker in its corresponding index position in the boolean array and sets the current time it received the message.
+     * @param sender_id Accepts the id of the broker that sent the specific message.
+     * @param msg_received Accepts the message received by the multicast socket.
+     */
+    private void setAlive(String sender_id,String msg_received){
+        try {
+            if (msg_received.equals("alive")) {
+                int id = Integer.parseInt(sender_id);
+                int index = caller_broker.getId_list().indexOf(id);
+                caller_broker.getAlive_brokers()[index] = true;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                LocalDateTime now = LocalDateTime.now();
+                //insert the last time the broker with the current id was alive
+                caller_broker.getLastTimeAlive()[index] = formatter.format(now);
+            }
+        }catch (NumberFormatException numberFormatException){
+            System.out.println(ConsoleColors.RED + "Wrong input type was given" + ConsoleColors.RESET);
+        }catch (IndexOutOfBoundsException indexOutOfBoundsException){
+            System.out.println(ConsoleColors.RED + "Wrong index" + ConsoleColors.RESET);
         }
     }
 

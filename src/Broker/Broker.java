@@ -125,6 +125,12 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
+            for (Topic topic:getTopics()) {
+                if(topic.getName().equals(topic_name)){
+                    interBrokerCommunications.sendObject(topic);
+                    break;
+                }
+            }
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -140,6 +146,12 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
+            for (Topic topic:getTopics()) {
+                if(topic.getName().equals(topic_name)){
+                    interBrokerCommunications.sendObject(topic);
+                    break;
+                }
+            }
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -155,6 +167,12 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
+            for (Topic topic:getTopics()) {
+                if(topic.getName().equals(topic_name)){
+                    interBrokerCommunications.sendObject(topic);
+                    break;
+                }
+            }
         }
     }
     /**
@@ -342,9 +360,11 @@ public class  Broker{
         if (Topics.contains(topic)) {
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
+            interBrokerCommunications.sendObject(topic);
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
+            interBrokerCommunications.sendObject(topic);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -359,6 +379,7 @@ public class  Broker{
         if(Topics.contains(topic)){
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
+            interBrokerCommunications.sendObject(topic);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -371,6 +392,17 @@ public class  Broker{
      */
     public void addNewTopicReceivedFromOtherBroker(int id,Topic topic){
         if(Topics_From_Other_Brokers.containsKey(id)){
+            ArrayList<Topic> topic_list_of_broker = Topics_From_Other_Brokers.get(id);
+            for (int i = 0; i < topic_list_of_broker.size(); i++) {
+                if(topic_list_of_broker.get(i).getName().equals(topic.getName())) {
+                    //if topic is in the topic list change the local topic to another topic
+                    int index = topic_list_of_broker.indexOf(topic);
+                    System.out.println("index is: " + index);
+                    topic_list_of_broker.add(index,topic);
+                    return;
+                }
+            }
+            //if topic doesn't exist in the broker array list
             Topics_From_Other_Brokers.get(id).add(topic);
         }else{
             Topics_From_Other_Brokers.put(id,new ArrayList<>());

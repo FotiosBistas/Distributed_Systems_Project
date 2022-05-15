@@ -133,9 +133,6 @@ public class MultimediaFile extends Value implements Serializable {
             return false;
         }
         final MultimediaFile file = (MultimediaFile) obj;
-        if(this.identifier == file.identifier){
-            return true;
-        }
-        return false;
+        return this.identifier == file.identifier;
     }
 }

@@ -207,6 +207,19 @@ public class Topic implements Serializable{
     }
 
     @Override
+    public boolean equals(Object obj){
+        if(obj == null){
+            return false;
+        }
+
+        if(obj.getClass() != this.getClass()){
+            return false;
+        }
+        final Topic topic = (Topic) obj;
+        return this.name.equals(topic.getName());
+    }
+
+    @Override
     public String toString() {
         return "Topic{" +
                 "name='" + name + '\'' +

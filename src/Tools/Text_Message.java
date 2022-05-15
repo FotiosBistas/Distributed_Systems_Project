@@ -51,10 +51,7 @@ public class Text_Message extends Value implements Serializable {
             return false;
         }
         final Text_Message message = (Text_Message) obj;
-        if(this.identifier == message.identifier){
-            return true;
-        }
-        return false;
+        return this.identifier == message.identifier;
     }
 
 }
