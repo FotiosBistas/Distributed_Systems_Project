@@ -50,9 +50,9 @@ class InterBrokerCommunications{
     }
 
     /**
-     *
-     * @param sender_id
-     * @param msg_received
+     * Sets alive the broker in its corresponding index position in the boolean array and sets the current time it received the message.
+     * @param sender_id Accepts the id of the broker that sent the specific message.
+     * @param msg_received Accepts the message received by the multicast socket.
      */
     private void setAlive(String sender_id,String msg_received){
         try {
@@ -64,9 +64,6 @@ class InterBrokerCommunications{
                 LocalDateTime now = LocalDateTime.now();
                 //insert the last time the broker with the current id was alive
                 caller_broker.getLastTimeAlive()[index] = formatter.format(now);
-                System.out.println("Broker with ID: " + caller_broker.getId_list().get(index) + " is now alive");
-                System.out.println(Arrays.toString(caller_broker.getAlive_brokers()));
-                System.out.println(Arrays.toString(caller_broker.getLastTimeAlive()));
             }
         }catch (NumberFormatException numberFormatException){
             System.out.println("Wrong input type was given");
