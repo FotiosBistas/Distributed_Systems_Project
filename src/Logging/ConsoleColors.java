@@ -3,7 +3,6 @@ package Logging;
 /**
  * this class is used for printing messages for debug
  */
-//sdafjalsjasl;
 public class ConsoleColors {
     // Reset
     public static final String RESET = "\033[0m";  // Text Reset
