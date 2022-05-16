@@ -8,6 +8,7 @@ import SHA1.SHA1;
 
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,6 +151,14 @@ public class BrokerUtils {
     }
     public static Integer sendShareSubscriberMessage(ObjectOutputStream objectOutputStream){
         return GeneralUtils.sendMessage(Messages.SHARE_SUBSCRIBER,objectOutputStream);
+    }
+
+    public static Integer sendRegister(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.REGISTER,objectOutputStream);
+    }
+
+    public static Integer sendDisconnect(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.UNSUBSCRIBE,objectOutputStream);
     }
 
     /**

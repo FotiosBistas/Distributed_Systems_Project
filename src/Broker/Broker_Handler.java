@@ -3,7 +3,7 @@ package Broker;
 import Logging.ConsoleColors;
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
-import Tools.Messages;
+import Tools.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -42,38 +42,103 @@ public class Broker_Handler implements Runnable{
                 continue;
             }
             Messages message_received = Messages.values()[message];
+            String topic_name;
+            Integer id;
             switch (message_received){
                 case FINISHED_OPERATION:
                     System.out.println("Received finished operation message");
                     break;
                 case SHARE_FILE:
-                    String topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    //this is when another broker inserts a file to the topic received.
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
                     }
-
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    MultimediaFile file = (MultimediaFile) BrokerUtils.receiveFile(localinputStream,broker_connection);
+                    if(file == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    caller_broker.addMessageFromOtherBroker(file,id,topic_name);
+                    break;
+                case SHARE_TEXT_MESSAGE:
+                    //this is when another broker inserts a text message to the topic received.
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    if(topic_name == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    Text_Message text_message = (Text_Message) BrokerUtils.receiveTextMessage(localinputStream,broker_connection);
+                    if(text_message == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    caller_broker.addMessageFromOtherBroker(text_message,id,topic_name);
                     break;
                 case SHARE_STORY:
-                    String topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    //this is when another broker inserts a story to the topic received.
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
                     }
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    Story story = (Story) BrokerUtils.receiveStory(localinputStream,broker_connection);
+                    if(story == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    caller_broker.addMessageFromOtherBroker(story,id,topic_name);
                     break;
                 case SHARE_TOPIC:
-                    String topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    //this is received the moment a new topic is created.
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
                     }
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    caller_broker.addNewTopicReceivedFromOtherBroker(id,new Topic(topic_name));
                     break;
                 case SHARE_SUBSCRIBER:
-                    String topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    //this is received when a subscriber is disconnected or subscribed from the topic received.
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
                     if(topic_name == null){
                         shutdownConnection();
                         return;
                     }
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    String subscriber = GeneralUtils.readUTFString(localinputStream,broker_connection);
+                    if(subscriber == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    Integer = BrokerUtils.;
+
+                    caller_broker.addSubcriberFromOther(subscriber,id,topic_name);
                     break;
                 default:
                     System.out.println("No known message type was received");

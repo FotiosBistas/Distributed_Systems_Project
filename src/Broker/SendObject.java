@@ -3,7 +3,7 @@ package Broker;
 import Logging.ConsoleColors;
 import NetworkUtilities.BrokerUtils;
 import NetworkUtilities.GeneralUtils;
-import Tools.Messages;
+import Tools.*;
 import UserNode.UserNode;
 
 import java.io.IOException;
@@ -18,6 +18,9 @@ public class SendObject implements Runnable{
     private final Socket request_socket;
     private final Broker caller_broker;
 
+    private final Object object_to_be_sent;
+
+    private final String topic;
     private final int operation;
 
     enum Operation{
@@ -28,11 +31,13 @@ public class SendObject implements Runnable{
         SHARE_SUBSCRIBER
     }
 
-    SendObject(Socket request_socket,Broker caller_broker, int operation){
+    SendObject(Socket request_socket, Broker caller_broker, int operation, Object object_to_be_sent,String topic){
         try {
             this.operation = operation;
             this.request_socket = request_socket;
             this.caller_broker = caller_broker;
+            this.object_to_be_sent = object_to_be_sent;
+            this.topic = topic;
             localinputStream = new ObjectInputStream(request_socket.getInputStream());
             localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
         }catch (IOException e) {
@@ -40,6 +45,7 @@ public class SendObject implements Runnable{
             throw new RuntimeException(e);
         }
     }
+
 
 
     @Override
@@ -54,31 +60,91 @@ public class SendObject implements Runnable{
                 if(BrokerUtils.sendShareFileMessage(localoutputStream) == null){
                     shutdownConnection();
                     return;
-                };
+                }
+                if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(caller_broker.getId(),localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(object_to_be_sent,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
                 break;
             case SHARE_STORY:
                 if(BrokerUtils.sendShareStoryMessage(localoutputStream) == null){
                     shutdownConnection();
                     return;
-                };
+                }
+                if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(caller_broker.getId(),localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(object_to_be_sent,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
                 break;
             case SHARE_SUBSCRIBER:
                 if(BrokerUtils.sendShareSubscriberMessage(localoutputStream) == null){
                     shutdownConnection();
                     return;
-                };
+                }
+                if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(caller_broker.getId(),localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(object_to_be_sent,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
                 break;
             case SHARE_TEXT_MESSAGE:
                 if(BrokerUtils.sendShareTextMessageMessage(localoutputStream) == null){
                     shutdownConnection();
                     return;
-                };
+                }
+                if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(caller_broker.getId(),localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(object_to_be_sent,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
                 break;
             case SHARE_TOPIC:
                 if(BrokerUtils.sendShareTopicMessage(localoutputStream) == null){
                     shutdownConnection();
                     return;
-                };
+                }
+                if(GeneralUtils.sendMessage(topic,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(caller_broker.getId(),localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
+                if(GeneralUtils.sendMessage(object_to_be_sent,localoutputStream) == null){
+                    shutdownConnection();
+                    return;
+                }
                 break;
         }
     }

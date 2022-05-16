@@ -5,6 +5,7 @@ import Logging.ConsoleColors;
 import Tools.*;
 import UserNode.UserNode;
 import SHA1.SHA1;
+import org.w3c.dom.Text;
 
 
 import java.io.*;
@@ -416,6 +417,56 @@ public class  Broker{
     }
 
     /**
+     *
+     * @param value Accep
+     * @param id
+     * @param topic_name
+     */
+    public void addSubcriberFromOther(String value,int id,String topic_name) {
+
+        Topic right_topic = null;
+        for (Topic topic:Topics) {
+            if(topic.getName().equals(topic_name)){
+                right_topic = topic;
+            }
+        }
+
+        if(right_topic == null){
+            return;
+        }
+
+
+
+    }
+
+    /**
+     *
+     * @param value Accepts
+     * @param id
+     * @param topic_name
+     */
+    public void addMessageFromOtherBroker(Value value,int id,String topic_name) {
+
+        Topic right_topic = null;
+        /*
+        for (Topic topic:Topics) {
+            if(topic.getName().equals(topic_name)){
+                right_topic = topic;
+            }
+        }*/
+        if(right_topic == null){
+            return;
+        }
+        if(value instanceof Story story){
+            addToMessageQueue(story,topic_name);
+        }else if(value instanceof MultimediaFile file){
+            addToMessageQueue(file,topic_name);
+        }else if(value instanceof Text_Message text_message){
+            addToMessageQueue(text_message,topic_name);
+        }
+    }
+
+    /**
      * Hashes the topic with its name and returns the broker that will serve the request.
      * @param topic first parameter is the topic name
      * @return returns the index of the broker in the broker list. Returns null if an error occurs.
@@ -465,13 +516,5 @@ public class  Broker{
         }
     }
 
-    public void addValueTypeFromOtherBroker(Value value,int id,String topic_name) {
-        if(value instanceof Story){
 
-        }else if(value instanceof MultimediaFile){
-
-        }else if(value instanceof Text_Message){
-
-        }
-    }
 }
