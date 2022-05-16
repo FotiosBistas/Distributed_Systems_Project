@@ -129,6 +129,28 @@ public class BrokerUtils {
         return new_text_message;
     }
 
+    public static Integer sendID(ObjectOutputStream objectOutputStream,Broker caller_broker){
+        return GeneralUtils.sendMessage(caller_broker.getId(),objectOutputStream);
+    }
+
+    public static Integer sendShareTopicMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_TOPIC,objectOutputStream);
+    }
+
+    public static Integer sendShareFileMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_FILE,objectOutputStream);
+    }
+
+    public static Integer sendShareStoryMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_STORY,objectOutputStream);
+    }
+
+    public static Integer sendShareTextMessageMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_TEXT_MESSAGE,objectOutputStream);
+    }
+    public static Integer sendShareSubscriberMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_SUBSCRIBER,objectOutputStream);
+    }
 
     /**
      * Receives all the chunks for the specific file that is read from the input stream.

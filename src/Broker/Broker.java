@@ -36,22 +36,21 @@ public class  Broker{
 
     private ServerSocket consumer_service;
     private ServerSocket publisher_service;
-    private ObjectOutputStream localoutputStream;
-    private ObjectInputStream localinputStream;
+    private ServerSocket broker_service;
 
     private final String ip;
     private final int consumer_port;
     private final int publisher_port;
+
+    private final int broker_port;
     private Integer id;
 
-    public Broker(String ip,int consumer_port , int publisher_port){
+    public Broker(String ip,int consumer_port , int publisher_port,int broker_port){
         this.ip = ip;
         this.consumer_port = consumer_port;
         this.publisher_port = publisher_port;
-        if((this.id = SHA1.hextoInt(SHA1.encrypt(consumer_port + publisher_port + ip),300)) == null){
-            System.out.println("\033[0;31m" + "Error while constructing broker" + "\033[0m");
-            return;
-        }
+        this.broker_port = broker_port;
+        this.id = SHA1.hextoInt(SHA1.encrypt(ip + consumer_port + publisher_port + broker_port),300);
         readBrokerListFromConfigFile();
     }
 
@@ -225,13 +224,14 @@ public class  Broker{
             while((line = br.readLine()) != null) {
                 String[] splitted = line.split("\\s+");
                 System.out.println(Arrays.toString(splitted));
-                int [] array = new int[2];
+                int [] array = new int[3];
                 array[0] = Integer.parseInt(splitted[1]);
                 array[1] = Integer.parseInt(splitted[2]);
-                System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections");
+                array[2] = Integer.parseInt(splitted[3]);
+                System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections and " + array[2] + " for broker connections");
                 BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
                 System.out.println("Broker list size now is: " + BrokerList.size());
-                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + ip),300));
+                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),300));
                 System.out.println("Running in while loop");
             }
             sortBrokerList();
@@ -289,7 +289,26 @@ public class  Broker{
                 }
             }).start();
 
-            //start the object to initiate broker communications.
+            new Thread(() -> {
+                try {
+                    broker_service = new ServerSocket(broker_port);
+                    /*accepts all publisher connection on the predestined port*/
+                    System.out.println("Opened thread to receive broker connections");
+                    while (!broker_service.isClosed()) {
+                        Socket broker_connection = broker_service.accept();
+                        Broker_Handler broker_handler = new Broker_Handler(broker_connection,Broker.this);
+                        Thread t3 = new Thread(broker_handler);
+                        t3.start();
+                    }
+                }catch(IOException e){
+                    e.printStackTrace();
+                    System.out.println("Error in broker service thread");
+                    shutdownBroker();
+                }
+            }).start();
+
+
+            //start the object to multicast alive message
             this.multicast_alive_message = new AliveBroker(this);
 
         } catch (Exception e) {
@@ -311,6 +330,9 @@ public class  Broker{
             }
             if(publisher_service != null){
                 publisher_service.close();
+            }
+            if(broker_service != null){
+                broker_service.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -437,7 +459,8 @@ public class  Broker{
             String ip = args[0];
             int consumer_port = Integer.parseInt(args[1]);
             int service_port = Integer.parseInt(args[2]);
-            Broker broker = new Broker(ip, consumer_port,service_port);
+            int broker_port = Integer.parseInt(args[3]);
+            Broker broker = new Broker(ip, consumer_port,service_port,broker_port);
             broker.startBroker();
         }
     }
