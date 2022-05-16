@@ -397,7 +397,6 @@ public class  Broker{
                 if(topic_list_of_broker.get(i).getName().equals(topic.getName())) {
                     //if topic is in the topic list change the local topic to another topic
                     int index = topic_list_of_broker.indexOf(topic);
-                    System.out.println("index is: " + index);
                     topic_list_of_broker.add(index,topic);
                     return;
                 }

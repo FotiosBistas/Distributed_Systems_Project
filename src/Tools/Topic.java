@@ -223,6 +223,10 @@ public class Topic implements Serializable{
     public String toString() {
         return "Topic{" +
                 "name='" + name + '\'' +
+                ", subscribedUsers=" + subscribedUsers +
+                ", message_queue=" + message_queue +
+                ", file_queue=" + file_queue +
+                ", story_queue=" + story_queue +
                 '}';
     }
 }
