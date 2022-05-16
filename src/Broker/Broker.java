@@ -20,7 +20,7 @@ public class  Broker{
     private final List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
     private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
 
-    InterBrokerCommunications interBrokerCommunications = null;
+    AliveBroker multicast_alive_message = null;
 
     //this list is matching in indexes with the Broker list
     private final Boolean[] alive_brokers = new Boolean[3];
@@ -125,12 +125,6 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
-            for (Topic topic:getTopics()) {
-                if(topic.getName().equals(topic_name)){
-                    interBrokerCommunications.sendObject(topic);
-                    break;
-                }
-            }
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -146,12 +140,7 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
-            for (Topic topic:getTopics()) {
-                if(topic.getName().equals(topic_name)){
-                    interBrokerCommunications.sendObject(topic);
-                    break;
-                }
-            }
+
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -167,12 +156,6 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
-            for (Topic topic:getTopics()) {
-                if(topic.getName().equals(topic_name)){
-                    interBrokerCommunications.sendObject(topic);
-                    break;
-                }
-            }
         }
     }
     /**
@@ -307,7 +290,7 @@ public class  Broker{
             }).start();
 
             //start the object to initiate broker communications.
-            this.interBrokerCommunications = new InterBrokerCommunications(this);
+            this.multicast_alive_message = new AliveBroker(this);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -345,7 +328,6 @@ public class  Broker{
        Topic new_topic = new Topic(topic_name);
        executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        Topics.add(new_topic);
-       interBrokerCommunications.sendObject(new_topic);
        System.out.println("Created new topic: " + topic_name);
        addConsumerToTopic(new_topic,consumer);
     }
@@ -360,11 +342,9 @@ public class  Broker{
         if (Topics.contains(topic)) {
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
-            interBrokerCommunications.sendObject(topic);
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
-            interBrokerCommunications.sendObject(topic);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -379,7 +359,6 @@ public class  Broker{
         if(Topics.contains(topic)){
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
-            interBrokerCommunications.sendObject(topic);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -397,13 +376,18 @@ public class  Broker{
                 if(topic_list_of_broker.get(i).getName().equals(topic.getName())) {
                     //if topic is in the topic list change the local topic to another topic
                     int index = topic_list_of_broker.indexOf(topic);
+                    System.out.println("index is: " + index);
+                    System.out.println("old topic: " + topic_list_of_broker.get(i));
                     topic_list_of_broker.add(index,topic);
+                    System.out.println("old topic: " + topic_list_of_broker.get(i));
                     return;
                 }
             }
             //if topic doesn't exist in the broker array list
+            System.out.println("Doesn't exist");
             Topics_From_Other_Brokers.get(id).add(topic);
         }else{
+            System.out.println("Lone beast case");
             Topics_From_Other_Brokers.put(id,new ArrayList<>());
             Topics_From_Other_Brokers.get(id).add(topic);
         }
@@ -458,4 +442,13 @@ public class  Broker{
         }
     }
 
+    public void addValueTypeFromOtherBroker(Value value,int id,String topic_name) {
+        if(value instanceof Story){
+
+        }else if(value instanceof MultimediaFile){
+
+        }else if(value instanceof Text_Message){
+
+        }
+    }
 }
