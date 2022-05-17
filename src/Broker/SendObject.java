@@ -55,6 +55,7 @@ public class SendObject implements Runnable{
 
         switch (operation) {
             case SHARE_TOPIC -> {
+                System.out.println("Sharing topic");
                 if (BrokerUtils.sendShareTopicMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;
@@ -69,6 +70,7 @@ public class SendObject implements Runnable{
                 }
             }
             case SHARE_FILE -> {
+                System.out.println("Sharing file");
                 if (BrokerUtils.sendShareFileMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;
@@ -87,6 +89,7 @@ public class SendObject implements Runnable{
                 }
             }
             case SHARE_STORY -> {
+                System.out.println("Sharing story");
                 if (BrokerUtils.sendShareStoryMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;
@@ -105,6 +108,7 @@ public class SendObject implements Runnable{
                 }
             }
             case SHARE_TEXT_MESSAGE -> {
+                System.out.println("Sharing text message");
                 if (BrokerUtils.sendShareTextMessageMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;
@@ -123,6 +127,7 @@ public class SendObject implements Runnable{
                 }
             }
             case SHARE_SUBSCRIBER -> {
+                System.out.println("Sharing subscriber");
                 if (BrokerUtils.sendShareSubscriberMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;
@@ -141,6 +146,7 @@ public class SendObject implements Runnable{
                 }
             }
             case SHARE_DISCONNECT -> {
+                System.out.println("Sharing disconnect");
                 if (BrokerUtils.sendShareDisconnectMessage(localoutputStream) == null) {
                     shutdownConnection();
                     return;

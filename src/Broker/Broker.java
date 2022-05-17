@@ -124,7 +124,7 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
-            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_STORY);
+            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_STORY);}).start();
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -140,7 +140,7 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
-            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_FILE);
+            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_FILE);}).start();
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -156,7 +156,7 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
-            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_TEXT_MESSAGE);
+            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_TEXT_MESSAGE);}).start();
         }
     }
     /**
@@ -339,14 +339,14 @@ public class  Broker{
      */
     public void createTopic(String topic_name,String consumer){
        Topic new_topic = new Topic(topic_name);
-       executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        Topics.add(new_topic);
-       notifyBrokersOnChanges(null,topic_name, SendObject.Operation.SHARE_TOPIC);
-       System.out.println("Created new topic: " + topic_name);
+       new Thread(()->{notifyBrokersOnChanges(null,topic_name,SendObject.Operation.SHARE_TOPIC);}).start();
        addConsumerToTopic(new_topic,consumer);
+       executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
+       System.out.println("Created new topic: " + topic_name);
     }
 
-    private void notifyBrokersOnChanges(Object object, String topic_name, SendObject.Operation operation){
+    private synchronized void notifyBrokersOnChanges(Object object, String topic_name, SendObject.Operation operation){
         for (Tuple<String,int[]> broker: BrokerList) {
             try {
                 SendObject sendObject = new SendObject(new Socket(broker.getValue1(),broker.getValue2()[2]),this,operation,object,topic_name);
@@ -369,11 +369,11 @@ public class  Broker{
         if (Topics.contains(topic)) {
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
-            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);
+            new Thread(()-> {notifyBrokersOnChanges(consumer, topic.getName(), SendObject.Operation.SHARE_SUBSCRIBER);}).start();
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
-            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);
+            new Thread(() -> {notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);}).start();
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -388,7 +388,7 @@ public class  Broker{
         if(Topics.contains(topic)){
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
-            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_DISCONNECT);
+            new Thread(()->{notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_DISCONNECT);}).start();
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());

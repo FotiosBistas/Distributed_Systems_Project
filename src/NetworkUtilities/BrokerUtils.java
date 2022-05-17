@@ -2,6 +2,7 @@ package NetworkUtilities;
 
 
 import Broker.Broker;
+import Logging.ConsoleColors;
 import Tools.*;
 import UserNode.UserNode;
 import SHA1.SHA1;
@@ -273,13 +274,13 @@ public class BrokerUtils {
             }
             int i;
             for (i = 0; i < val.getValue2().length; i++) {
-                System.out.println("\033[0;32m" + "Sending broker's ports: " + val.getValue2()[i] + "\033[0m");
+                System.out.println(ConsoleColors.GREEN + "Sending broker's ports: " + val.getValue2()[i] + ConsoleColors.RESET);
                 if(GeneralUtils.sendMessage(val.getValue2()[i],localoutputStream) == null){
                     return null;
                 }
             }
-            if (i == 2) {
-                System.out.println("\033[0;32m" + "Finished sending ports" + "\033[0m");
+            if (i == val.getValue2().length) {
+                System.out.println(ConsoleColors.GREEN + "Finished sending ports" + ConsoleColors.RESET);
                 if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                     return null;
                 }
