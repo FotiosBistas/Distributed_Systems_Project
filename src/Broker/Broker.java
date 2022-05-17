@@ -5,8 +5,6 @@ import Logging.ConsoleColors;
 import Tools.*;
 import UserNode.UserNode;
 import SHA1.SHA1;
-import org.w3c.dom.Text;
-
 
 import java.io.*;
 import java.net.*;
@@ -20,6 +18,8 @@ public class  Broker{
 
     private final List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
     private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
+
+    private final String read_file_path = "C:\\Users\\fotis\\IdeaProjects\\Distributed_Systems_Project\\src\\Broker\\";
 
     AliveBroker multicast_alive_message = null;
 
@@ -42,11 +42,10 @@ public class  Broker{
     private final String ip;
     private final int consumer_port;
     private final int publisher_port;
-
     private final int broker_port;
     private Integer id;
 
-    public Broker(String ip,int consumer_port , int publisher_port,int broker_port){
+    public Broker(String ip,int consumer_port,int publisher_port,int broker_port){
         this.ip = ip;
         this.consumer_port = consumer_port;
         this.publisher_port = publisher_port;
@@ -125,6 +124,7 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
+            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_STORY);
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -140,7 +140,7 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
-
+            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_FILE);
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -156,6 +156,7 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
+            notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_TEXT_MESSAGE);
         }
     }
     /**
@@ -187,22 +188,12 @@ public class  Broker{
         List<Tuple<String,int[]>> temp_list = new ArrayList<>();
         for (int i = 0; i < indexes.length; i++) {
             temp_list.add(BrokerList.get(indexes[i]));
-            if(i == 0){
-                //change the local id to the new one for better distribution of topics
-                //this is used in the inter broker communications class
-                int id = id_list.get(i);
-                id_list.set(i,0);
-                if(id == this.id){
-                    this.id = id_list.get(i);
-                }
-            }else {
-                //change the local id to the new one for better distribution of topics
-                //this is used in the inter broker communications class
-                int id = id_list.get(i);
-                id_list.set(i,i*100);
-                if(id == this.id){
-                    this.id = id_list.get(i);
-                }
+            //change the local id to the new one for better distribution of topics
+            //this is used in the inter broker communications class
+            int id = id_list.get(i);
+            id_list.set(i,i*100);
+            if(id == this.id){
+                this.id = id_list.get(i);
             }
         }
         BrokerList = temp_list;
@@ -216,23 +207,23 @@ public class  Broker{
      * Also calls the sort operation on the broker list.
      */
     public void readBrokerListFromConfigFile(){
-        File file = new File("C:\\Users\\fotis\\IdeaProjects\\DSproject\\src\\Broker\\config.txt");
-        BufferedReader br;
         try {
-            br = new BufferedReader(new FileReader(file));
+            File file=new File(read_file_path + "config.txt");
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line;
 
-            while((line = br.readLine()) != null) {
-                String[] splitted = line.split("\\s+");
-                System.out.println(Arrays.toString(splitted));
-                int [] array = new int[3];
-                array[0] = Integer.parseInt(splitted[1]);
-                array[1] = Integer.parseInt(splitted[2]);
-                array[2] = Integer.parseInt(splitted[3]);
-                System.out.println("Inserted into array ports: " + array[0] + " for consumer connections," + array[1] + " for publisher connections and " + array[2] + " for broker connections");
-                BrokerList.add(new Tuple<String, int[]>(splitted[0], array));
+            while((line = bufferedReader.readLine()) != null) {
+                String[] split = line.split(" +");
+
+                int[] ports = new int[split.length - 1];
+                for (int i = 0; i < ports.length; i++) {
+                    ports[i] = Integer.parseInt(split[i + 1]);
+                }
+
+                BrokerList.add(new Tuple<String, int[]>(split[0], ports));
                 System.out.println("Broker list size now is: " + BrokerList.size());
-                id_list.add(SHA1.hextoInt(SHA1.encrypt(array[0] + array[1] + array[2] + ip),300));
+                id_list.add(SHA1.hextoInt(SHA1.encrypt(ip + ports[0] + ports[1] + ports[2]),300));
                 System.out.println("Running in while loop");
             }
             sortBrokerList();
@@ -249,9 +240,10 @@ public class  Broker{
      */
     public void startBroker() {
         try {
-            System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
+            System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port
+                    + " for publisher services " + this.broker_port + " for broker services");
             System.out.println("IP address: " + this.ip);
-            /* separate thread for receiving consumer connections */
+            //separate thread for receiving consumer connections
             new Thread(() -> {
                 try {
                     consumer_service = new ServerSocket(consumer_port);
@@ -270,7 +262,7 @@ public class  Broker{
                     shutdownBroker();
                 }
             }).start();
-            /* separate thread for receiving publisher connections*/
+            //separate thread for receiving publisher connections
             new Thread(() -> {
                 try {
                     publisher_service = new ServerSocket(publisher_port);
@@ -284,16 +276,15 @@ public class  Broker{
                         t2.start();
                     }
                 }catch(IOException e){
-                    e.printStackTrace();
                     System.out.println("Error in publisher service thread");
                     shutdownBroker();
                 }
             }).start();
-
+            //separate thread for receiving broker connections
             new Thread(() -> {
                 try {
                     broker_service = new ServerSocket(broker_port);
-                    /*accepts all publisher connection on the predestined port*/
+                    //accepts all broker connection on the predestined port
                     System.out.println("Opened thread to receive broker connections");
                     while (!broker_service.isClosed()) {
                         Socket broker_connection = broker_service.accept();
@@ -302,7 +293,6 @@ public class  Broker{
                         t3.start();
                     }
                 }catch(IOException e){
-                    e.printStackTrace();
                     System.out.println("Error in broker service thread");
                     shutdownBroker();
                 }
@@ -351,8 +341,22 @@ public class  Broker{
        Topic new_topic = new Topic(topic_name);
        executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        Topics.add(new_topic);
+       notifyBrokersOnChanges(null,topic_name, SendObject.Operation.SHARE_TOPIC);
        System.out.println("Created new topic: " + topic_name);
        addConsumerToTopic(new_topic,consumer);
+    }
+
+    private void notifyBrokersOnChanges(Object object, String topic_name, SendObject.Operation operation){
+        for (Tuple<String,int[]> broker: BrokerList) {
+            try {
+                SendObject sendObject = new SendObject(new Socket(broker.getValue1(),broker.getValue2()[2]),this,operation,object,topic_name);
+                Thread thread = new Thread(sendObject);
+                thread.start();
+            } catch (IOException e) {
+                System.out.println(ConsoleColors.RED + "Error while trying to notify brokers" + ConsoleColors.RESET);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -365,9 +369,11 @@ public class  Broker{
         if (Topics.contains(topic)) {
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
+            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
+            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -382,6 +388,7 @@ public class  Broker{
         if(Topics.contains(topic)){
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
+            notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_DISCONNECT);
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -410,7 +417,6 @@ public class  Broker{
             System.out.println("Doesn't exist");
             Topics_From_Other_Brokers.get(id).add(topic);
         }else{
-            System.out.println("Lone beast case");
             Topics_From_Other_Brokers.put(id,new ArrayList<>());
             Topics_From_Other_Brokers.get(id).add(topic);
         }
@@ -418,25 +424,44 @@ public class  Broker{
 
     /**
      *
-     * @param value Accep
+     * @param value Accepts
      * @param id
      * @param topic_name
      */
     public void addSubcriberFromOther(String value,int id,String topic_name) {
 
         Topic right_topic = null;
-        for (Topic topic:Topics) {
+        ArrayList<Topic> Other_Broker_Topics = Topics_From_Other_Brokers.get(id);
+        for (Topic topic:Other_Broker_Topics) {
             if(topic.getName().equals(topic_name)){
                 right_topic = topic;
             }
         }
-
         if(right_topic == null){
             return;
         }
+        right_topic.addSubscription(value);
 
+    }
 
-
+    /**
+     *
+     * @param value
+     * @param id
+     * @param topic_name
+     */
+    public void DisconnectFromOtherTopic(String value,int id,String topic_name){
+        Topic right_topic = null;
+        ArrayList<Topic> Other_Broker_Topics = Topics_From_Other_Brokers.get(id);
+        for (Topic topic:Other_Broker_Topics) {
+            if(topic.getName().equals(topic_name)){
+                right_topic = topic;
+            }
+        }
+        if(right_topic == null){
+            return;
+        }
+        right_topic.removeSubscription(value);
     }
 
     /**
@@ -448,21 +473,21 @@ public class  Broker{
     public void addMessageFromOtherBroker(Value value,int id,String topic_name) {
 
         Topic right_topic = null;
-        /*
-        for (Topic topic:Topics) {
+        ArrayList<Topic> Other_Broker_Topics = Topics_From_Other_Brokers.get(id);
+        for (Topic topic:Other_Broker_Topics) {
             if(topic.getName().equals(topic_name)){
                 right_topic = topic;
             }
-        }*/
+        }
         if(right_topic == null){
             return;
         }
         if(value instanceof Story story){
-            addToMessageQueue(story,topic_name);
+            right_topic.addToStoryQueue(story);
         }else if(value instanceof MultimediaFile file){
-            addToMessageQueue(file,topic_name);
+            right_topic.addToFileQueue(file);
         }else if(value instanceof Text_Message text_message){
-            addToMessageQueue(text_message,topic_name);
+            right_topic.addToMessageQueue(text_message);
         }
     }
 
@@ -503,7 +528,7 @@ public class  Broker{
     }
 
     public static void main(String[] args) {
-        if(args.length <= 2) {
+        if(args.length <= 3) {
             System.out.println("You did not provide an ip address or appropriate port numbers");
         }
         else {

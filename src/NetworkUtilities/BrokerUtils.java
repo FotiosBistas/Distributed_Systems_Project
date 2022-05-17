@@ -153,13 +153,10 @@ public class BrokerUtils {
         return GeneralUtils.sendMessage(Messages.SHARE_SUBSCRIBER,objectOutputStream);
     }
 
-    public static Integer sendRegister(ObjectOutputStream objectOutputStream){
-        return GeneralUtils.sendMessage(Messages.REGISTER,objectOutputStream);
+    public static Integer sendShareDisconnectMessage(ObjectOutputStream objectOutputStream){
+        return GeneralUtils.sendMessage(Messages.SHARE_DISCONNECT,objectOutputStream);
     }
 
-    public static Integer sendDisconnect(ObjectOutputStream objectOutputStream){
-        return GeneralUtils.sendMessage(Messages.UNSUBSCRIBE,objectOutputStream);
-    }
 
     /**
      * Receives all the chunks for the specific file that is read from the input stream.

@@ -44,6 +44,7 @@ public class Broker_Handler implements Runnable{
             Messages message_received = Messages.values()[message];
             String topic_name;
             Integer id;
+            String subscriber;
             switch (message_received){
                 case FINISHED_OPERATION:
                     System.out.println("Received finished operation message");
@@ -67,6 +68,23 @@ public class Broker_Handler implements Runnable{
                     }
                     caller_broker.addMessageFromOtherBroker(file,id,topic_name);
                     break;
+                case SHARE_DISCONNECT:
+                    topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
+                    if(topic_name == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    id = GeneralUtils.waitForNodePrompt(localinputStream,broker_connection);
+                    if(id == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    subscriber = GeneralUtils.readUTFString(localinputStream,broker_connection);
+                    if(subscriber == null){
+                        shutdownConnection();
+                        return;
+                    }
+                    caller_broker.DisconnectFromOtherTopic(subscriber,id,topic_name);
                 case SHARE_TEXT_MESSAGE:
                     //this is when another broker inserts a text message to the topic received.
                     topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
@@ -120,7 +138,7 @@ public class Broker_Handler implements Runnable{
                     caller_broker.addNewTopicReceivedFromOtherBroker(id,new Topic(topic_name));
                     break;
                 case SHARE_SUBSCRIBER:
-                    //this is received when a subscriber is disconnected or subscribed from the topic received.
+                    //this is received when a subscriber is subscribed to the topic received.
                     topic_name = BrokerUtils.receiveTopicName(localinputStream,localoutputStream,broker_connection);
                     if(topic_name == null){
                         shutdownConnection();
@@ -131,13 +149,11 @@ public class Broker_Handler implements Runnable{
                         shutdownConnection();
                         return;
                     }
-                    String subscriber = GeneralUtils.readUTFString(localinputStream,broker_connection);
+                    subscriber = GeneralUtils.readUTFString(localinputStream,broker_connection);
                     if(subscriber == null){
                         shutdownConnection();
                         return;
                     }
-                    Integer = BrokerUtils.;
-
                     caller_broker.addSubcriberFromOther(subscriber,id,topic_name);
                     break;
                 default:
