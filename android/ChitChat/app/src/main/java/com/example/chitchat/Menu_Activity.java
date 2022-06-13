@@ -25,8 +25,8 @@ public class Menu_Activity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.profile) {
-            startActivity(new Intent(Menu_Activity.this,ProfileActivity.class));
+            startActivity(new Intent(Menu_Activity.this, Profile_Activity.class));
         }
-        super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item);
     }
 }

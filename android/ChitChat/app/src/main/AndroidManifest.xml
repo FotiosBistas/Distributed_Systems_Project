@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ChitChat"
         tools:targetApi="31">
         <activity
-            android:name=".ProfileActivity"
+            android:name=".Profile_Activity"
             android:exported="false" />
         <activity
             android:name=".Menu_Activity"
@@ -23,10 +23,10 @@
             android:name=".Topic_List_Activity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".Connect_Activity"
             android:exported="false" />
         <activity
-            android:name=".StartUp"
+            android:name=".Splash_Screen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
