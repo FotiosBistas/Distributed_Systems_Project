@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Chit Chat</string>
+    <string name="IP_address_prompt">IP Address</string>
+    <string name="Username_prompt">Username</string>
+    <string name="PortNumber_prompt">Port Number</string>
+    <string name="Upload_Image">Upload Image</string>
+</resources>
