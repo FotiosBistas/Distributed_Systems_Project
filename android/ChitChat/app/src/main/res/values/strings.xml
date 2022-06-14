@@ -4,4 +4,10 @@
     <string name="Username_prompt">Username</string>
     <string name="PortNumber_prompt">Port Number</string>
     <string name="Upload_Image">Upload Image</string>
+    <string name="register_to_topic">Register to topic</string>
+    <string name="disconnect_from_topic">Disconnect from topic</string>
+    <string name="upload_file">Upload file</string>
+    <string name="upload_image">Upload image</string>
+    <string name="upload_story">Upload story</string>
+
 </resources>
