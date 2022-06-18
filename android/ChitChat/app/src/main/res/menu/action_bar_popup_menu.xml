@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_bar_menu_subscribe_to_topic"
+        android:title="@string/subscribe_to_topic">
+
+    </item>
+
+    <item
+        android:id="@+id/action_bar_menu_logout"
+        android:title="@string/log_out">
+    </item>
+
+
+</menu>

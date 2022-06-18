@@ -9,8 +9,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.chitchat.UserNode.UserNode;
-
 public class Connect_Activity extends AppCompatActivity {
 
     private EditText edit_username,edit_port,edit_ip;
@@ -19,7 +17,7 @@ public class Connect_Activity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_connect);
         //fields that are filled by the user
         edit_username= findViewById(R.id.editusername);
         edit_ip = findViewById(R.id.editIP);
@@ -27,7 +25,7 @@ public class Connect_Activity extends AppCompatActivity {
         //TODO check if this stores the state
         //if already logged in a previous session go instantly to menu
         if(!(edit_username.getText().toString().isEmpty() && edit_ip.getText().toString().isEmpty() && edit_port.getText().toString().isEmpty())){
-            startActivity(new Intent(Connect_Activity.this,Menu_Activity.class));
+            startActivity(new Intent(Connect_Activity.this, Central_Screen_Activity.class));
             finish();
         }
 
@@ -53,7 +51,7 @@ public class Connect_Activity extends AppCompatActivity {
         //create the user with the specified parameters given by the user
         Toast.makeText(Connect_Activity.this, "User connected successfully", Toast.LENGTH_SHORT).show();
         //UserNode user = new UserNode(edit_username,Integer.parseInt(edit_port),edit_ip);
-        startActivity(new Intent(Connect_Activity.this,Menu_Activity.class));
+        startActivity(new Intent(Connect_Activity.this, Central_Screen_Activity.class));
         finish();
         //user.connect();
     }

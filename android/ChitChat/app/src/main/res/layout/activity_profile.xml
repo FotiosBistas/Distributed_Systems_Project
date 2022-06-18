@@ -60,19 +60,4 @@
         app:layout_constraintTop_toBottomOf="@+id/cardView"
         app:layout_constraintVertical_bias="0.307"></Button>
 
-    <Button
-        android:id="@+id/log_out_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/square_round_shape"
-        android:text="Log Out"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="@+id/upload_image_button"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="@+id/upload_image_button"
-        app:layout_constraintTop_toBottomOf="@+id/upload_image_button">
-
-    </Button>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

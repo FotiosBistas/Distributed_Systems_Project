@@ -20,6 +20,7 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
 
+    private static final long serialVersionUID = -4L;
 
 
     private final String receive_data_path = "C:\\Users\\fotis\\OneDrive\\Desktop";
@@ -149,104 +150,6 @@ public class UserNode implements Serializable {
             //blocks until id list,broker list and send nickname finish
             for (int i = 0; i < temp.size(); i++) {
                 temp.get(i).join();
-            }
-            erroneousinput = true;
-            int userinput = -1;
-            String topic_name;
-            Scanner sc;
-            while (!exit) {
-                sc = new Scanner(System.in);
-                while(erroneousinput) {
-                    try {
-                        System.out.println("1.Register to topic");
-                        System.out.println("2.Unsubscribe from topic");
-                        System.out.println("3.Show conversation data");
-                        System.out.println("4.Push");
-                        System.out.println("5.Exit");
-                        System.out.println("Enter an int from the above options");
-                        userinput = sc.nextInt();
-                        erroneousinput = false;
-                    } catch (InputMismatchException inputMismatchException) {
-                        System.out.println(ConsoleColors.RED + "You gave a wrong input type try again" + ConsoleColors.RESET);
-                        break;
-                    }
-                }
-                if(erroneousinput){
-                    continue;
-                }
-                switch (userinput) {
-                    case 1:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 1,topic_name);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
-                    case 2:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 2,topic_name);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
-                    case 3:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 3,topic_name);
-                        t1 = new Thread(consumer);
-                        t1.start();
-                        erroneousinput = true;
-                        break;
-                    case 4:
-                        System.out.println("Give the topic name...");
-                        topic_name = sc.next();
-                        boolean error = true;
-                        int operation = -1;
-                        while(error) {
-                            sc = new Scanner(System.in);
-                            try {
-                                System.out.println("0.Publish message");
-                                System.out.println("1.Publish file");
-                                System.out.println("2.Publish story");
-                                operation = sc.nextInt();
-                                error = false;
-                            } catch (InputMismatchException inputMismatchException) {
-                                System.out.println(ConsoleColors.RED + "You gave a wrong input while trying to push" + ConsoleColors.RESET);
-                                break;
-                            }
-                        }
-                        if(error){
-                            continue;
-                        }
-                        String con_file_name = null;
-                        switch (operation){
-                            case 0:
-                                System.out.println("Give the contents of the message");
-                                con_file_name = sc.next();
-                                break;
-                            case 1:
-                                System.out.println("Give the file name");
-                                con_file_name = sc.next();
-                                break;
-                            case 2:
-                                System.out.println("Give the file name you want to publish as a story");
-                                con_file_name = sc.next();
-                                break;
-                        }
-                        NetworkingForPublisher publish = new NetworkingForPublisher(new Socket(default_ip_address, 1235), this,topic_name,operation,con_file_name);
-                        Thread t = new Thread(publish);
-                        t.start();
-                        erroneousinput = true;
-                        break;
-                    case 5:
-                        exit = true;
-                        break;
-                    default:
-                        System.out.println("Invalid Request... Try again");
-                        erroneousinput = true;
-                }
             }
         }catch(ConnectException e){
             System.out.println(ConsoleColors.RED + "No response from broker try again" + ConsoleColors.RESET);

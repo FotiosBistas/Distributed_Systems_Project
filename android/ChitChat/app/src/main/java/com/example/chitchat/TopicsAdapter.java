@@ -1,11 +1,14 @@
 package com.example.chitchat;
 
 import android.content.Context;
+import android.text.Layout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,14 +19,13 @@ import java.util.ArrayList;
 
 public class TopicsAdapter extends RecyclerView.Adapter<TopicsAdapter.TopicHolder> {
 
-    private ArrayList<Topic> topics;
+    private ArrayList<String> topics;
     private Context context;
     private onUserClickListener onUserClickListener;
 
-    public TopicsAdapter(ArrayList<Topic> topics, Context context, TopicsAdapter.onUserClickListener onUserClickListener) {
+    public TopicsAdapter(ArrayList<String> topics, Context context) {
         this.topics = topics;
         this.context = context;
-        this.onUserClickListener = onUserClickListener;
     }
 
     interface onUserClickListener{
@@ -33,14 +35,16 @@ public class TopicsAdapter extends RecyclerView.Adapter<TopicsAdapter.TopicHolde
     @NonNull
     @Override
     public TopicHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.topic_holder,parent,false);
-        return new TopicHolder(view);
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.topic_holder, parent, false);
+        return new TopicHolder(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull TopicHolder holder, int position) {
-        holder.textView.setText(topics.get(position).getName());
+        holder.textView.setText(topics.get(position));
         //TODO get image from broker and inflate
+
     }
 
     @Override
@@ -54,8 +58,14 @@ public class TopicsAdapter extends RecyclerView.Adapter<TopicsAdapter.TopicHolde
 
         public TopicHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.topic_name);
-            imageView = imageView.findViewById(R.id.topic_image);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //TODO this will open the chatroom for the specific topic
+                }
+            });
+            textView = itemView.findViewById(R.id.text_for_topic_image);
+            imageView = itemView.findViewById(R.id.topic_image);
         }
 
 

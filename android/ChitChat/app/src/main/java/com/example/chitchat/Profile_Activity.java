@@ -18,7 +18,6 @@ import java.io.IOException;
 
 public class Profile_Activity extends AppCompatActivity {
 
-    private Button log_out_button;
     private Button upload_image_button;
     private ImageView profile_image;
     private Uri imagePath;
@@ -27,20 +26,10 @@ public class Profile_Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
-        log_out_button = findViewById(R.id.log_out_button);
         //TODO send to the brokers so the brokers notify all new users
         upload_image_button = findViewById(R.id.upload_image_button);
 
         profile_image = findViewById(R.id.profile_image);
-        //if log out button is pressed return to main activity
-        log_out_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Profile_Activity.this, Connect_Activity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP));
-                finish();
-            }
-        });
-
         //upload button to broker
         upload_image_button.setOnClickListener(new View.OnClickListener() {
             @Override

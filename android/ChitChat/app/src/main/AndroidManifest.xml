@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.chitchat">
+    package="com.example.chitchat" >
 
     <application
         android:allowBackup="true"
@@ -12,22 +12,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChitChat"
-        tools:targetApi="31">
+        tools:targetApi="31" >
+        <activity
+            android:name=".Chatroom_Activity"
+            android:exported="false" />
         <activity
             android:name=".Profile_Activity"
             android:exported="false" />
         <activity
-            android:name=".Menu_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Topic_List_Activity"
+            android:name=".Central_Screen_Activity"
             android:exported="false" />
         <activity
             android:name=".Connect_Activity"
             android:exported="false" />
         <activity
             android:name=".Splash_Screen"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
