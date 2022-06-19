@@ -1,6 +1,9 @@
 package com.example.chitchat.Tools;
 
+import android.os.Build;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import java.io.Serializable;
 
@@ -22,7 +25,8 @@ public class Text_Message extends Value implements Serializable {
         this.identifier = hashCode();
     }
 
-    public Text_Message(String publisher,String contents) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public Text_Message(String publisher, String contents) {
         super(publisher);
         this.contents = contents;
         this.identifier = hashCode();
