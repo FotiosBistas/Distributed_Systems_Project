@@ -38,8 +38,6 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
     @Override
     public void onBindViewHolder(@NonNull TopicHolder holder, int position) {
         holder.textView.setText(topics.get(position));
-        //TODO get image from broker and inflate
-
     }
 
     @Override

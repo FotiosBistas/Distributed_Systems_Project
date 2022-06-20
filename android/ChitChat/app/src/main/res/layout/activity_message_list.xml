@@ -10,8 +10,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_chatroom"
         android:layout_width="match_parent"
-        android:layout_height="513dp"
+        android:layout_height="match_parent"
         app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toTopOf="@+id/layout_chat_box"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -19,20 +20,23 @@
         android:id="@+id/layout_chat_box"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/dark_green"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
+
         <EditText
             android:id="@+id/enter_message_chatroom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Message"
             android:layout_centerVertical="true"
-            android:inputType="text"
-            android:background="@android:color/transparent"
-            android:textColorHint="#4E342E"
             android:layout_toStartOf="@id/send_button_chatroom"
             android:layout_toEndOf="@+id/open_gallery_button_chatroom"
-            />
+            android:background="@android:color/transparent"
+            android:hint="Enter Message"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:textColor="#E64A19"
+            android:textColorHint="#E64A19" />
         <ImageButton
             android:id="@+id/send_button_chatroom"
             android:layout_width="wrap_content"
@@ -53,7 +57,6 @@
             app:layout_constraintTop_toTopOf="@+id/enter_message_chatroom"
             app:layout_constraintVertical_bias="0.368" />
     </RelativeLayout>
-
 
 
 

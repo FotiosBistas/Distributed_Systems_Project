@@ -7,13 +7,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.PopupMenu;
 
+import com.example.chitchat.Tools.MultimediaFile;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 
@@ -25,19 +30,58 @@ public class Message_List_Activity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private Message_List_Adapter message_list_adapter;
 
+    private ImageButton send;
+    private ImageButton open_gallery;
+    private EditText text_message;
+
+
     private List<Value> messageList;
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message_list);
+        send = (ImageButton) findViewById(R.id.send_button_chatroom);
+        open_gallery = (ImageButton) findViewById(R.id.open_gallery_button_chatroom);
+        text_message = (EditText) findViewById(R.id.enter_message_chatroom);
         messageList = new ArrayList<>();
+
+
         GlobalVariables.getInstance().setUsername("Fotis");
-        messageList.add(new Text_Message("Fotis","Hello there"));
+        /*messageList.add(new MultimediaFile("Fotis","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\kitten.jpg"));
+        messageList.add(new MultimediaFile("Kostas Kakoutopoulos","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\bruno_bottoming"));*/
+
+
+
         recyclerView = (RecyclerView) findViewById(R.id.recycler_chatroom);
         message_list_adapter = new Message_List_Adapter(this,messageList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(message_list_adapter);
+
+        //when you press send button send to server and create it locally
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String contents = text_message.getText().toString();
+                message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
+                text_message.getText().clear();
+            }
+        });
+
+        open_gallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+    }
+
+    private void createMessage(){
+
+    }
+
+    private void openGallery(){
+
     }
 
     @Override
