@@ -15,9 +15,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chitchat.Tools.Chunk;
 import com.example.chitchat.Tools.MultimediaFile;
+import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -85,10 +90,10 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
                 ((Text_Sent_Message_Holder) holder).bind((Text_Message) message);
                 break;
             case VIEW_IMAGE_RECEIVED_MESSAGE:
-                ((Image_Received_Message_Holder) holder).bind((MultimediaFile) message);
+                ((Image_Received_Message_Holder) holder).bind((Multimedia_File_Android) message);
                 break;
             case VIEW_IMAGE_SENT_MESSAGE:
-                ((Image_Sent_Message_Holder) holder).bind((MultimediaFile) message);
+                ((Image_Sent_Message_Holder) holder).bind((Multimedia_File_Android) message);
                 break;
             case VIEW_VIDEO_RECEIVED_MESSAGE:
                 break;
@@ -97,25 +102,38 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
-    private String findextensionType(MultimediaFile file){
+    private String findextensionType(Multimedia_File_Android file){
         String extension = "";
-        int i = file.getMultimediaFileName().lastIndexOf('.');
+        int i = file.getFile_name().lastIndexOf('.');
         if (i > 0) {
-            extension = file.getMultimediaFileName().substring(i+1);
+            extension = file.getFile_name().substring(i+1);
         }
         return extension;
     }
 
-    private byte[] copyBytes(MultimediaFile message){
+    private byte[] copyBytes(Multimedia_File_Android message){
         //get the maximum number of chunks for the specific multimedia file
-        int max_sequence = message.getMultimediaFileChunk().get(0).getMax_sequence_number();
-        int chunk_size = message.getMultimediaFileChunk().get(0).getChunk_size();
+        int max_sequence = message.getChunks().get(0).getMax_sequence_number();
+        int chunk_size = message.getChunks().get(0).getChunk_size();
         byte[] file = new byte[max_sequence * chunk_size];
-        for(int i = 0; i< message.getMultimediaFileChunk().size();i++){
+
+        for(int i = 0; i< message.getChunks().size();i++){
             //add the specific chunk to the file byte array
-            byte[] chunk = message.getMultimediaFileChunk().get(0).getChunk();
-            System.arraycopy(chunk,0,file,i,chunk.length);
+            byte[] chunk = message.getChunks().get(i).getChunk();
+            for(int j = 0; j < chunk.length; j++){
+                file[j] = chunk[j];
+            }
         }
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream("/storage/emulated/0/sent_files/hey_there.jpg");
+            fileOutputStream.write(file);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(Arrays.toString(file));
         return file;
     }
 
@@ -128,7 +146,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             if(value instanceof Text_Message){
                 return VIEW_TEXT_SENT_MESSAGE;
             }else{
-                MultimediaFile file = (MultimediaFile) value;
+                Multimedia_File_Android file = (Multimedia_File_Android) value;
                 if(findextensionType(file).equals("jpg")){
                     System.out.println("Found sent jpg image");
                     return VIEW_IMAGE_SENT_MESSAGE;
@@ -141,7 +159,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             if(value instanceof Text_Message){
                 return VIEW_TEXT_RECEIVED_MESSAGE;
             }else{
-                MultimediaFile file = (MultimediaFile) value;
+                Multimedia_File_Android file = (Multimedia_File_Android) value;
                 if(findextensionType(file).equals("jpg")){
                     System.out.println("Found received jpg image");
                     return VIEW_IMAGE_RECEIVED_MESSAGE;
@@ -203,7 +221,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             name_of_sender = itemView.findViewById(R.id.received_image_message_sender);
             image_received = (ImageView) itemView.findViewById(R.id.received_image_message_contents);
         }
-        void bind(MultimediaFile message){
+        void bind(Multimedia_File_Android message){
 
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
@@ -225,7 +243,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             timestamp = itemView.findViewById(R.id.sent_image_message_timestamp);
             image_sent = itemView.findViewById(R.id.sent_image_message_contents);
         }
-        void bind(MultimediaFile message){
+        void bind(Multimedia_File_Android message){
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
@@ -244,7 +262,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             timestamp = itemView.findViewById(R.id.received_video_message_timestamp);
             name_of_sender = itemView.findViewById(R.id.received_video_message_sender);
         }
-        void bind(MultimediaFile message){
+        void bind(Multimedia_File_Android message){
             //date is in format date__time
             date_received.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
@@ -259,7 +277,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             date_sent = itemView.findViewById(R.id.sent_video_message_date);
             timestamp = itemView.findViewById(R.id.sent_video_message_timestamp);
         }
-        void bind(MultimediaFile message){
+        void bind(Multimedia_File_Android message){
             date_sent.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
 

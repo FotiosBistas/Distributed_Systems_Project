@@ -7,12 +7,19 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.example.chitchat.UserNode.NetworkingForConsumer;
+import com.example.chitchat.UserNode.UserNode;
 
 public class Connect_Activity extends AppCompatActivity {
 
     private EditText edit_username,edit_port,edit_ip;
     private Button connect_button;
+    private UserNode userNode;
+
+    public ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,17 +49,25 @@ public class Connect_Activity extends AppCompatActivity {
                     Toast.makeText(Connect_Activity.this, "You did not provide username,ip or port number ", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                handleConnect(edit_username.getText().toString(),edit_ip.getText().toString(),edit_port.getText().toString());
+                Connect_Activity.this.userNode = new UserNode(edit_ip.getText().toString(),Integer. parseInt(edit_port.getText().toString()),edit_username.getText().toString());
+                handleConnect();
             }
         });
     }
 
-    private void handleConnect(String edit_username,String edit_ip,String edit_port){
+    public void startAsyncTask(View v){
+        System.out.println("starting async task");
+        NetworkingForConsumer networkingForConsumer = new NetworkingForConsumer(this,userNode);
+        //operations 1,2,3 are get broker list ,get  id list and send nickname
+        networkingForConsumer.execute(1,2,3);
+    }
+
+    private void handleConnect(){
         //create the user with the specified parameters given by the user
         Toast.makeText(Connect_Activity.this, "User connected successfully", Toast.LENGTH_SHORT).show();
-        //UserNode user = new UserNode(edit_username,Integer.parseInt(edit_port),edit_ip);
         startActivity(new Intent(Connect_Activity.this, Central_Screen_Activity.class));
         finish();
-        //user.connect();
     }
+
+
 }

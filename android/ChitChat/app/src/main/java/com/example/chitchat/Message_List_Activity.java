@@ -3,13 +3,18 @@ package com.example.chitchat;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.media.Image;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,11 +24,17 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 
 import com.example.chitchat.Tools.MultimediaFile;
+import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import Logging.ConsoleColors;
 
 public class Message_List_Activity extends AppCompatActivity {
 
@@ -51,37 +62,51 @@ public class Message_List_Activity extends AppCompatActivity {
         /*messageList.add(new MultimediaFile("Fotis","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\kitten.jpg"));
         messageList.add(new MultimediaFile("Kostas Kakoutopoulos","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\bruno_bottoming"));*/
 
-
-
         recyclerView = (RecyclerView) findViewById(R.id.recycler_chatroom);
         message_list_adapter = new Message_List_Adapter(this,messageList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(message_list_adapter);
-
         //when you press send button send to server and create it locally
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String contents = text_message.getText().toString();
-                message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
-                text_message.getText().clear();
+                createMessage();
             }
         });
 
         open_gallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                openGallery();
             }
         });
     }
 
-    private void createMessage(){
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private Multimedia_File_Android createMultimediaFile(Context  context, String file_name){
+        String extension = "";
+        int i = file_name.lastIndexOf('.');
+        if(i > 0){
+            Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(GlobalVariables.getInstance().getUsername(), file_name,this);
+            return multimedia_file_android;
+        }else{
+            System.out.println("Your file name should only include 1 dot");
+            return null;
+        }
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void createMessage(){
+        String contents = text_message.getText().toString();
+        message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
+        text_message.getText().clear();
     }
 
     private void openGallery(){
-
+        Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        gallery.setType("image/* video/*");
+        gallery.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(gallery,1);
     }
 
     @Override
@@ -90,6 +115,23 @@ public class Message_List_Activity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int result,Intent data) {
+        if(result == RESULT_OK){
+            Uri selectedMediaUri = data.getData();
+            if(selectedMediaUri.toString().contains("image")) {
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedMediaUri);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }else if(selectedMediaUri.toString().contains("video")){
+
+            }
+        }
+        super.onActivityResult(requestCode, result, data);
+    }
 
     /**
      * Creates the pop up menu when the plus icon is pressed on the action bar
