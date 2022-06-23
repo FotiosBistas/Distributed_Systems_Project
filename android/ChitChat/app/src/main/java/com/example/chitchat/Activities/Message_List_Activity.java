@@ -25,7 +25,7 @@ import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Value;
 import com.example.chitchat.UserNode.NetworkingForConsumer;
 import com.example.chitchat.UserNode.NetworkingForPublisher;
-import com.example.chitchat.UserNode.UserNode;
+import com.example.chitchat.UserNode.Android_User_Node;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class Message_List_Activity extends AppCompatActivity {
     private ImageButton open_gallery;
     private EditText text_message;
 
-    private UserNode userNode;
+    private Android_User_Node androidUserNode;
     private String topic_name;
 
 
@@ -68,7 +68,7 @@ public class Message_List_Activity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if(extras != null){
-            this.userNode = (UserNode) extras.get("User Node");
+            this.androidUserNode = (Android_User_Node) extras.get("User Node");
             this.topic_name = (String) extras.get("Topic Name");
         }
         /*messageList.add(new MultimediaFile("Fotis","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\kitten.jpg"));
@@ -99,7 +99,7 @@ public class Message_List_Activity extends AppCompatActivity {
 
     private void getConversationData(){
         //receive conversation data
-        new NetworkingForConsumer(this,topic_name,userNode).execute(6);
+        new NetworkingForConsumer(this,topic_name, androidUserNode).execute(6);
 
     }
 
@@ -122,7 +122,7 @@ public class Message_List_Activity extends AppCompatActivity {
         String contents = text_message.getText().toString();
         //message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
         //push message = 0
-        new NetworkingForPublisher(this,topic_name,userNode,contents).execute(0);
+        new NetworkingForPublisher(this,topic_name, androidUserNode,contents).execute(0);
         text_message.getText().clear();
     }
 

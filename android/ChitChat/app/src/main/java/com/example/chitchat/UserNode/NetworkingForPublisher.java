@@ -28,7 +28,7 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
     private final int default_port = 1234;
 
     private String topic_name;
-    private UserNode pub;
+    private Android_User_Node pub;
 
     private Socket connection;
     private ObjectInputStream localinputStream;
@@ -47,14 +47,14 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
     }
 
 
-    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, UserNode pub, String contents_or_file_name) {
+    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, Android_User_Node pub, String contents_or_file_name) {
         this.weakReference = weakReference;
         this.topic_name = topic_name;
         this.pub = pub;
         this.contents_or_file_name = contents_or_file_name;
     }
 
-    public NetworkingForPublisher(Activity activity, String topic_name, UserNode pub, String contents_or_file_name) {
+    public NetworkingForPublisher(Activity activity, String topic_name, Android_User_Node pub, String contents_or_file_name) {
         this.weakReference = new WeakReference<>(activity);
         this.topic_name = topic_name;
         this.pub = pub;

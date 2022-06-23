@@ -13,7 +13,6 @@ import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.chitchat.GlobalVariables;
 import com.example.chitchat.R;
 import com.example.chitchat.Tools.Chunk;
 import com.example.chitchat.Tools.MultimediaFile;
@@ -146,9 +145,9 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public int getItemViewType(int position) {
         Value value = (Value) message_list.get(position);
-        String current_username = GlobalVariables.getInstance().getUsername();
+        String current_username = "hi";
         //check if the publisher name is the same as the current user running the app.
-        if(value.getPublisher().equals(GlobalVariables.getInstance().getUsername())){
+        if(value.getPublisher().equals(current_username)){
             if(value instanceof Text_Message){
                 return VIEW_TEXT_SENT_MESSAGE;
             }else{

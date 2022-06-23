@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Scanner;
 
 public class UserNodeUtils {
 
@@ -103,7 +102,7 @@ public class UserNodeUtils {
      * @param cons              Accepts a user node object but refers to a consumer node.
      * @return Returns -1 if all goes well. Returns null if an error occurs.
      */
-    public static Integer sendNickname(ObjectOutputStream localoutputStream, UserNode cons) {
+    public static Integer sendNickname(ObjectOutputStream localoutputStream, Android_User_Node cons) {
         if (GeneralUtils.sendMessage(Messages.SENDING_NICK_NAME, localoutputStream) == null) {
             return null;
         }
@@ -123,7 +122,7 @@ public class UserNodeUtils {
      * @param cons              Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
-    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode cons) {
+    public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
         if (GeneralUtils.sendMessage(Messages.REGISTER, localoutputStream) == null) {
             return null;
         }
@@ -156,7 +155,8 @@ public class UserNodeUtils {
             //    return null;
             //}
             System.out.println("Writing consumer object...");
-            if (GeneralUtils.sendMessage(cons, localoutputStream) == null) {
+            System.out.println(cons);
+            if (GeneralUtils.sendMessage(cons.getName(), localoutputStream) == null) {
                 return null;
             }
         }
@@ -173,7 +173,7 @@ public class UserNodeUtils {
      * @param cons              Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
-    public static Integer unsubscribe(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode cons) {
+    public static Integer unsubscribe(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
         if (GeneralUtils.sendMessage(Messages.UNSUBSCRIBE, localoutputStream) == null) {
             return null;
         }
@@ -206,7 +206,7 @@ public class UserNodeUtils {
             //    return null;
             //}
             System.out.println("Writing consumer object...");
-            if (GeneralUtils.sendMessage(cons, localoutputStream) == null) {
+            if (GeneralUtils.sendMessage(cons.getName(), localoutputStream) == null) {
                 return null;
             }
         }
@@ -222,7 +222,7 @@ public class UserNodeUtils {
      * @param cons              Accepts a consumer instance(UserNode object)
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer receiveBrokerList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, UserNode cons) {
+    public static Integer receiveBrokerList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Android_User_Node cons) {
         Integer messagebroker = -1;
         while (true) {
             System.out.println("\033[0;34m" + "Waiting to receive sending broker list message" + "\033[0m");
@@ -402,7 +402,7 @@ public class UserNodeUtils {
      * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, int file_or_text, String contents_or_file_name) {
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node pub, int file_or_text, String contents_or_file_name) {
         System.out.println("Requesting for proper broker from the connection");
         notifyBrokersNewMessage(localoutputStream);
 
@@ -546,7 +546,7 @@ public class UserNodeUtils {
      * @param socket           Accepts the local socket.
      * @return Returns the topic list if everything goes well. If an error occurs it returns null.
      */
-    public static Integer receiveIDList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, UserNode cons) {
+    public static Integer receiveIDList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Android_User_Node cons) {
         Integer messagebroker = -1;
         while (true) {
             System.out.println("Waiting to receive sending ID list message");
@@ -596,7 +596,7 @@ public class UserNodeUtils {
      * @param topic_name        Accepts the topic name that we want to see the conversation data for.
      * @return Returns -1 if everything goes well. It returns null if there is an error.
      */
-    public static Integer receiveConversationData(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket socket, String topic_name, UserNode userNode) {
+    public static Integer receiveConversationData(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket socket, String topic_name, Android_User_Node androidUserNode) {
         System.out.println("Requesting for proper broker from the connection");
         if (showConversationData(localoutputStream) == null) {
             return null;
@@ -658,7 +658,7 @@ public class UserNodeUtils {
             return_list.addAll(temp.getStory_queue());
             return_list.addAll(temp.getFile_queue());
             Collections.sort(return_list,new SortMessages());
-            userNode.setTemp_message_list(return_list);
+            androidUserNode.setTemp_message_list(return_list);
             return -1;
         }
         return -1;
@@ -671,10 +671,10 @@ public class UserNodeUtils {
      * @param localinputStream Accepts the local output stream.
      * @param pull_request Accepts the pull request socket.
      * @param topic Accepts the topic that we will pull data for.
-     * @param userNode Accepts the user node that initiates the pull request.
+     * @param androidUserNode Accepts the user node that initiates the pull request.
      * @return Returns -1 if everything goes well. If we must connect to another broker the method returns the index of the broker in the broker list. If an error occurs it returns null.
      */
-    public static Integer pull(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket pull_request, String topic, UserNode userNode) {
+    public static Integer pull(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket pull_request, String topic, Android_User_Node androidUserNode) {
         //makes sure the broker received the pull request and they synchronize
         while (true) {
             //System.out.println("sending pull request");
@@ -705,7 +705,7 @@ public class UserNodeUtils {
         }
         //makes sure the broker received the name of the publisher
         while (true) {
-            if (GeneralUtils.sendMessage(userNode.getName(), localoutputStream) == null) {
+            if (GeneralUtils.sendMessage(androidUserNode.getName(), localoutputStream) == null) {
                 return null;
             }
             Integer message_broker = GeneralUtils.waitForNodePrompt(localinputStream, pull_request);
@@ -731,7 +731,7 @@ public class UserNodeUtils {
                 // System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
             } else {
                 for (Text_Message val : new_messages) {
-                    userNode.addNewMessage(topic, val);
+                    androidUserNode.addNewMessage(topic, val);
                 }
             }
             if (new_files == null) {
@@ -740,7 +740,7 @@ public class UserNodeUtils {
                 //System.out.println(ConsoleColors.RED + "There are no new files" + ConsoleColors.RESET);
             } else {
                 for (MultimediaFile val : new_files) {
-                    userNode.addNewFile(topic, val);
+                    androidUserNode.addNewFile(topic, val);
                 }
             }
             if (new_stories == null) {
@@ -749,7 +749,7 @@ public class UserNodeUtils {
                 // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
             } else {
                 for (Story story : new_stories) {
-                    userNode.addNewStory(topic, story);
+                    androidUserNode.addNewStory(topic, story);
                 }
             }
             return -1; //return -1 if the method worked successfully
