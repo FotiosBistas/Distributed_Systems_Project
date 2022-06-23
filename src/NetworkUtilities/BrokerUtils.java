@@ -4,7 +4,7 @@ package NetworkUtilities;
 import Broker.Broker;
 import Logging.ConsoleColors;
 import Tools.*;
-import UserNode.UserNode;
+import UserNode.Android_User_Node;
 import SHA1.SHA1;
 
 
@@ -258,9 +258,10 @@ public class BrokerUtils {
             }
             if (i == val.getValue2().length) {
                 System.out.println(ConsoleColors.GREEN + "Finished sending ports" + ConsoleColors.RESET);
-                if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
                     return null;
                 }
+
             }
         }
         return -1;
@@ -310,8 +311,8 @@ public class BrokerUtils {
             return null;
         }
         if(correct) {
-            UserNode new_cons;
-            if((new_cons = (UserNode) GeneralUtils.readObject(localinputStream,socket)) == null){
+            Android_User_Node new_cons;
+            if((new_cons = (Android_User_Node) GeneralUtils.readObject(localinputStream,socket)) == null){
                 return null;
             }
             System.out.println("\033[0;32m" + "Topic name: " + topic_name + "\033[0m");
@@ -356,8 +357,8 @@ public class BrokerUtils {
             return null;
         }
         if(correct) {
-            UserNode new_cons;
-            if ((new_cons = (UserNode) GeneralUtils.readObject(localinputStream, socket)) == null) {
+            Android_User_Node new_cons;
+            if ((new_cons = (Android_User_Node) GeneralUtils.readObject(localinputStream, socket)) == null) {
                 return null;
             }
             System.out.println("Topic name: " + topic_name);
