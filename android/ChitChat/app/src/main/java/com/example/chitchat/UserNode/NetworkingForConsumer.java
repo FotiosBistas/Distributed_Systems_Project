@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import Logging.ConsoleColors;
 
+import com.example.chitchat.Central_Screen_Activity;
 import com.example.chitchat.Connect_Activity;
 import com.example.chitchat.NetworkUtilities.GeneralUtils;
 import com.example.chitchat.NetworkUtilities.UserNodeUtils;
@@ -41,6 +42,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     private ObjectInputStream localinputStream;
     private ObjectOutputStream localoutputStream;
 
+    private int request_type;
+
     public NetworkingForConsumer(Activity activity,UserNode cons){
         this.weakReference = new WeakReference<>(activity);
         this.cons = cons;
@@ -59,6 +62,10 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         this.cons = cons;
     }
 
+    public void setWeakReference(WeakReference<Activity> weakReference) {
+        this.weakReference = weakReference;
+    }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
@@ -66,9 +73,9 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         if (activity == null || activity.isFinishing()) {
             return;
         }
-        if(activity instanceof Connect_Activity) {
-            Connect_Activity connect_activity = (Connect_Activity) activity;
-            connect_activity.progressBar.setVisibility(View.VISIBLE);
+        if(activity instanceof Central_Screen_Activity) {
+            Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
+            central_screen_activity.getProgressBar().setVisibility(View.VISIBLE);
         }
     }
 
@@ -80,13 +87,13 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
      */
     @Override
     protected Integer doInBackground(Integer... integers) {
-        System.out.println(Arrays.toString(integers));
         Integer index;
         Integer success;
         try{
             request_socket = new Socket(default_ip_address,default_port);
             localinputStream = new ObjectInputStream(request_socket.getInputStream());
             localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
+            this.request_type = integers[0];
             for (int i = 0; i < integers.length ; i++){
                 if(isCancelled()){
                     break;
@@ -95,14 +102,17 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                 switch (operation){
                     case 1:
                         if(UserNodeUtils.getBrokerList(localoutputStream) == null){
+                            System.out.println("Error occured");
                             cancel(true);
                             break;
                         };
                         if(UserNodeUtils.receiveBrokerList(localinputStream,localoutputStream,request_socket,cons) == null){
+                            System.out.println("Error occured");
                             cancel(true);
                             break;
                         }
                         if(GeneralUtils.FinishedOperation(localoutputStream) == null){
+                            System.out.println("Error occured");
                             cancel(true);
                             break;
                         }
@@ -196,7 +206,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                         }
                     default:
                         System.out.println("Invalid Request... Try again");
-                        shutdownConnection();
+                        cancel(true);
                 }
             }
         } catch (IOException e) {
@@ -220,6 +230,26 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     @Override
     protected void onPostExecute(Integer integer) {
         super.onPostExecute(integer);
+
+        Activity activity = weakReference.get();
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
+
+        if (request_type == 1 || request_type == 2 || request_type == 3) {
+            if(activity instanceof Central_Screen_Activity) {
+                Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
+                Toast.makeText(activity, "Received broker and id list successfully", Toast.LENGTH_SHORT).show();
+                central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
+            }
+        }else if(request_type == 4){
+            if(activity instanceof Central_Screen_Activity) {
+                Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
+                Toast.makeText(activity, "Subscribed to topic: " + topic_name + " successfully", Toast.LENGTH_SHORT).show();
+                central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
+                central_screen_activity.getTopicsAdapter().addTopic(topic_name);
+            }
+        }
     }
 
     /**

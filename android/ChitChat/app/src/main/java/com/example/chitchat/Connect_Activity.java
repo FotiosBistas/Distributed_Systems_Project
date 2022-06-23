@@ -1,8 +1,13 @@
 package com.example.chitchat;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -18,8 +23,9 @@ public class Connect_Activity extends AppCompatActivity {
     private EditText edit_username,edit_port,edit_ip;
     private Button connect_button;
     private UserNode userNode;
+    private final int PERMISSIONS_CODE = 1;
+    private String[] permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
 
-    public ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +35,6 @@ public class Connect_Activity extends AppCompatActivity {
         edit_username= findViewById(R.id.editusername);
         edit_ip = findViewById(R.id.editIP);
         edit_port = findViewById(R.id.editPort);
-        //TODO check if this stores the state
         //if already logged in a previous session go instantly to menu
         if(!(edit_username.getText().toString().isEmpty() && edit_ip.getText().toString().isEmpty() && edit_port.getText().toString().isEmpty())){
             startActivity(new Intent(Connect_Activity.this, Central_Screen_Activity.class));
@@ -49,25 +54,21 @@ public class Connect_Activity extends AppCompatActivity {
                     Toast.makeText(Connect_Activity.this, "You did not provide username,ip or port number ", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                //create the user with the specified parameters given by the user
                 Connect_Activity.this.userNode = new UserNode(edit_ip.getText().toString(),Integer. parseInt(edit_port.getText().toString()),edit_username.getText().toString());
-                handleConnect();
+                System.out.println("starting async task");
+                Intent intent = new Intent(Connect_Activity.this, Central_Screen_Activity.class);
+                intent.putExtra("User Node",userNode);
+                startActivity(intent);
+                finish();
             }
         });
     }
 
-    public void startAsyncTask(View v){
-        System.out.println("starting async task");
-        NetworkingForConsumer networkingForConsumer = new NetworkingForConsumer(this,userNode);
-        //operations 1,2,3 are get broker list ,get  id list and send nickname
-        networkingForConsumer.execute(1,2,3);
-    }
 
-    private void handleConnect(){
-        //create the user with the specified parameters given by the user
-        Toast.makeText(Connect_Activity.this, "User connected successfully", Toast.LENGTH_SHORT).show();
-        startActivity(new Intent(Connect_Activity.this, Central_Screen_Activity.class));
-        finish();
-    }
+
+
+
 
 
 }

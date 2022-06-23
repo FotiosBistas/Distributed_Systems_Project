@@ -1,5 +1,9 @@
 package com.example.chitchat.NetworkUtilities;
 
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import Logging.ConsoleColors;
 import com.example.chitchat.Tools.*;
 import com.example.chitchat.UserNode.*;
@@ -219,8 +223,6 @@ public class UserNodeUtils {
      */
     public static Integer receiveBrokerList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, UserNode cons) {
         Integer messagebroker = -1;
-        //declared variable expected number of ports
-        final int number_of_ports = 3;
         while (true) {
             System.out.println("\033[0;34m" + "Waiting to receive sending broker list message" + "\033[0m");
             messagebroker = GeneralUtils.waitForNodePrompt(localinputStream, socket);
@@ -271,10 +273,11 @@ public class UserNodeUtils {
                 }
                 System.out.println("Received port: " + port);
                 port_list.add(port);
-                if (port_list.size() >= number_of_ports) {
-                    while (true) {
+                if (port_list.size() >= 2) {
+                    while(true) {
                         System.out.println("Waiting for finished operation message by the broker in the while loop for sending port array");
                         messagebroker = GeneralUtils.waitForNodePrompt(localinputStream, socket);
+
                         if (messagebroker == null) {
                             System.out.println("\033[0;31m" + "Received null message while waiting for finished operation message in the port while" + "\033[0m");
                             return null;
@@ -284,7 +287,7 @@ public class UserNodeUtils {
                     }
                 }
             }
-            int[] ports = new int[number_of_ports];
+            int[] ports = new int[2];
             for (int i = 0; i < port_list.size(); i++) {
                 ports[i] = port_list.get(i);
             }
@@ -453,24 +456,7 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                Scanner sc;
-                switch (file_or_text) {
-                    case 0:
-                        push_message(localoutputStream);
-                        Text_Message new_text = new Text_Message(pub.getName(), contents_file_name);
-                        sendTextMessage(new_text, localoutputStream);
-                        break;
-                    case 1:
-                        push_file(localoutputStream);
-                        MultimediaFile new_file = new MultimediaFile(pub.getName(), contents_file_name);
-                        sendFile(new_file, localoutputStream);
-                        break;
-                    case 2:
-                        push_story(localoutputStream);
-                        Story new_story = new Story(pub.getName(), contents_file_name);
-                        sendStory(new_story, localoutputStream);
-                        break;
-                }
+                //TODO HANDLE REQUEST
 
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
@@ -720,7 +706,7 @@ public class UserNodeUtils {
             if (new_messages == null) {
                 return null;
             } else if (new_messages.isEmpty()) {
-               // System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
+                // System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
             } else {
                 for (Text_Message val : new_messages) {
                     userNode.addNewMessage(topic, val);
@@ -738,7 +724,7 @@ public class UserNodeUtils {
             if (new_stories == null) {
                 return null;
             } else if (new_stories.isEmpty()) {
-               // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
+                // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
             } else {
                 for (Story story : new_stories) {
                     userNode.addNewStory(topic, story);
@@ -756,3 +742,4 @@ public class UserNodeUtils {
         return null;
     }
 }
+

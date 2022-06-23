@@ -45,6 +45,11 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
         return topics.size();
     }
 
+    public void addTopic(String topic_name){
+        topics.add(topic_name);
+        notifyItemInserted(topics.size() - 1);
+    }
+
     protected class TopicHolder extends RecyclerView.ViewHolder{
         TextView textView;
         ImageView imageView;
