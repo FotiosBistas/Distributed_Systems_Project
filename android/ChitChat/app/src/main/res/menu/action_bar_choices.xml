@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:title="Profile Image" android:id="@+id/profile" android:icon="@drawable/account_image" app:showAsAction="ifRoom"/>
+    <item android:title="add circle"
+        android:id="@+id/add_circle" android:icon="@drawable/add_circle" app:showAsAction="ifRoom" />
+</menu>

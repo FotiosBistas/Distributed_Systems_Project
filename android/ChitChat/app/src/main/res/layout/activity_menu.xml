@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/faded_green"
+    tools:context=".Menu_Activity">
+
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose your action"
+        android:textSize="30dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/register_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.675">
+
+    </TextView>
+
+    <Button
+        android:id="@+id/register_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/square_round_shape"
+        android:text="@string/register_to_topic"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/disconnect_button"
+        app:layout_constraintEnd_toEndOf="@+id/disconnect_button"
+        app:layout_constraintHorizontal_bias="0.413"
+        app:layout_constraintStart_toStartOf="@+id/disconnect_button">
+
+
+    </Button>
+
+    <Button
+        android:id="@+id/disconnect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/square_round_shape"
+        android:text="@string/disconnect_from_topic"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/upload_file"
+        app:layout_constraintEnd_toEndOf="@+id/upload_file"
+        app:layout_constraintHorizontal_bias="0.474"
+        app:layout_constraintStart_toStartOf="@+id/upload_file">
+
+    </Button>
+
+    <Button
+        android:id="@+id/upload_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/square_round_shape"
+        android:text="@string/upload_file"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/upload_image"
+        app:layout_constraintEnd_toEndOf="@+id/upload_image"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/upload_image" />
+
+    <Button
+        android:id="@+id/upload_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/square_round_shape"
+        android:text="@string/upload_image"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/upload_story"
+        app:layout_constraintEnd_toEndOf="@+id/upload_story"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/upload_story" />
+
+    <Button
+        android:id="@+id/upload_story"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/square_round_shape"
+        android:text="@string/upload_story"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="@+id/textView"
+        app:layout_constraintStart_toStartOf="@+id/textView"
+        tools:layout_editor_absoluteY="629dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
