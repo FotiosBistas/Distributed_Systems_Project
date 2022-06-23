@@ -23,11 +23,11 @@ public class Topic implements Serializable{
     private final ArrayList<Story> story_queue = new ArrayList<>();
     private final HashMap<String,Integer> last_story = new HashMap<>();
 
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private static final long serialVersionUID = -3L;
+
 
     public Topic(String name){
         this.name = name;
-        executor.scheduleAtFixedRate(this::checkExpiredStories,0,20, TimeUnit.SECONDS);
     }
 
     public String getName() {
@@ -107,7 +107,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<Text_Message> findLatestMessage(String user){
-        System.out.println("Finding newest messages for user: " + user);
+        //System.out.println("Finding newest messages for user: " + user);
         int index = last_message.get(user);
         ArrayList<Text_Message> new_messages = new ArrayList<>();
         boolean found_new_messages = false;
@@ -115,7 +115,7 @@ public class Topic implements Serializable{
             new_messages.add(message_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new messages are: " + new_messages.size());
+        //System.out.println("The number of new messages are: " + new_messages.size());
         if(found_new_messages) {
             last_message.put(user,last_message.getOrDefault(user,0) + new_messages.size());
         }
@@ -128,7 +128,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<MultimediaFile> findLatestFile(String user){
-        System.out.println("Finding newest files for user: " + user);
+        //System.out.println("Finding newest files for user: " + user);
         int index = last_file.get(user);
         ArrayList<MultimediaFile> new_files = new ArrayList<>();
         boolean found_new_messages = false;
@@ -136,7 +136,7 @@ public class Topic implements Serializable{
             new_files.add(file_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new messages are: " + new_files.size());
+        //System.out.println("The number of new messages are: " + new_files.size());
         if(found_new_messages) {
             last_file.put(user,last_file.getOrDefault(user,0) + new_files.size());
         }
@@ -149,7 +149,7 @@ public class Topic implements Serializable{
      * @return returns the new text message found.
      */
     public ArrayList<Story> findLatestStory(String user){
-        System.out.println("Finding newest stories for user: " + user);
+        //System.out.println("Finding newest stories for user: " + user);
         int index = last_story.get(user);
         ArrayList<Story> new_stories = new ArrayList<>();
         boolean found_new_messages = false;
@@ -157,7 +157,7 @@ public class Topic implements Serializable{
             new_stories.add(story_queue.get(i));
             found_new_messages = true;
         }
-        System.out.println("The number of new stories are: " + new_stories.size());
+        //System.out.println("The number of new stories are: " + new_stories.size());
         if(found_new_messages) {
             last_story.put(user,last_story.getOrDefault(user,0) + new_stories.size());
         }
@@ -181,26 +181,55 @@ public class Topic implements Serializable{
     }
 
     /**
-     * Get's called every specific interval specified in the constructor of the topic.
+     * Gets called every specific interval specified in the constructor of the topic.
      * If a story is expired it removes it from the story queue.
      */
-    private void checkExpiredStories(){
+    public void checkExpiredStories(){
         System.out.println("Finding expired stories");
-        for (Story story:story_queue) {
+        int i = 0;
+        while(true){
+            if(i >= story_queue.size()){
+                break;
+            }
+            Story story = story_queue.get(i);
             ExpireStory(story);
             if(story.isExpired()){
                 story_queue.remove(story);
-                for (String user:subscribedUsers) {
+                int j = 0;
+                while(true){
+                    if(j >= subscribedUsers.size()){
+                        break;
+                    }
+                    String user = subscribedUsers.get(j);
                     last_story.put(user, last_story.getOrDefault(user,0) -1);
+                    j++;
                 }
             }
+            i++;
         }
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if(obj == null){
+            return false;
+        }
+
+        if(obj.getClass() != this.getClass()){
+            return false;
+        }
+        final Topic topic = (Topic) obj;
+        return this.name.equals(topic.getName());
     }
 
     @Override
     public String toString() {
         return "Topic{" +
                 "name='" + name + '\'' +
+                ", subscribedUsers=" + subscribedUsers +
+                ", message_queue=" + message_queue +
+                ", file_queue=" + file_queue +
+                ", story_queue=" + story_queue +
                 '}';
     }
 }

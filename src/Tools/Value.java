@@ -8,6 +8,8 @@ public class Value implements Serializable {
     private final String publisher;
     private final String dateCreated;
 
+    private static final long serialVersionUID = 2L;
+
     public String getPublisher() {
         return publisher;
     }

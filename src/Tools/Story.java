@@ -15,6 +15,8 @@ public class Story extends MultimediaFile implements Serializable {
     private final String expiration_date;
     private final int identifier;
 
+    private static final long serialVersionUID = -1L;
+
 
     public boolean isExpired() {
         return isExpired;
@@ -71,10 +73,7 @@ public class Story extends MultimediaFile implements Serializable {
             return false;
         }
         final Story story = (Story) obj;
-        if(this.identifier == story.identifier){
-            return true;
-        }
-        return false;
+        return this.identifier == story.identifier;
     }
 
     @Override
