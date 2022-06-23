@@ -28,7 +28,7 @@ class AliveBroker{
     private final Broker caller_broker;
     private final int alive_port = 9860;
     private final String alive_message = "alive";
-    private static ScheduledExecutorService executorCompletionService = Executors.newScheduledThreadPool(1);
+    private static ScheduledExecutorService executorCompletionService = Executors.newScheduledThreadPool(2);
     AliveBroker(Broker caller_broker){
         this.caller_broker = caller_broker;
         executorCompletionService.scheduleAtFixedRate(this::sendAliveMessage,0,5, TimeUnit.SECONDS);

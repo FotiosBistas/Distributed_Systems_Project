@@ -10,11 +10,11 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class  Broker{
+
+
 
     private final List<Consumer_Handler> consumer_Handlers = new ArrayList<>();
     private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
@@ -30,7 +30,19 @@ public class  Broker{
     private final List<Topic> Topics = new ArrayList<>();
     private final HashMap<Integer,ArrayList<Topic>> Topics_From_Other_Brokers = new HashMap<>();
 
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    //before setting thread pool sizes and assigning threads to each broker check
+    //Runtime.getRuntime().availableProcessors()
+    // mine is 12
+    private static final ScheduledExecutorService story_checker = Executors.newScheduledThreadPool(1);
+
+    private static final Executor consumer_event_loop = Executors.newSingleThreadExecutor();
+    private static final Executor publisher_event_loop = Executors.newSingleThreadExecutor();
+    private static final Executor broker_event_loop = Executors.newSingleThreadExecutor();
+
+    private static final ExecutorService request_handler = Executors.newFixedThreadPool(3);
+
+    private static final Executor notify_other_brokers = Executors.newSingleThreadExecutor();
+    private static final Executor send_object_to_other_brokers = Executors.newSingleThreadExecutor();
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private final List<Integer> id_list = new ArrayList<>();
@@ -124,7 +136,7 @@ public class  Broker{
                 return;
             }
             temp.addToStoryQueue((Story) val);
-            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_STORY);}).start();
+            notify_other_brokers.execute(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_STORY);});
         } else if (val instanceof MultimediaFile) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the file list of the topic: " + topic_name);
             Topic temp = null;
@@ -140,7 +152,7 @@ public class  Broker{
                 return;
             }
             temp.addToFileQueue((MultimediaFile) val);
-            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_FILE);}).start();
+            notify_other_brokers.execute(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_FILE);});
         } else if (val instanceof Text_Message) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert value: " + val + "into the message list of the topic: " + topic_name);
             Topic temp = null;
@@ -156,7 +168,7 @@ public class  Broker{
                 return;
             }
             temp.addToMessageQueue((Text_Message) val);
-            new Thread(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_TEXT_MESSAGE);}).start();
+            notify_other_brokers.execute(()->{notifyBrokersOnChanges(val,topic_name,SendObject.Operation.SHARE_TEXT_MESSAGE);});
         }
     }
     /**
@@ -244,7 +256,7 @@ public class  Broker{
                     + " for publisher services " + this.broker_port + " for broker services");
             System.out.println("IP address: " + this.ip);
             //separate thread for receiving consumer connections
-            new Thread(() -> {
+            consumer_event_loop.execute(() -> {
                 try {
                     consumer_service = new ServerSocket(consumer_port);
                     System.out.println("Opened thread to service consumer connections");
@@ -254,16 +266,16 @@ public class  Broker{
                         Consumer_Handler consumer_handler = new Consumer_Handler(consumer_connection,Broker.this);
                         Thread t1 = new Thread(consumer_handler);
                         consumer_Handlers.add(consumer_handler);
-                        t1.start();
+                        request_handler.submit(t1);
                     }
                 }catch(IOException e){
                     e.printStackTrace();
                     System.out.println("Error in consumer service thread");
                     shutdownBroker();
                 }
-            }).start();
+            });
             //separate thread for receiving publisher connections
-            new Thread(() -> {
+            publisher_event_loop.execute(() -> {
                 try {
                     publisher_service = new ServerSocket(publisher_port);
                     /*accepts all publisher connection on the predestined port*/
@@ -273,15 +285,15 @@ public class  Broker{
                         Publisher_Handler publisher_handler = new Publisher_Handler(publisher_connection,Broker.this);
                         Thread t2 = new Thread(publisher_handler);
                         publisher_Handlers.add(publisher_handler);
-                        t2.start();
+                        request_handler.submit(t2);
                     }
                 }catch(IOException e){
                     System.out.println("Error in publisher service thread");
                     shutdownBroker();
                 }
-            }).start();
+            });
             //separate thread for receiving broker connections
-            new Thread(() -> {
+            broker_event_loop.execute(() -> {
                 try {
                     broker_service = new ServerSocket(broker_port);
                     //accepts all broker connection on the predestined port
@@ -290,14 +302,13 @@ public class  Broker{
                         Socket broker_connection = broker_service.accept();
                         Broker_Handler broker_handler = new Broker_Handler(broker_connection,Broker.this);
                         Thread t3 = new Thread(broker_handler);
-                        t3.start();
+                        request_handler.submit(t3);
                     }
                 }catch(IOException e){
                     System.out.println("Error in broker service thread");
                     shutdownBroker();
                 }
-            }).start();
-
+            });
 
             //start the object to multicast alive message
             this.multicast_alive_message = new AliveBroker(this);
@@ -340,9 +351,9 @@ public class  Broker{
     public void createTopic(String topic_name,String consumer){
        Topic new_topic = new Topic(topic_name);
        Topics.add(new_topic);
-       new Thread(()->{notifyBrokersOnChanges(null,topic_name,SendObject.Operation.SHARE_TOPIC);}).start();
+       notify_other_brokers.execute(()->{notifyBrokersOnChanges(null,topic_name,SendObject.Operation.SHARE_TOPIC);});
        addConsumerToTopic(new_topic,consumer);
-       executor.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
+       story_checker.scheduleAtFixedRate(new_topic::checkExpiredStories,0,20, TimeUnit.SECONDS);
        System.out.println("Created new topic: " + topic_name);
     }
 
@@ -351,7 +362,7 @@ public class  Broker{
             try {
                 SendObject sendObject = new SendObject(new Socket(broker.getValue1(),broker.getValue2()[2]),this,operation,object,topic_name);
                 Thread thread = new Thread(sendObject);
-                thread.start();
+                send_object_to_other_brokers.execute(thread);
             } catch (IOException e) {
                 System.out.println(ConsoleColors.RED + "Error while trying to notify brokers" + ConsoleColors.RESET);
                 throw new RuntimeException(e);
@@ -369,11 +380,11 @@ public class  Broker{
         if (Topics.contains(topic)) {
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now subscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.addSubscription(consumer);
-            new Thread(()-> {notifyBrokersOnChanges(consumer, topic.getName(), SendObject.Operation.SHARE_SUBSCRIBER);}).start();
+            notify_other_brokers.execute(()-> {notifyBrokersOnChanges(consumer, topic.getName(), SendObject.Operation.SHARE_SUBSCRIBER);});
         } else { // this is the case where the topic does not exist and the new topic must be inserted in the hash map
             Topics.add(topic);
             topic.addSubscription(consumer);
-            new Thread(() -> {notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);}).start();
+            notify_other_brokers.execute(() -> {notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_SUBSCRIBER);});
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
@@ -388,7 +399,7 @@ public class  Broker{
         if(Topics.contains(topic)){
             System.out.println(ConsoleColors.PURPLE + "Topic is in topic list and now unsubscribing consumer: " + consumer + ConsoleColors.RESET);
             topic.removeSubscription(consumer);
-            new Thread(()->{notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_DISCONNECT);}).start();
+            notify_other_brokers.execute(()->{notifyBrokersOnChanges(consumer,topic.getName(),SendObject.Operation.SHARE_DISCONNECT);});
         }
         System.out.println("Subscribed users: ");
         System.out.println(Topics.get(Topics.indexOf(topic)).getSubscribedUsers());
