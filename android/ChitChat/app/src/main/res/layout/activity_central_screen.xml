@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/faded_green"
-    tools:context=".Central_Screen_Activity">
+    tools:context=".Activities.Central_Screen_Activity">
 
     <ProgressBar
         android:id="@+id/indeterminateBar"

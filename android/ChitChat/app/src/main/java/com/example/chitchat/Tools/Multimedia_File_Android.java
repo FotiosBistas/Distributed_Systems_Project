@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
@@ -31,6 +32,7 @@ public class Multimedia_File_Android extends Value{
 
     private final String internal_storage = "/storage/emulated/0/sent_files/";
     private final int chunk_size = 1024*512;
+    private final int identifier;
 
     public long getSize() {
         return size;
@@ -60,8 +62,12 @@ public class Multimedia_File_Android extends Value{
         return chunk_size;
     }
 
+    public int getIdentifier() {
+        return identifier;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public Multimedia_File_Android(String publisher, String file_name, Context context) {
+    public Multimedia_File_Android(String publisher, String file_name) {
         super(publisher);
         //context is to get the internal storage allocated for the app
         this.file_name = file_name;
@@ -82,7 +88,17 @@ public class Multimedia_File_Android extends Value{
         //we create cache file to be able to read it
         //File cached_file = File.createTempFile(internal_storage + file_name,null,context.getCacheDir());
         createChunks(new_file);
+        this.identifier = hashCode();
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public Multimedia_File_Android(String publisher, String date_created, String file_name, String actual_date_created, long size, ArrayList<Chunk> chunks){
+        super(publisher,date_created);
+        this.file_name = file_name;
+        this.actual_date_created = actual_date_created;
+        this.size = size;
+        this.chunks = chunks;
+        this.identifier =  this.hashCode();
     }
 
     /**
@@ -136,5 +152,38 @@ public class Multimedia_File_Android extends Value{
         }
     }
 
+
+    @NonNull
+    @Override
+    public String toString() {
+        return  super.toString() + "MultimediaFile{" +
+                "multimediaFileName='" + file_name + '\'' +
+                ", size=" + size +
+                ", actual_date='" + actual_date_created + '\'' +
+                ", multimediaFileChunk=" + chunks +
+                ", identifier=" + identifier +
+                '}';
+    }
+
+    @Override
+    public int hashCode(){
+        int result = 1;
+        final int prime = 31;
+        result = prime*result + this.getPublisher().hashCode() + this.getDateCreated().hashCode() + this.getFile_name().hashCode() + this.getDateCreated().hashCode() + this.getChunks().hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null){
+            return false;
+        }
+
+        if(obj.getClass() != this.getClass()){
+            return false;
+        }
+        final Multimedia_File_Android file = (Multimedia_File_Android) obj;
+        return this.identifier == file.identifier;
+    }
 
 }

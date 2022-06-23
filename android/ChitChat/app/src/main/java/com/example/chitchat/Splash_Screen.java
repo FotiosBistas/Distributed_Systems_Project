@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.WindowManager;
 
+import com.example.chitchat.Activities.Central_Screen_Activity;
+import com.example.chitchat.Activities.Connect_Activity;
+
 public class Splash_Screen extends AppCompatActivity {
 
     private static int SPLASH_TIMER = 3000;
@@ -21,7 +24,7 @@ public class Splash_Screen extends AppCompatActivity {
             public void run() {
                 //Intent intent = new Intent(Splash_Screen.this, Connect_Activity.class);
                //Intent intent = new Intent(Splash_Screen.this, Central_Screen_Activity.class);
-                Intent intent = new Intent(Splash_Screen.this, Connect_Activity.class);
+                Intent intent = new Intent(Splash_Screen.this, Central_Screen_Activity.class);
                 startActivity(intent);
                 finish();
             }

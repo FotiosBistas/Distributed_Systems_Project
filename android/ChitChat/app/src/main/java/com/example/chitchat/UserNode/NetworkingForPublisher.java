@@ -3,143 +3,170 @@
 package com.example.chitchat.UserNode;
 
 
+import android.app.Activity;
+import android.os.AsyncTask;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import Logging.ConsoleColors;
+
+import com.example.chitchat.Activities.Message_List_Activity;
 import com.example.chitchat.NetworkUtilities.UserNodeUtils;
 import com.example.chitchat.Tools.Tuple;
 
 import java.io.*;
-import java.net.ConnectException;
+import java.lang.ref.WeakReference;
 import java.net.Socket;
-import java.net.SocketException;
 
-import javax.crypto.Cipher;
+public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
 
-public class NetworkingForPublisher implements Runnable {
+    private WeakReference<Activity> weakReference;
+    //default broker ip address to connect to
+    private final String default_ip_address = "192.168.1.5";
+    //port that listens to consumer services for that broker
+    private final int default_port = 1234;
 
-    private final Socket connection;
-    private final UserNode pub;
-    private ObjectOutputStream localoutputStream;
+    private String topic_name;
+    private UserNode pub;
+
+    private Socket connection;
     private ObjectInputStream localinputStream;
-    private final String topic_name;
-    private final int operation;
-    private final String contents_file_name;
+    private ObjectOutputStream localoutputStream;
 
-
-    public NetworkingForPublisher(Socket connection, UserNode pub, String topic_name, int operation, String contents_file_name) {
-        this.connection = connection;
-        this.pub = pub;
-        this.topic_name = topic_name;
-        this.operation = operation;
-        this.contents_file_name = contents_file_name;
-        try {
-            localoutputStream = new ObjectOutputStream(connection.getOutputStream());
-            localinputStream = new ObjectInputStream(connection.getInputStream());
-        } catch (IOException socketException) {
-            System.out.println(ConsoleColors.RED + "Error while constructing networking for publisher" + ConsoleColors.RESET);
-            shutdownConnection();
-        }
-    }
+    private int push_type;
+    private String contents_or_file_name;
 
     /**
-     * If the current broker that the user node is connected to is not the right broker for the topic a new connection is opened to serve the corresponding request
-     * for the specific topic.
-     * @param new_broker Accepts a tuple type that is the new broker's ip and port(port[1] because it is for publisher connections). The tuple broker is found in the broker list that the user received.
-     * @param operation Accepts the operation that the new connection must serve.
+     * we need a weak reference because the Networking For consumer class will be called from multiple activities
+     *
+     * @param weakReference The activity that has initiated the async task
      */
-    private void startNewConnection(Tuple<String,int[]> new_broker,int operation){
+    public void setWeakReference(WeakReference<Activity> weakReference) {
+        this.weakReference = weakReference;
+    }
+
+
+    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, UserNode pub, String contents_or_file_name) {
+        this.weakReference = weakReference;
+        this.topic_name = topic_name;
+        this.pub = pub;
+        this.contents_or_file_name = contents_or_file_name;
+    }
+
+    public NetworkingForPublisher(Activity activity, String topic_name, UserNode pub, String contents_or_file_name) {
+        this.weakReference = new WeakReference<>(activity);
+        this.topic_name = topic_name;
+        this.pub = pub;
+        this.contents_or_file_name = contents_or_file_name;
+    }
+
+
+    /**
+     * initiates new async task meaning a new connection with the broker that is responsible for the topic name
+     *
+     * @param new_broker a Tools.tuple containing the ip of the broker and the port number to connect to. THe consumer ports are in the second place in the array
+     */
+    private void startNewConnection(Tuple<String, int[]> new_broker, int operation, String contents_or_file_name) {
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         //port for publisher services
         int port = new_broker.getValue2()[1];
         System.out.println("New broker port: " + port);
-        NetworkingForPublisher new_connection = null;
-        try {
-            new_connection = new NetworkingForPublisher(new Socket(IP,port),pub,topic_name,operation,contents_file_name);
-            shutdownConnection();
-        } catch (ConnectException connectException){
-            System.out.println(ConsoleColors.RED + "Could not connect to the new broker" + ConsoleColors.RESET);
-            shutdownConnection();
-        } catch (IOException ioException) {
-            System.out.println(ConsoleColors.RED + "IO error while trying to connect to the new broker" + ConsoleColors.RESET);
-            shutdownConnection();
-        }
-        Thread t = new Thread(new_connection);
-        t.start();
+        NetworkingForPublisher new_connection = new NetworkingForPublisher(weakReference, topic_name, pub, contents_or_file_name);
+        new_connection.execute(operation);
     }
 
-    @Override
-    public void run() {
-        System.out.println("New publisher was created");
-        //index of -1 is success index
-        //if index is null there was an error
-        //if index is another integer its the index of the broker
-        Integer index;
-        switch (operation) {
-            case 0:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 0, contents_file_name)) == null) {
-                    System.out.println(ConsoleColors.RED + "Error while trying to push file" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else if (index == -1) {
-                    System.out.println(ConsoleColors.PURPLE + "Finished the push file operation" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else {
-                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                    startNewConnection(brk, 0);
-                }
-                break;
-            case 1:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 1, contents_file_name)) == null) {
-                    System.out.println(ConsoleColors.RED + "Error while trying to push message" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else if (index == -1) {
-                    System.out.println(ConsoleColors.PURPLE + "Finished the push message operation" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else {
-                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                    startNewConnection(brk, 1);
-                }
-                break;
-
-            case 2:
-                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, 2, contents_file_name)) == null) {
-                    System.out.println(ConsoleColors.RED + "Error while trying to push message" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else if (index == -1) {
-                    System.out.println(ConsoleColors.PURPLE + "Finished the push message operation" + ConsoleColors.RESET);
-                    shutdownConnection();
-                    return;
-                } else {
-                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                    startNewConnection(brk, 2);
-                }
-                break;
-        }
-    }
 
     /**
      * Terminates the local socket along with it's corresponding input and output streams.It throws a IO exception if something goes wrong.
      */
-    private void shutdownConnection(){
+    private void shutdownConnection() {
         System.out.println("Terminating publisher: " + pub.getName());
         try {
-            if(connection != null){
+            if (connection != null) {
                 connection.close();
             }
 
-            if(localoutputStream != null){
+            if (localoutputStream != null) {
                 localoutputStream.close();
             }
-            if(localinputStream != null){
+            if (localinputStream != null) {
                 localinputStream.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+
+        Activity activity = weakReference.get();
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
+
+        if(activity instanceof Message_List_Activity){
+            //TODO implement progress bar for each case
+        }
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected Integer doInBackground(Integer... integers) {
+        Integer index;
+        try {
+            connection = new Socket(default_ip_address, default_port);
+            localinputStream = new ObjectInputStream(connection.getInputStream());
+            localoutputStream = new ObjectOutputStream(connection.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            cancel(true);
+        }
+        if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
+            System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
+            cancel(true);
+        } else if (index == -1) {
+            System.out.println("Successful push");
+        } else {
+            Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+            startNewConnection(brk, push_type, contents_or_file_name);
+            cancel(true);
+
+        }
+        return -1;
+    }
+
+    @Override
+    protected void onPostExecute(Integer integer) {
+        super.onPostExecute(integer);
+
+        Activity activity = weakReference.get();
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
+        if(activity instanceof Message_List_Activity) {
+            Message_List_Activity message_list_activity = (Message_List_Activity) activity;
+            //if push text message
+            if (push_type == 0) {
+                message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_message());
+            }else if(push_type == 1){
+                message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_multimedia_file_android());
+            }else if(push_type == 2){
+                message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_story());
+            }
+        }
+    }
+
+    @Override
+    protected void onCancelled(Integer integer) {
+        super.onCancelled(integer);
+        shutdownConnection();
+    }
+
+
 }
 
