@@ -1,4 +1,4 @@
-package com.example.chitchat;
+package com.example.chitchat.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +9,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.renderscript.ScriptGroup;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,10 +17,13 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 
+import com.example.chitchat.R;
 import com.example.chitchat.UserNode.NetworkingForConsumer;
 import com.example.chitchat.UserNode.UserNode;
 
 import java.util.ArrayList;
+
+import com.example.chitchat.Adapters.Topics_Adapter;
 
 public class Central_Screen_Activity extends AppCompatActivity{
     private RecyclerView recyclerView;

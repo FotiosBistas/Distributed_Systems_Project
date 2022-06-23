@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/faded_green"
-    tools:context=".Central_Screen_Activity">
+    tools:context=".Activities.Central_Screen_Activity">
 
     <ProgressBar
         android:id="@+id/indeterminateBar"
@@ -13,11 +13,14 @@
         android:layout_height="28dp"
         android:layout_margin="16dp"
         android:layout_marginStart="256dp"
-        android:layout_marginTop="36dp"
-        android:background="@color/faded_green"
+        android:background="@color/white"
         android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.483"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/recycler_view"
+        app:layout_constraintVertical_bias="0.0"
         tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView

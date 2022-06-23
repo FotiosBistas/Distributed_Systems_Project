@@ -2,16 +2,14 @@
 package com.example.chitchat.UserNode;
 
 import android.app.Activity;
-import android.app.WallpaperColors;
 import android.os.AsyncTask;
-import android.text.PrecomputedText;
 import android.view.View;
 import android.widget.Toast;
 
 import Logging.ConsoleColors;
 
-import com.example.chitchat.Central_Screen_Activity;
-import com.example.chitchat.Connect_Activity;
+import com.example.chitchat.Activities.Central_Screen_Activity;
+import com.example.chitchat.Activities.Message_List_Activity;
 import com.example.chitchat.NetworkUtilities.GeneralUtils;
 import com.example.chitchat.NetworkUtilities.UserNodeUtils;
 import com.example.chitchat.Tools.Messages;
@@ -21,11 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
-import java.net.ConnectException;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Arrays;
 
 public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
@@ -49,19 +43,23 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         this.cons = cons;
     }
 
+    //Copy Constructor
     public NetworkingForConsumer(WeakReference<Activity> weakReference,String topic_name,UserNode cons){
         this.weakReference = weakReference;
         this.topic_name = topic_name;
         this.cons = cons;
     }
 
-    //Copy Constructor
     public NetworkingForConsumer(Activity activity,String topic_name,UserNode cons){
         this.weakReference = new WeakReference<>(activity);
         this.topic_name = topic_name;
         this.cons = cons;
     }
 
+    /**
+     * we need a weak reference because the Networking For consumer class will be called from multiple activities
+     * @param weakReference The activity that has initiated the async task
+     */
     public void setWeakReference(WeakReference<Activity> weakReference) {
         this.weakReference = weakReference;
     }
@@ -81,8 +79,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
 
     /**
-     * integer is the operation type we want to perform
-     * @param integers
+     * integers is the operation type we want to perform
+     * @param integers accept a single request type or an array of request types
      * @return
      */
     @Override
@@ -104,64 +102,73 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                         if(UserNodeUtils.getBrokerList(localoutputStream) == null){
                             System.out.println("Error occured");
                             cancel(true);
-                            break;
+                            continue;
                         };
                         if(UserNodeUtils.receiveBrokerList(localinputStream,localoutputStream,request_socket,cons) == null){
                             System.out.println("Error occured");
                             cancel(true);
-                            break;
+                            continue;
                         }
                         if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                             System.out.println("Error occured");
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         break;
                     case 2:
                         if(UserNodeUtils.getIDList(localoutputStream) == null){
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         if(UserNodeUtils.receiveIDList(localinputStream,localoutputStream,request_socket,cons) == null){
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         break;
                     case 3:
                         if(UserNodeUtils.sendNickname(localoutputStream,cons) == null){
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                             cancel(true);
-                            break;
+                            continue;
+
                         }
                         System.out.println("I'm the client: " + cons.getName() + " and i have connected to the server");
                         break;
                     case 4:
                         if((index = UserNodeUtils.register(localinputStream,localoutputStream,request_socket,topic_name,cons)) == null){
-                            shutdownConnection();
-                            break;
+                            cancel(true);
+                            continue;
                         }else if(index == -1) {
                             success = GeneralUtils.waitForNodePrompt(localinputStream, request_socket);
                             if (success == null) {
                                 cancel(true);
+                                continue;
                             } else if (success == Messages.NO_SUCH_TOPIC.ordinal()) {
                                 System.out.println(ConsoleColors.RED + "Broker couldn't subscribe you to the topic so it will create a new one" + ConsoleColors.RESET);
                                 cons.addNewSubscription(topic_name);
                                 if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
-                                    shutdownConnection();
-                                    break;
+                                    cancel(true);
+                                    continue;
+
                                 }
                             } else if (success == Messages.FINISHED_OPERATION.ordinal()) {
                                 cons.addNewSubscription(topic_name);
                                 if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
-                                    shutdownConnection();
-                                    break;
+                                    cancel(true);
+                                    continue;
+
                                 }
                             }
                         }
@@ -169,28 +176,32 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                     case 5:
                         if((index = UserNodeUtils.unsubscribe(localinputStream,localoutputStream,request_socket,topic_name,this.cons)) == null){
                             cancel(true);
+                            continue;
                         }else if(index == -1) {
                             success = GeneralUtils.waitForNodePrompt(localinputStream, request_socket);
                             if (success == null) {
                                 cancel(true);
+                                continue;
                             } else if (success == Messages.NO_SUCH_TOPIC.ordinal()) {
                                 System.out.println(ConsoleColors.RED + "Broker couldn't unsubscribe you from the topic" + ConsoleColors.RESET);
                                 cancel(true);
+                                continue;
                             } else if (success == Messages.FINISHED_OPERATION.ordinal()) {
                                 cons.removeSubscription(topic_name);
                                 if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
-                                    shutdownConnection();
-                                    break;
+                                   cancel(true);
+                                   continue;
                                 }
                             }
                             break;
                         }else{
                             Tuple<String, int[]> brk = cons.getBrokerList().get(index);
                             startNewConnection(brk,operation);
-                            break;
+                            cancel(true);
+                            continue;
                         }
                     case 6:
-                        if((index = UserNodeUtils.receiveConversationData(localoutputStream,localinputStream,request_socket,topic_name)) == null){
+                        if((index = UserNodeUtils.receiveConversationData(localoutputStream,localinputStream,request_socket,topic_name,cons)) == null){
                             cancel(true);
                             continue;
                         }else if(index == -1){
@@ -202,11 +213,13 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                         }else{
                             Tuple<String, int[]> brk = cons.getBrokerList().get(index);
                             startNewConnection(brk,operation);
-                            break;
+                            cancel(true);
+                            continue;
                         }
                     default:
                         System.out.println("Invalid Request... Try again");
                         cancel(true);
+                        continue;
                 }
             }
         } catch (IOException e) {
@@ -217,6 +230,11 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         return null;
     }
 
+    /**
+     * initiates new async task meaning a new connection with the broker that is responsible for the topic name
+     * @param new_broker a Tools.tuple containing the ip of the broker and the port number to connect to. THe consumer ports are in the second place in the array
+     * @param i
+     */
     private void startNewConnection(Tuple<String,int[]> new_broker, int i) {
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
@@ -224,6 +242,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         int port = new_broker.getValue2()[0];
         System.out.println("New broker port: " + port);
         NetworkingForConsumer new_connection = new NetworkingForConsumer(weakReference,topic_name,cons);
+        new_connection.execute(i);
     }
 
 
@@ -249,6 +268,11 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                 central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
                 central_screen_activity.getTopicsAdapter().addTopic(topic_name);
             }
+        }else if(request_type == 6){
+            if(activity instanceof Message_List_Activity){
+                Message_List_Activity message_list_activity = (Message_List_Activity) activity;
+                message_list_activity.getMessage_list_adapter().addMessages(cons.getTemp_message_list());
+            }
         }
     }
 
@@ -258,6 +282,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
      */
     @Override
     protected void onCancelled(Integer integer) {
+        super.onCancelled(integer);
         shutdownConnection();
     }
 

@@ -1,4 +1,4 @@
-package com.example.chitchat;
+package com.example.chitchat.Adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.chitchat.R;
 
 import java.util.ArrayList;
 
@@ -28,7 +30,7 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
         this.context = context;
     }
 
-    interface onUserClickListener{
+    public interface onUserClickListener{
         void onUserClicked(View v,int position); // position inside array list
     }
 

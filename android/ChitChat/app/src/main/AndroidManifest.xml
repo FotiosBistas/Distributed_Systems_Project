@@ -19,19 +19,16 @@
 
         tools:targetApi="31">
         <activity
-            android:name=".Message_List_Activity"
+            android:name=".Activities.Message_List_Activity"
             android:exported="false" />
         <activity
-            android:name=".Chatroom_Activity"
+            android:name=".Activities.Profile_Activity"
             android:exported="false" />
         <activity
-            android:name=".Profile_Activity"
+            android:name=".Activities.Central_Screen_Activity"
             android:exported="false" />
         <activity
-            android:name=".Central_Screen_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Connect_Activity"
+            android:name=".Activities.Connect_Activity"
             android:exported="false" />
         <activity
             android:name=".Splash_Screen"

@@ -20,6 +20,49 @@ public class UserNode implements Serializable {
     private int port;
     private String name;
 
+    private ArrayList<Value> general_message_list;
+
+    //this message list is used when receiving conversation data
+    private ArrayList<Value> temp_message_list;
+
+    private Text_Message temp_message;
+    private Multimedia_File_Android temp_multimedia_file_android;
+    private Story temp_story;
+
+    public Text_Message getTemp_message() {
+        return temp_message;
+    }
+
+    public void setTemp_message(Text_Message temp_message) {
+        this.temp_message = temp_message;
+    }
+
+    public Multimedia_File_Android getTemp_multimedia_file_android() {
+        return temp_multimedia_file_android;
+    }
+
+    public void setTemp_multimedia_file_android(Multimedia_File_Android temp_multimedia_file_android) {
+        this.temp_multimedia_file_android = temp_multimedia_file_android;
+    }
+
+    public Story getTemp_story() {
+        return temp_story;
+    }
+
+    public void setTemp_story(Story temp_story) {
+        this.temp_story = temp_story;
+    }
+
+    //used when opening a topic's chat and gets set by receive conversation data in userNodeUtils.java
+    public void setTemp_message_list(ArrayList<Value> temp_message_list) {
+        this.temp_message_list = temp_message_list;
+    }
+
+    //called by get Message_List_Activity when requesting for the conversation data
+    public ArrayList<Value> getTemp_message_list() {
+        return temp_message_list;
+    }
+
     private static final long serialVersionUID = -4L;
 
     //Broker list should be sorted by ids of brokers

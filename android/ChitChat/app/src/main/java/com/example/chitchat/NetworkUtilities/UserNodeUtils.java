@@ -11,6 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 
 public class UserNodeUtils {
@@ -344,31 +345,31 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer sendFile(MultimediaFile file, ObjectOutputStream localoutputStream) {
+    public static Integer sendFile(Multimedia_File_Android file, ObjectOutputStream localoutputStream) {
 
-        ArrayList<Chunk> chunks = file.getMultimediaFileChunk();
-        System.out.println("Sending the file name: " + file.getMultimediaFileName());
-        if (GeneralUtils.sendMessage(file.getMultimediaFileName(), localoutputStream) == null) {
+        ArrayList<Chunk> chunks = file.getChunks();
+        System.out.println("Sending the file name: " + file.getFile_name());
+        if (GeneralUtils.sendMessage(file.getFile_name(), localoutputStream) == null) {
             return null;
         }
         System.out.println("Sending date that the file was sent to the network: " + file.getDateCreated());
         if (GeneralUtils.sendMessage(file.getDateCreated(), localoutputStream) == null) {
             return null;
         }
-        System.out.println("Sending date that the file was created: " + file.getActual_date());
-        if (GeneralUtils.sendMessage(file.getActual_date(), localoutputStream) == null) {
+        System.out.println("Sending date that the file was created: " + file.getActual_date_created());
+        if (GeneralUtils.sendMessage(file.getActual_date_created(), localoutputStream) == null) {
             return null;
         }
         System.out.println("Sending publisher name: " + file.getPublisher());
         if (GeneralUtils.sendMessage(file.getPublisher(), localoutputStream) == null) {
             return null;
         }
-        System.out.println("Sending file's length: " + file.getLength());
-        if (GeneralUtils.sendMessage(file.getLength(), localoutputStream) == null) {
+        System.out.println("Sending file's size: " + file.getSize());
+        if (GeneralUtils.sendMessage(file.getSize(), localoutputStream) == null) {
             return null;
         }
-        System.out.println("Informing broker how many chunks there are: " + file.getMultimediaFileChunk().size());
-        if (GeneralUtils.sendMessage(file.getMultimediaFileChunk().size(), localoutputStream) == null) {
+        System.out.println("Informing broker how many chunks there are: " + file.getChunks().size());
+        if (GeneralUtils.sendMessage(file.getChunks().size(), localoutputStream) == null) {
             return null;
         }
         for (int i = 0; i < chunks.size(); i++) {
@@ -400,7 +401,8 @@ public class UserNodeUtils {
      * @param pub               Accepts a node to access its name and other necessary fiels.
      * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
-    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, int file_or_text, String contents_file_name) {
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, UserNode pub, int file_or_text, String contents_or_file_name) {
         System.out.println("Requesting for proper broker from the connection");
         notifyBrokersNewMessage(localoutputStream);
 
@@ -456,7 +458,23 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                //TODO HANDLE REQUEST
+                if(file_or_text == 0){ // push text message
+                    push_message(localoutputStream);
+                    Text_Message new_text = new Text_Message(pub.getName(), contents_or_file_name);
+                    pub.setTemp_message(new_text);
+                    sendTextMessage(new_text, localoutputStream);
+                }else if(file_or_text == 1){ //push multimedia file
+                    push_file(localoutputStream);
+                    Multimedia_File_Android new_file = new Multimedia_File_Android(pub.getName(), contents_or_file_name);
+                    pub.setTemp_multimedia_file_android(new_file);
+                    sendFile(new_file, localoutputStream);
+                }else if(file_or_text == 2){// push story
+                    push_story(localoutputStream);
+                    Story new_story = new Story(pub.getName(), contents_or_file_name);
+                    pub.setTemp_story(new_story);
+                    sendStory(new_story, localoutputStream);
+                }
+
 
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
@@ -578,7 +596,7 @@ public class UserNodeUtils {
      * @param topic_name        Accepts the topic name that we want to see the conversation data for.
      * @return Returns -1 if everything goes well. It returns null if there is an error.
      */
-    public static Integer receiveConversationData(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket socket, String topic_name) {
+    public static Integer receiveConversationData(ObjectOutputStream localoutputStream, ObjectInputStream localinputStream, Socket socket, String topic_name, UserNode userNode) {
         System.out.println("Requesting for proper broker from the connection");
         if (showConversationData(localoutputStream) == null) {
             return null;
@@ -634,10 +652,14 @@ public class UserNodeUtils {
                 System.out.println(ConsoleColors.RED + "There isn't a topic with topic name: " + topic_name + ConsoleColors.RESET);
                 return null;
             }
-            System.out.println(ConsoleColors.PURPLE + "Showing message queue: " + ConsoleColors.RESET);
-            System.out.println(temp.getMessage_queue());
-            System.out.println(temp.getStory_queue());
-            System.out.println(temp.getFile_queue());
+            //System.out.println(ConsoleColors.PURPLE + "Showing message queue: " + ConsoleColors.RESET);
+            ArrayList<Value> return_list = new ArrayList<>();
+            return_list.addAll(temp.getMessage_queue());
+            return_list.addAll(temp.getStory_queue());
+            return_list.addAll(temp.getFile_queue());
+            Collections.sort(return_list,new SortMessages());
+            userNode.setTemp_message_list(return_list);
+            return -1;
         }
         return -1;
     }

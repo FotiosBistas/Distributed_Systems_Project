@@ -1,16 +1,14 @@
-package com.example.chitchat;
+package com.example.chitchat.Activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,29 +16,35 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 
-import com.example.chitchat.Tools.MultimediaFile;
+import com.example.chitchat.R;
 import com.example.chitchat.Tools.Multimedia_File_Android;
-import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
+import com.example.chitchat.UserNode.NetworkingForConsumer;
+import com.example.chitchat.UserNode.NetworkingForPublisher;
 import com.example.chitchat.UserNode.UserNode;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import Logging.ConsoleColors;
+import com.example.chitchat.Adapters.Message_List_Adapter;
 
 public class Message_List_Activity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private Message_List_Adapter message_list_adapter;
+
+    /**
+     * called at the end of async task with request type 6 to add the received elements to the recycler view
+     * @return the message list adapter
+     */
+    public Message_List_Adapter getMessage_list_adapter() {
+        return message_list_adapter;
+    }
 
     private ImageButton send;
     private ImageButton open_gallery;
@@ -94,6 +98,8 @@ public class Message_List_Activity extends AppCompatActivity {
     }
 
     private void getConversationData(){
+        //receive conversation data
+        new NetworkingForConsumer(this,topic_name,userNode).execute(6);
 
     }
 
@@ -102,8 +108,9 @@ public class Message_List_Activity extends AppCompatActivity {
         String extension = "";
         int i = file_name.lastIndexOf('.');
         if(i > 0){
-            Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(GlobalVariables.getInstance().getUsername(), file_name,this);
-            return multimedia_file_android;
+            //Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(GlobalVariables.getInstance().getUsername(), file_name,this);
+            //return multimedia_file_android;
+            return null; 
         }else{
             System.out.println("Your file name should only include 1 dot");
             return null;
@@ -113,7 +120,9 @@ public class Message_List_Activity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createMessage(){
         String contents = text_message.getText().toString();
-        message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
+        //message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
+        //push message = 0
+        new NetworkingForPublisher(this,topic_name,userNode,contents).execute(0);
         text_message.getText().clear();
     }
 

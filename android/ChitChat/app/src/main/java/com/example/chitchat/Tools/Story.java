@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
-public class Story extends MultimediaFile implements Serializable {
+public class Story extends Multimedia_File_Android implements Serializable {
 
     private boolean isExpired = false;
     private final String expiration_date;
@@ -47,12 +47,14 @@ public class Story extends MultimediaFile implements Serializable {
         this.identifier = Hash();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public Story(String publisher, String date_created, String mutlimediaFileName, String actual_date, long length, ArrayList<Chunk> multimediaFileChunk, String expiration_date){
         super(publisher,date_created,mutlimediaFileName,actual_date,length,multimediaFileChunk);
         this.expiration_date = expiration_date;
         this.identifier = Hash();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public Story(MultimediaFile multimediaFile){
         super(multimediaFile.getPublisher(),multimediaFile.getDateCreated(),multimediaFile.getMultimediaFileName(),multimediaFile.getActual_date(), multimediaFile.getLength(), multimediaFile.getMultimediaFileChunk());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
