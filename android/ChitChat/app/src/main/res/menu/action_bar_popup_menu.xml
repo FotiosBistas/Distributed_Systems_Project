@@ -8,6 +8,11 @@
     </item>
 
     <item
+        android:id="@+id/action_bar_menu_disconnect_from_topic"
+        android:title="unsubscribe from topic">
+    </item>
+
+    <item
         android:id="@+id/action_bar_menu_logout"
         android:title="@string/log_out">
     </item>

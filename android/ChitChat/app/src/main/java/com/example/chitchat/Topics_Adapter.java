@@ -18,13 +18,18 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
     private Context context;
     private onUserClickListener onUserClickListener;
 
-    public Topics_Adapter(ArrayList<String> topics, Context context) {
+    public ArrayList<String> getTopics() {
+        return topics;
+    }
+
+    public Topics_Adapter(ArrayList<String> topics, Context context, onUserClickListener onUserClickListener) {
         this.topics = topics;
+        this.onUserClickListener = onUserClickListener;
         this.context = context;
     }
 
     interface onUserClickListener{
-        void onUserClicked(int position); // position inside array list
+        void onUserClicked(View v,int position); // position inside array list
     }
 
     @NonNull
@@ -60,6 +65,7 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
                 @Override
                 public void onClick(View v) {
                     //TODO this will open the chatroom for the specific topic
+                    onUserClickListener.onUserClicked(v,getAdapterPosition());
                 }
             });
             textView = itemView.findViewById(R.id.text_for_topic_image);

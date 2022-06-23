@@ -30,6 +30,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
     private ProgressBar progressBar;
     private UserNode userNode;
     private Topics_Adapter topicsAdapter;
+    private Topics_Adapter.onUserClickListener onUserClickListener;
 
 
     public ProgressBar getProgressBar() {
@@ -54,10 +55,24 @@ public class Central_Screen_Activity extends AppCompatActivity{
         this.userNode = (UserNode) getIntent().getSerializableExtra("User Node");
         //operations 1,2,3 are get broker list ,get  id list and send nickname
         new NetworkingForConsumer(this,userNode).execute(1,2,3);
+        setOnClickListener(); 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        Topics_Adapter topicsAdapter = new Topics_Adapter(topics, this);
+        topicsAdapter = new Topics_Adapter(topics, this,onUserClickListener);
         recyclerView.setAdapter(topicsAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setOnClickListener() {
+        onUserClickListener = new Topics_Adapter.onUserClickListener() {
+            @Override
+            public void onUserClicked(View v, int position) {
+                Intent intent = new Intent(getApplicationContext(),Message_List_Activity.class);
+                intent.putExtra("User Node",userNode);
+                intent.putExtra("Topic Name",topicsAdapter.getTopics().get(position));
+                startActivity(intent);
+                finish();
+            }
+        };
     }
 
 
@@ -105,6 +120,26 @@ public class Central_Screen_Activity extends AppCompatActivity{
                     startActivity(intent);
                     finish();
                     return true;
+                }else if(item.getItemId() == R.id.action_bar_menu_disconnect_from_topic){
+                    //give the topic name you want to unsubscribe from
+                    AlertDialog.Builder alertDialog = new AlertDialog.Builder(Central_Screen_Activity.this);
+                    final EditText topic_name = new EditText(Central_Screen_Activity.this);
+                    topic_name.setInputType(InputType.TYPE_CLASS_TEXT);
+                    alertDialog.setView(topic_name);
+                    alertDialog.setMessage("Unsubscribe from what topic?").setTitle("Unsubscribe");
+                    alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            new NetworkingForConsumer(Central_Screen_Activity.this,topic_name.getText().toString(),
+                                    userNode).execute(5);
+
+                        }
+                    });
+                    alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    });
+                    alertDialog.show();
                 }
                 return false;
             }

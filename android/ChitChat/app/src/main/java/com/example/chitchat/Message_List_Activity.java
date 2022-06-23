@@ -27,6 +27,7 @@ import com.example.chitchat.Tools.MultimediaFile;
 import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
+import com.example.chitchat.UserNode.UserNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +46,9 @@ public class Message_List_Activity extends AppCompatActivity {
     private ImageButton open_gallery;
     private EditText text_message;
 
+    private UserNode userNode;
+    private String topic_name;
+
 
     private List<Value> messageList;
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -58,7 +62,11 @@ public class Message_List_Activity extends AppCompatActivity {
         messageList = new ArrayList<>();
 
 
-        GlobalVariables.getInstance().setUsername("Fotis");
+        Bundle extras = getIntent().getExtras();
+        if(extras != null){
+            this.userNode = (UserNode) extras.get("User Node");
+            this.topic_name = (String) extras.get("Topic Name");
+        }
         /*messageList.add(new MultimediaFile("Fotis","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\kitten.jpg"));
         messageList.add(new MultimediaFile("Kostas Kakoutopoulos","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\bruno_bottoming"));*/
 
@@ -66,6 +74,9 @@ public class Message_List_Activity extends AppCompatActivity {
         message_list_adapter = new Message_List_Adapter(this,messageList);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(message_list_adapter);
+
+
+
         //when you press send button send to server and create it locally
         send.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,6 +91,10 @@ public class Message_List_Activity extends AppCompatActivity {
                 openGallery();
             }
         });
+    }
+
+    private void getConversationData(){
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

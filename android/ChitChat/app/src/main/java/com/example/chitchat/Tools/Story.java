@@ -53,6 +53,7 @@ public class Story extends MultimediaFile implements Serializable {
         this.identifier = Hash();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public Story(MultimediaFile multimediaFile){
         super(multimediaFile.getPublisher(),multimediaFile.getDateCreated(),multimediaFile.getMultimediaFileName(),multimediaFile.getActual_date(), multimediaFile.getLength(), multimediaFile.getMultimediaFileChunk());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
