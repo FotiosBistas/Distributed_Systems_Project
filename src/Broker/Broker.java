@@ -11,9 +11,7 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class  Broker{
 
@@ -21,11 +19,23 @@ public class  Broker{
     private final List<Publisher_Handler> publisher_Handlers = new ArrayList<>();
 
     //this list is matching in indexes with the Broker list
-    private final Boolean[] alive_brokers = new Boolean[3];
-    private final String[] LastTimeAlive = new String[3];
 
     private final List<Topic> Topics = new ArrayList<>();
     private final HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
+
+
+    private final String read_file_path = "C:\\Users\\fotis\\IdeaProjects\\Distributed_Systems_Project\\src\\Broker\\";
+
+    //before setting thread pool sizes and assigning threads to each broker check
+    //Runtime.getRuntime().availableProcessors()
+    // mine is 12
+    private static final ScheduledExecutorService story_checker = Executors.newScheduledThreadPool(2);
+
+    private static final Executor consumer_event_loop = Executors.newSingleThreadExecutor();
+    private static final Executor publisher_event_loop = Executors.newSingleThreadExecutor();
+    private static final Executor broker_event_loop = Executors.newSingleThreadExecutor();
+
+    private static final ExecutorService request_handler = Executors.newFixedThreadPool(3);
 
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private final List<Integer> id_list = new ArrayList<>();
@@ -51,13 +61,6 @@ public class  Broker{
         readBrokerListFromConfigFile();
     }
 
-    public Boolean[] getAlive_brokers() {
-        return alive_brokers;
-    }
-
-    public String[] getLastTimeAlive() {
-        return LastTimeAlive;
-    }
 
     public List<Consumer_Handler> getConsumer_Handlers() {
         return consumer_Handlers;
@@ -211,7 +214,7 @@ public class  Broker{
      * Also calls the sort operation on the broker list.
      */
     public void readBrokerListFromConfigFile(){
-        File file = new File("C:\\Users\\fotis\\IdeaProjects\\DSproject\\src\\Broker\\config.txt");
+        File file = new File(read_file_path + "config.txt");
         BufferedReader br;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -246,7 +249,7 @@ public class  Broker{
             System.out.println("Broker with id: " + this.id + ",listens on port: " + this.consumer_port + " for subscriber services" + " and listens to port: " + this.publisher_port + " for publisher services");
             System.out.println("IP address: " + this.ip);
             /* separate thread for receiving consumer connections */
-            new Thread(() -> {
+            consumer_event_loop.execute(() -> {
                 try {
                     consumer_service = new ServerSocket(consumer_port);
                     System.out.println("Opened thread to service consumer connections");
@@ -256,16 +259,16 @@ public class  Broker{
                         Consumer_Handler consumer_handler = new Consumer_Handler(consumer_connection,Broker.this);
                         Thread t1 = new Thread(consumer_handler);
                         consumer_Handlers.add(consumer_handler);
-                        t1.start();
+                        request_handler.submit(t1);
                     }
                 }catch(IOException e){
                     e.printStackTrace();
                     System.out.println("Error in consumer service thread");
                     shutdownBroker();
                 }
-            }).start();
+            });
             /* separate thread for receiving publisher connections*/
-            new Thread(() -> {
+            publisher_event_loop.execute(() -> {
                 try {
                     publisher_service = new ServerSocket(publisher_port);
                     /*accepts all publisher connection on the predestined port*/
@@ -275,17 +278,13 @@ public class  Broker{
                         Publisher_Handler publisher_handler = new Publisher_Handler(publisher_connection,Broker.this);
                         Thread t2 = new Thread(publisher_handler);
                         publisher_Handlers.add(publisher_handler);
-                        t2.start();
+                        request_handler.submit(t2);
                     }
                 }catch(IOException e){
-                    e.printStackTrace();
                     System.out.println("Error in publisher service thread");
                     shutdownBroker();
                 }
-            }).start();
-
-            //start the object to initiate broker communications.
-            InterBrokerCommunications interBrokerCommunications = new InterBrokerCommunications(this);
+            });
 
         } catch (Exception e) {
             e.printStackTrace();
