@@ -4,7 +4,6 @@ import Logging.ConsoleColors;
 import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
 import Tools.*;
-import jdk.internal.loader.AbstractClassLoaderValue;
 
 import java.awt.*;
 import java.io.*;
@@ -34,7 +33,7 @@ public class UserNode implements Serializable {
     private String files_directory;
 
     private final String default_ip_address = "192.168.1.5";
-
+    private final int default_port = 1234;
     private boolean exit;
     private boolean erroneousinput = true;
     //Broker list should be sorted by ids of brokers
@@ -141,7 +140,7 @@ public class UserNode implements Serializable {
             Thread t1;
             ArrayList<Thread> temp = new ArrayList<>();
             for (int i = 4; i < 7; i++) {
-                consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, i);
+                consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, i);
                 t1 = new Thread(consumer);
                 t1.start();
                 temp.add(t1);
@@ -178,7 +177,7 @@ public class UserNode implements Serializable {
                     case 1:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 1,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 1,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -186,7 +185,7 @@ public class UserNode implements Serializable {
                     case 2:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 2,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 2,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -194,7 +193,7 @@ public class UserNode implements Serializable {
                     case 3:
                         System.out.println("Give the topic name...");
                         topic_name = sc.next();
-                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, 1234), this, 3,topic_name);
+                        consumer = new NetworkingForConsumer(new Socket(default_ip_address, default_port), this, 3,topic_name);
                         t1 = new Thread(consumer);
                         t1.start();
                         erroneousinput = true;
@@ -536,7 +535,7 @@ public class UserNode implements Serializable {
         for(String topic: SubscribedTopics) {
             //System.out.println(SubscribedTopics);
             try {
-                Pull_Request request = new Pull_Request(topic,new Socket(default_ip_address,1234));
+                Pull_Request request = new Pull_Request(topic,new Socket(default_ip_address,default_port));
                 Thread thread = new Thread(request);
                 thread.start();
             } catch (IOException ioException) {
