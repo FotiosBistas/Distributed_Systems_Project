@@ -1,5 +1,6 @@
 package com.example.chitchat.Tools;
-import Logging.ConsoleColors;
+
+import com.example.chitchat.Logging.ConsoleColors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
