@@ -2,14 +2,12 @@ package NetworkUtilities;
 
 import Logging.ConsoleColors;
 import Tools.*;
-import UserNode.UserNode;
-
+import UserNode.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
-
 
 public class UserNodeUtils {
 
@@ -720,7 +718,7 @@ public class UserNodeUtils {
             if (new_messages == null) {
                 return null;
             } else if (new_messages.isEmpty()) {
-                // System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
+               // System.out.println(ConsoleColors.RED + "There are no new messages" + ConsoleColors.RESET);
             } else {
                 for (Text_Message val : new_messages) {
                     userNode.addNewMessage(topic, val);
@@ -738,7 +736,7 @@ public class UserNodeUtils {
             if (new_stories == null) {
                 return null;
             } else if (new_stories.isEmpty()) {
-                // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
+               // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
             } else {
                 for (Story story : new_stories) {
                     userNode.addNewStory(topic, story);

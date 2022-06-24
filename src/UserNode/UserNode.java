@@ -1,13 +1,11 @@
 package UserNode;
 
-
-
-
-
 import Logging.ConsoleColors;
+import NetworkUtilities.GeneralUtils;
 import NetworkUtilities.UserNodeUtils;
 import Tools.*;
 
+import java.awt.*;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -342,7 +340,7 @@ public class UserNode implements Serializable {
      * @param chunks Accepts an array list containing chunk objects
      * @param file Accepts the file that the data is going to get written to.
      */
-    private void writeChunks(ArrayList<Chunk> chunks, File file){
+    private void writeChunks(ArrayList<Chunk> chunks,File file){
         try(FileOutputStream fos = new FileOutputStream (file)) {
             for (Chunk chunk : chunks) {
                 System.out.println("Writing chunk: ");
@@ -601,7 +599,7 @@ public class UserNode implements Serializable {
 
         @Override
         public void run() {
-           Integer return_type = UserNodeUtils.pull(localoutputStream,localinputStream,pull_request,topic,UserNode.this);
+            Integer return_type = UserNodeUtils.pull(localoutputStream,localinputStream,pull_request,topic,UserNode.this);
             if(return_type == null){
                 System.out.println(ConsoleColors.RED + "An error occured inside the run of the pull request" + ConsoleColors.RESET);
                 shutdownConnection();

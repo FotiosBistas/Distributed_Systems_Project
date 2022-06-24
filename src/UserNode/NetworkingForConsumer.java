@@ -7,7 +7,6 @@ import NetworkUtilities.UserNodeUtils;
 import Tools.Messages;
 import Tools.Tuple;
 
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -69,7 +68,7 @@ public class NetworkingForConsumer implements Runnable{
      * @param new_broker Accepts a tuple type that is the new broker's ip and port(port[0] because it is for consumer connections). The tuple broker is found in the broker list that the user received.
      * @param operation Accepts the operation that the new connection must serve.
      */
-    private void startNewConnection(Tuple<String,int[]> new_broker, int operation){
+    private void startNewConnection(Tuple<String,int[]> new_broker,int operation){
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         //port for connecting to broker for consumer traffic

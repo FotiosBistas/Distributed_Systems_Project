@@ -3,8 +3,6 @@
 package UserNode;
 
 
-
-
 import Logging.ConsoleColors;
 import NetworkUtilities.UserNodeUtils;
 import Tools.Tuple;
@@ -51,7 +49,7 @@ public class NetworkingForPublisher implements Runnable {
      * @param new_broker Accepts a tuple type that is the new broker's ip and port(port[1] because it is for publisher connections). The tuple broker is found in the broker list that the user received.
      * @param operation Accepts the operation that the new connection must serve.
      */
-    private void startNewConnection(Tuple<String,int[]> new_broker, int operation){
+    private void startNewConnection(Tuple<String,int[]> new_broker,int operation){
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         int port = new_broker.getValue2()[1];

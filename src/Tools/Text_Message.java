@@ -6,8 +6,6 @@ public class Text_Message extends Value implements Serializable {
     private final String contents;
     private final int identifier;
 
-    private static final long serialVersionUID = 3L;
-
     public String getContents() {
         return contents;
     }
@@ -20,7 +18,7 @@ public class Text_Message extends Value implements Serializable {
         this.identifier = hashCode();
     }
 
-    public Text_Message(String publisher, String contents) {
+    public Text_Message(String publisher,String contents) {
         super(publisher);
         this.contents = contents;
         this.identifier = hashCode();
@@ -53,7 +51,10 @@ public class Text_Message extends Value implements Serializable {
             return false;
         }
         final Text_Message message = (Text_Message) obj;
-        return this.identifier == message.identifier;
+        if(this.identifier == message.identifier){
+            return true;
+        }
+        return false;
     }
 
 }

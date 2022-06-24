@@ -4,7 +4,6 @@ package NetworkUtilities;
 import Logging.ConsoleColors;
 import Tools.Messages;
 
-
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -124,7 +123,6 @@ public class GeneralUtils {
             return null;
         } catch (IOException | ClassNotFoundException e) {
             System.out.println( ConsoleColors.RED + "Error in read object..." + ConsoleColors.RESET);
-            e.printStackTrace();
             return null;
         }
     }

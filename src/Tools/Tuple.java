@@ -6,8 +6,6 @@ public class Tuple<V1,V2> implements Serializable {
     private final V1 value1;
     private final V2 value2;
 
-    private static final long serialVersionUID = 4L;
-
     public Tuple(){
         this.value1 = null;
         this.value2 = null;
@@ -25,4 +23,3 @@ public class Tuple<V1,V2> implements Serializable {
         return value2;
     }
 }
-
