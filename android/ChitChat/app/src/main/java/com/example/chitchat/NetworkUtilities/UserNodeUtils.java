@@ -119,7 +119,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
      * @param topic_name        Accepts the topic name that the user wants to subscribe to.
-     * @param cons              Accepts a consumer(UserNode instance).
+     * @param cons              Accepts a consumer(Android_User_Node instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
     public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
@@ -170,7 +170,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
      * @param topic_name        Accepts the topic name that the user wants to subscribe to.
-     * @param cons              Accepts a consumer(UserNode instance).
+     * @param cons              Accepts a consumer(Android_User_Node instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
     public static Integer unsubscribe(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
@@ -219,7 +219,7 @@ public class UserNodeUtils {
      * @param localinputStream  Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
-     * @param cons              Accepts a consumer instance(UserNode object)
+     * @param cons              Accepts a consumer instance(Android_User_Node object)
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer receiveBrokerList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Android_User_Node cons) {

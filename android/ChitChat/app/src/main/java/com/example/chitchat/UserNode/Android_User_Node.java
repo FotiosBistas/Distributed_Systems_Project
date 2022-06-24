@@ -171,7 +171,7 @@ public class Android_User_Node implements Serializable {
 
     @Override
     public String toString() {
-        return "UserNode{" +
+        return "Android_User_Node{" +
                 "ip='" + ip + '\'' +
                 ", port=" + port +
                 ", name='" + name + '\'' +

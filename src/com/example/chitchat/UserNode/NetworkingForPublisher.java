@@ -17,7 +17,7 @@ import java.net.SocketException;
 public class NetworkingForPublisher implements Runnable {
 
     private final Socket connection;
-    private final UserNode pub;
+    private final Android_User_Node pub;
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
     private final String topic_name;
@@ -25,7 +25,7 @@ public class NetworkingForPublisher implements Runnable {
     private final String contents_file_name;
 
 
-    public NetworkingForPublisher(Socket connection, UserNode pub, String topic_name, int operation, String contents_file_name) {
+    public NetworkingForPublisher(Socket connection, Android_User_Node pub, String topic_name, int operation, String contents_file_name) {
         this.connection = connection;
         this.pub = pub;
         this.topic_name = topic_name;

@@ -20,13 +20,13 @@ public class NetworkingForConsumer implements Runnable{
     private ObjectOutputStream localoutputStream;
     private ObjectInputStream localinputStream;
     private Socket request_socket;
-    private UserNode cons;
+    private Android_User_Node cons;
     boolean exit = false;
     private int operation;
     private String topic_name = null;
 
 
-    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation){
+    public NetworkingForConsumer(Socket request_socket, Android_User_Node cons, int operation){
         this.request_socket = request_socket;
         this.cons = cons;
         this.operation = operation;
@@ -44,7 +44,7 @@ public class NetworkingForConsumer implements Runnable{
         }
     }
 
-    public NetworkingForConsumer(Socket request_socket,UserNode cons,int operation,String topic_name){
+    public NetworkingForConsumer(Socket request_socket, Android_User_Node cons, int operation, String topic_name){
         this.request_socket = request_socket;
         this.cons = cons;
         this.operation = operation;

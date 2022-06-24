@@ -28,8 +28,8 @@ public class Publisher_Handler implements Runnable{
         this.publisher_connection = publisher_connection;
         this.broker = broker;
         try {
-            localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
             localoutputStream = new ObjectOutputStream(publisher_connection.getOutputStream());
+            localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
         }catch (SocketException socketException) {
             System.out.println("\033[0;31m" + "Socket error" + "\033[0m");
             shutdownConnection();
@@ -56,6 +56,7 @@ public class Publisher_Handler implements Runnable{
                 continue;
             }
             Messages message_received = Messages.values()[message];
+            System.out.println("Message received ordinal: " + message_received.ordinal());
             switch (message_received){
                 case FINISHED_OPERATION:
                     System.out.println("Received finished operation message");

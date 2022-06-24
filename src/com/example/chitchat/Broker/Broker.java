@@ -24,7 +24,7 @@ public class  Broker{
     private final HashMap<Integer,ArrayList<Topic>> Brokers_Topics = new HashMap<>();
 
 
-    private final String read_file_path = "C:\\Users\\fotis\\IdeaProjects\\Distributed_Systems_Project\\src\\Broker\\";
+    private final String read_file_path = "C:\\Users\\fotis\\IdeaProjects\\Distributed_Systems_Project\\src\\com\\example\\chitchat\\Broker\\";
 
     //before setting thread pool sizes and assigning threads to each broker check
     //Runtime.getRuntime().availableProcessors()
