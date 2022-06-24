@@ -6,6 +6,7 @@ package com.example.chitchat.UserNode;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.view.View;
 
 import androidx.annotation.RequiresApi;
 
@@ -19,13 +20,13 @@ import java.io.*;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
 
-public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
+public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
 
     private WeakReference<Activity> weakReference;
     //default broker ip address to connect to
-    private final String default_ip_address = "192.168.1.5";
+    private String default_ip_address = "192.168.1.5";
     //port that listens to consumer services for that broker
-    private final int default_port = 1234;
+    private int default_port = 1235;
 
     private String topic_name;
     private Android_User_Node pub;
@@ -46,6 +47,13 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
         this.weakReference = weakReference;
     }
 
+    public void setDefault_ip_address(String default_ip_address) {
+        this.default_ip_address = default_ip_address;
+    }
+
+    public void setDefault_port(int default_port) {
+        this.default_port = default_port;
+    }
 
     public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, Android_User_Node pub, String contents_or_file_name) {
         this.weakReference = weakReference;
@@ -74,6 +82,8 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
         int port = new_broker.getValue2()[1];
         System.out.println("New broker port: " + port);
         NetworkingForPublisher new_connection = new NetworkingForPublisher(weakReference, topic_name, pub, contents_or_file_name);
+        new_connection.setDefault_ip_address(IP);
+        new_connection.setDefault_port(port);
         new_connection.execute(operation);
     }
 
@@ -102,47 +112,54 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-
         Activity activity = weakReference.get();
         if (activity == null || activity.isFinishing()) {
+            System.out.println("Ending async task");
             return;
         }
 
         if(activity instanceof Message_List_Activity){
-            //TODO implement progress bar for each case
+            System.out.println("Instance of message list activity");
+            Message_List_Activity message_list_activity = (Message_List_Activity) activity;
+            message_list_activity.getProgressBar().setVisibility(View.VISIBLE);
+
         }
 
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    protected Integer doInBackground(Integer... integers) {
+    protected Void doInBackground(Integer... integers) {
         Integer index;
         try {
+            System.out.println("Trying to establish connection" + default_port);
             connection = new Socket(default_ip_address, default_port);
+            System.out.println("Established connection and trying to push");
             localinputStream = new ObjectInputStream(connection.getInputStream());
             localoutputStream = new ObjectOutputStream(connection.getOutputStream());
+            System.out.println("Local ladsjflaskl;dfalkd;s");
+            this.push_type = integers[0];
+            if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
+                System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
+                cancel(true);
+            } else if (index == -1) {
+                System.out.println("Successful push");
+            } else {
+                Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                startNewConnection(brk, push_type, contents_or_file_name);
+                cancel(true);
+
+            }
         } catch (IOException e) {
             e.printStackTrace();
             cancel(true);
         }
-        if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
-            System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
-            cancel(true);
-        } else if (index == -1) {
-            System.out.println("Successful push");
-        } else {
-            Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-            startNewConnection(brk, push_type, contents_or_file_name);
-            cancel(true);
-
-        }
-        return -1;
+        return null;
     }
 
     @Override
-    protected void onPostExecute(Integer integer) {
-        super.onPostExecute(integer);
+    protected void onPostExecute(Void v) {
+        super.onPostExecute(v);
 
         Activity activity = weakReference.get();
         if (activity == null || activity.isFinishing()) {
@@ -150,6 +167,7 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
         }
         if(activity instanceof Message_List_Activity) {
             Message_List_Activity message_list_activity = (Message_List_Activity) activity;
+            message_list_activity.getProgressBar().setVisibility(View.INVISIBLE);
             //if push text message
             if (push_type == 0) {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_message());
@@ -159,11 +177,12 @@ public class NetworkingForPublisher extends AsyncTask<Integer,Void,Integer> {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_story());
             }
         }
+        shutdownConnection();
     }
 
     @Override
-    protected void onCancelled(Integer integer) {
-        super.onCancelled(integer);
+    protected void onCancelled(Void v) {
+        super.onCancelled(v);
         shutdownConnection();
     }
 

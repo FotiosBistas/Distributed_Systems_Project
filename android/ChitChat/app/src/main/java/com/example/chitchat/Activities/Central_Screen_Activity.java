@@ -58,9 +58,15 @@ public class Central_Screen_Activity extends AppCompatActivity{
         //retrieve object of user node from connect activity
         this.androidUserNode = (Android_User_Node) getIntent().getSerializableExtra("User Node");
         System.out.println(ConsoleColors.RED + androidUserNode + ConsoleColors.RESET);
-        //operations 1,2,3 are get broker list ,get  id list and send nickname
-        new NetworkingForConsumer(this, androidUserNode).execute(1,2,3);
-        setOnClickListener(); 
+        Boolean came_from_message_list = (Boolean) getIntent().getSerializableExtra("message list activity");
+        if(came_from_message_list == null){
+            //operations 1,2,3 are get broker list ,get  id list and send nickname
+            new NetworkingForConsumer(this, androidUserNode).execute(1,2,3);
+
+        }else{
+            this.topics = (ArrayList<String>) androidUserNode.getSubscribedTopics();
+        }
+        setOnClickListener();
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         topicsAdapter = new Topics_Adapter(topics, this,onUserClickListener);
         recyclerView.setAdapter(topicsAdapter);

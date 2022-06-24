@@ -16,6 +16,10 @@ public class Android_User_Node implements Serializable {
 
     private ArrayList<Value> general_message_list;
 
+    public List<String> getSubscribedTopics() {
+        return SubscribedTopics;
+    }
+
     //this message list is used when receiving conversation data
     private ArrayList<Value> temp_message_list;
 

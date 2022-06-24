@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -19,9 +20,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 
 import com.example.chitchat.R;
 import com.example.chitchat.Tools.Multimedia_File_Android;
+import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 import com.example.chitchat.UserNode.NetworkingForConsumer;
 import com.example.chitchat.UserNode.NetworkingForPublisher;
@@ -32,11 +35,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.chitchat.Adapters.Message_List_Adapter;
+import com.example.chitchat.UserNode.Pull_request;
 
 public class Message_List_Activity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private Message_List_Adapter message_list_adapter;
+    private ProgressBar progressBar;
+
+    public ProgressBar getProgressBar(){
+        return progressBar;
+    }
 
     /**
      * called at the end of async task with request type 6 to add the received elements to the recycler view
@@ -63,6 +72,7 @@ public class Message_List_Activity extends AppCompatActivity {
         send = (ImageButton) findViewById(R.id.send_button_chatroom);
         open_gallery = (ImageButton) findViewById(R.id.open_gallery_button_chatroom);
         text_message = (EditText) findViewById(R.id.enter_message_chatroom);
+        progressBar = (ProgressBar) findViewById(R.id.message_list_bar);
         messageList = new ArrayList<>();
 
 
@@ -71,11 +81,10 @@ public class Message_List_Activity extends AppCompatActivity {
             this.androidUserNode = (Android_User_Node) extras.get("User Node");
             this.topic_name = (String) extras.get("Topic Name");
         }
-        /*messageList.add(new MultimediaFile("Fotis","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\kitten.jpg"));
-        messageList.add(new MultimediaFile("Kostas Kakoutopoulos","C:\\Users\\fotis\\OneDrive\\Desktop\\sent_files\\bruno_bottoming"));*/
+
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_chatroom);
-        message_list_adapter = new Message_List_Adapter(this,messageList);
+        message_list_adapter = new Message_List_Adapter(this,messageList,this.androidUserNode);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(message_list_adapter);
 
@@ -95,12 +104,14 @@ public class Message_List_Activity extends AppCompatActivity {
                 openGallery();
             }
         });
+
+        getConversationData();
     }
 
     private void getConversationData(){
         //receive conversation data
-        new NetworkingForConsumer(this,topic_name, androidUserNode).execute(6);
-
+        NetworkingForConsumer networkingForConsumer = new NetworkingForConsumer(this,topic_name, androidUserNode);
+        networkingForConsumer.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,6);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -120,9 +131,10 @@ public class Message_List_Activity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createMessage(){
         String contents = text_message.getText().toString();
-        //message_list_adapter.addMessage(new Text_Message(GlobalVariables.getInstance().getUsername(),contents));
-        //push message = 0
-        new NetworkingForPublisher(this,topic_name, androidUserNode,contents).execute(0);
+        message_list_adapter.addMessage(new Text_Message(androidUserNode.getName(),contents));
+        //push text_message = 0
+        NetworkingForPublisher networkingForPublisher = new NetworkingForPublisher(this,topic_name, androidUserNode,contents);
+        networkingForPublisher.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,0);
         text_message.getText().clear();
     }
 
@@ -135,7 +147,7 @@ public class Message_List_Activity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_bar_choices,menu);
+        getMenuInflater().inflate(R.menu.chatroom_action_bar_menu,menu);
         return true;
     }
 
@@ -191,10 +203,14 @@ public class Message_List_Activity extends AppCompatActivity {
      */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.profile) {
-            startActivity(new Intent(Message_List_Activity.this, Profile_Activity.class));
-        }else if(item.getItemId() == R.id.add_circle){
-            createPopUpMenu();
+        if(item.getItemId() == R.id.refresh_chat) {
+            new Pull_request();
+        }else if(item.getItemId() == R.id.go_back){
+            Intent intent = new Intent(Message_List_Activity.this,Central_Screen_Activity.class);
+            intent.putExtra("User Node",androidUserNode);
+            intent.putExtra("message list activity",true);
+            startActivity(intent);
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }

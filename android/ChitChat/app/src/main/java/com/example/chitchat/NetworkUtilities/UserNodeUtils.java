@@ -528,7 +528,7 @@ public class UserNodeUtils {
             }
             System.out.println("Reading topic...");
             Topic temp;
-            if ((temp = (Topic) GeneralUtils.readObject(localinputStream, socket)) == null) {
+            if ((temp = (Topic)GeneralUtils.readObject(localinputStream, socket)) == null) {
                 return null;
             }
             System.out.println("The topic is: " + temp);

@@ -7,4 +7,14 @@ public class Pull_request extends AsyncTask<Void,Void,Void> {
     protected Void doInBackground(Void... voids) {
         return null;
     }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    @Override
+    protected void onPostExecute(Void unused) {
+        super.onPostExecute(unused);
+    }
 }
