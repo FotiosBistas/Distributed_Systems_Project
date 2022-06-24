@@ -131,7 +131,6 @@ public class Message_List_Activity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createMessage(){
         String contents = text_message.getText().toString();
-        message_list_adapter.addMessage(new Text_Message(androidUserNode.getName(),contents));
         //push text_message = 0
         NetworkingForPublisher networkingForPublisher = new NetworkingForPublisher(this,topic_name, androidUserNode,contents);
         networkingForPublisher.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,0);
@@ -169,32 +168,6 @@ public class Message_List_Activity extends AppCompatActivity {
         super.onActivityResult(requestCode, result, data);
     }
 
-    /**
-     * Creates the pop up menu when the plus icon is pressed on the action bar
-     */
-    public void createPopUpMenu(){
-        View menu_item_view = (View) findViewById(R.id.add_circle);
-        PopupMenu popup = new PopupMenu(Message_List_Activity.this,menu_item_view);
-        popup.getMenuInflater().inflate(R.menu.action_bar_popup_menu, popup.getMenu());
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if(item.getItemId() == R.id.action_bar_menu_subscribe_to_topic){
-                    //give the topic name you want to subscribe to
-                    return true;
-                }else if(item.getItemId() == R.id.action_bar_menu_logout){
-                    //go back to connect screen if log out is pressed
-                    Intent intent = new Intent(Message_List_Activity.this,Connect_Activity.class);
-                    startActivity(intent);
-                    finish();
-                    return true;
-                }
-                return false;
-            }
-        });
-        popup.show();
-    }
-
 
     /**
      * The main toolbar menu displayed for the app
@@ -204,7 +177,7 @@ public class Message_List_Activity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.refresh_chat) {
-            new Pull_request();
+            new Pull_request().execute();
         }else if(item.getItemId() == R.id.go_back){
             Intent intent = new Intent(Message_List_Activity.this,Central_Screen_Activity.class);
             intent.putExtra("User Node",androidUserNode);

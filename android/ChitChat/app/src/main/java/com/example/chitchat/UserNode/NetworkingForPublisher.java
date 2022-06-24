@@ -6,6 +6,7 @@ package com.example.chitchat.UserNode;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
@@ -69,6 +70,53 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
         this.contents_or_file_name = contents_or_file_name;
     }
 
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        Activity activity = weakReference.get();
+        if (activity == null || activity.isFinishing()) {
+            System.out.println("Ending async task");
+            return;
+        }
+
+        if(activity instanceof Message_List_Activity){
+            System.out.println("Instance of message list activity");
+            Message_List_Activity message_list_activity = (Message_List_Activity) activity;
+            message_list_activity.getProgressBar().setVisibility(View.VISIBLE);
+
+        }
+        Log.e("NetworkingForPublisher","onPreExecute");
+
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected Void doInBackground(Integer... integers) {
+        Integer index;
+        try {
+            Log.v("NetworkingForPublisher","doInBackground");
+            connection = new Socket(default_ip_address,default_port);
+            localoutputStream = new ObjectOutputStream(connection.getOutputStream());
+            localinputStream = new ObjectInputStream(connection.getInputStream());
+            this.push_type = integers[0];
+            if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
+                System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
+                cancel(true);
+            } else if (index == -1) {
+                System.out.println("Successful push");
+            } else {
+                Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                startNewConnection(brk, push_type, contents_or_file_name);
+                cancel(true);
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            cancel(true);
+        }
+        return null;
+    }
 
     /**
      * initiates new async task meaning a new connection with the broker that is responsible for the topic name
@@ -109,58 +157,12 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
         }
     }
 
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        Activity activity = weakReference.get();
-        if (activity == null || activity.isFinishing()) {
-            System.out.println("Ending async task");
-            return;
-        }
 
-        if(activity instanceof Message_List_Activity){
-            System.out.println("Instance of message list activity");
-            Message_List_Activity message_list_activity = (Message_List_Activity) activity;
-            message_list_activity.getProgressBar().setVisibility(View.VISIBLE);
-
-        }
-
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected Void doInBackground(Integer... integers) {
-        Integer index;
-        try {
-            System.out.println("Trying to establish connection" + default_port);
-            connection = new Socket(default_ip_address, default_port);
-            System.out.println("Established connection and trying to push");
-            localinputStream = new ObjectInputStream(connection.getInputStream());
-            localoutputStream = new ObjectOutputStream(connection.getOutputStream());
-            System.out.println("Local ladsjflaskl;dfalkd;s");
-            this.push_type = integers[0];
-            if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
-                System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
-                cancel(true);
-            } else if (index == -1) {
-                System.out.println("Successful push");
-            } else {
-                Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                startNewConnection(brk, push_type, contents_or_file_name);
-                cancel(true);
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            cancel(true);
-        }
-        return null;
-    }
 
     @Override
     protected void onPostExecute(Void v) {
         super.onPostExecute(v);
-
+        Log.v("NetworkingForConsumer","onPostExecute");
         Activity activity = weakReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
