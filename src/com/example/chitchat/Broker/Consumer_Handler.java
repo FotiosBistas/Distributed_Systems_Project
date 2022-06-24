@@ -55,7 +55,7 @@ public class Consumer_Handler implements Runnable {
 
 
     /**
-     * Receives the messages that have to do with the consumer services from the Messages ENUMERATOR and
+     * Receives tthe messages that have to do with the consumer services from the Messages ENUMERATOR and
      * serves each request appropriately.
      */
     @Override
