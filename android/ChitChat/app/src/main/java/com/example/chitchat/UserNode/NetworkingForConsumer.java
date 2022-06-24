@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.ref.WeakReference;
+import java.net.ConnectException;
 import java.net.Socket;
 
 public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
@@ -30,7 +31,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     private final int default_port = 1234;
 
     private String topic_name;
-    private UserNode cons;
+    private Android_User_Node cons;
 
     private Socket request_socket;
     private ObjectInputStream localinputStream;
@@ -38,19 +39,19 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
     private int request_type;
 
-    public NetworkingForConsumer(Activity activity,UserNode cons){
+    public NetworkingForConsumer(Activity activity, Android_User_Node cons){
         this.weakReference = new WeakReference<>(activity);
         this.cons = cons;
     }
 
     //Copy Constructor
-    public NetworkingForConsumer(WeakReference<Activity> weakReference,String topic_name,UserNode cons){
+    public NetworkingForConsumer(WeakReference<Activity> weakReference, String topic_name, Android_User_Node cons){
         this.weakReference = weakReference;
         this.topic_name = topic_name;
         this.cons = cons;
     }
 
-    public NetworkingForConsumer(Activity activity,String topic_name,UserNode cons){
+    public NetworkingForConsumer(Activity activity, String topic_name, Android_User_Node cons){
         this.weakReference = new WeakReference<>(activity);
         this.topic_name = topic_name;
         this.cons = cons;
@@ -222,6 +223,9 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                         continue;
                 }
             }
+        }catch (ConnectException connectException){
+            cancel(true);
+            connectException.printStackTrace();
         } catch (IOException e) {
             cancel(true);
             e.printStackTrace();
@@ -267,6 +271,13 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                 Toast.makeText(activity, "Subscribed to topic: " + topic_name + " successfully", Toast.LENGTH_SHORT).show();
                 central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
                 central_screen_activity.getTopicsAdapter().addTopic(topic_name);
+            }
+        }else if(request_type == 5){
+            if(activity instanceof Central_Screen_Activity) {
+                Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
+                Toast.makeText(activity, "Unsubscribed from topic: " + topic_name + " successfully", Toast.LENGTH_SHORT).show();
+                central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
+                central_screen_activity.getTopicsAdapter().removeTopic(topic_name);
             }
         }else if(request_type == 6){
             if(activity instanceof Message_List_Activity){

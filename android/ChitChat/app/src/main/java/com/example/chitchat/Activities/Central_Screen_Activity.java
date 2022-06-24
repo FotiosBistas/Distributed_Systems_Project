@@ -19,18 +19,20 @@ import android.widget.ProgressBar;
 
 import com.example.chitchat.R;
 import com.example.chitchat.UserNode.NetworkingForConsumer;
-import com.example.chitchat.UserNode.UserNode;
+import com.example.chitchat.UserNode.Android_User_Node;
 
 import java.util.ArrayList;
 
 import com.example.chitchat.Adapters.Topics_Adapter;
+
+import Logging.ConsoleColors;
 
 public class Central_Screen_Activity extends AppCompatActivity{
     private RecyclerView recyclerView;
     private ArrayList<String> topics = new ArrayList<>();
 
     private ProgressBar progressBar;
-    private UserNode userNode;
+    private Android_User_Node androidUserNode;
     private Topics_Adapter topicsAdapter;
     private Topics_Adapter.onUserClickListener onUserClickListener;
 
@@ -39,8 +41,8 @@ public class Central_Screen_Activity extends AppCompatActivity{
         return progressBar;
     }
 
-    public UserNode getUserNode() {
-        return userNode;
+    public Android_User_Node getUserNode() {
+        return androidUserNode;
     }
 
     public Topics_Adapter getTopicsAdapter() {
@@ -54,9 +56,10 @@ public class Central_Screen_Activity extends AppCompatActivity{
 
         progressBar = (ProgressBar) this.findViewById(R.id.indeterminateBar);
         //retrieve object of user node from connect activity
-        this.userNode = (UserNode) getIntent().getSerializableExtra("User Node");
+        this.androidUserNode = (Android_User_Node) getIntent().getSerializableExtra("User Node");
+        System.out.println(ConsoleColors.RED + androidUserNode + ConsoleColors.RESET);
         //operations 1,2,3 are get broker list ,get  id list and send nickname
-        new NetworkingForConsumer(this,userNode).execute(1,2,3);
+        new NetworkingForConsumer(this, androidUserNode).execute(1,2,3);
         setOnClickListener(); 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         topicsAdapter = new Topics_Adapter(topics, this,onUserClickListener);
@@ -69,7 +72,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
             @Override
             public void onUserClicked(View v, int position) {
                 Intent intent = new Intent(getApplicationContext(),Message_List_Activity.class);
-                intent.putExtra("User Node",userNode);
+                intent.putExtra("User Node", androidUserNode);
                 intent.putExtra("Topic Name",topicsAdapter.getTopics().get(position));
                 startActivity(intent);
                 finish();
@@ -105,7 +108,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
                     alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             new NetworkingForConsumer(Central_Screen_Activity.this,topic_name.getText().toString(),
-                                    userNode).execute(4);
+                                    androidUserNode).execute(4);
 
                         }
                     });
@@ -132,7 +135,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
                     alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             new NetworkingForConsumer(Central_Screen_Activity.this,topic_name.getText().toString(),
-                                    userNode).execute(5);
+                                    androidUserNode).execute(5);
 
                         }
                     });

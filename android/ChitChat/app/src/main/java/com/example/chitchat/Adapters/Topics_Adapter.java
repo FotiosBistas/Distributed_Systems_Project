@@ -57,6 +57,12 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
         notifyItemInserted(topics.size() - 1);
     }
 
+    public void removeTopic(String topic_name){
+        int position = topics.indexOf(topic_name);
+        topics.remove(topic_name);
+        notifyItemRemoved(position);
+    }
+
     protected class TopicHolder extends RecyclerView.ViewHolder{
         TextView textView;
         ImageView imageView;
