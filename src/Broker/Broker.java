@@ -2,9 +2,8 @@
 package Broker;
 
 import Logging.ConsoleColors;
-import Tools.*;
-import UserNode.UserNode;
 import SHA1.SHA1;
+import Tools.*;
 
 
 import java.io.*;
@@ -108,7 +107,7 @@ public class  Broker{
      * @param val Accepts the value class type (story,multimediafile,text_message).
      * @param topic_name Accepts the topic.
      */
-    public void addToMessageQueue(Value val,String topic_name) {
+    public void addToMessageQueue(Value val, String topic_name) {
         if (val instanceof Story) {
             System.out.println(ConsoleColors.PURPLE + "Trying to insert story: " + val + " into the message list of the topic: " + topic_name);
             Topic temp = null;

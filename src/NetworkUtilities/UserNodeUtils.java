@@ -2,12 +2,14 @@ package NetworkUtilities;
 
 import Logging.ConsoleColors;
 import Tools.*;
-import UserNode.*;
+import UserNode.UserNode;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
+
 
 public class UserNodeUtils {
 

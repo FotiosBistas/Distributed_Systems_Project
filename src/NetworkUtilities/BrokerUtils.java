@@ -4,9 +4,7 @@ package NetworkUtilities;
 import Broker.Broker;
 import Logging.ConsoleColors;
 import Tools.*;
-import UserNode.Android_User_Node;
 import SHA1.SHA1;
-
 
 import java.io.*;
 import java.net.Socket;
@@ -311,8 +309,13 @@ public class BrokerUtils {
             return null;
         }
         if(correct) {
-            Android_User_Node new_cons;
+            //TODO changed to fit android implementation
+            /*Android_User_Node new_cons;
             if((new_cons = (Android_User_Node) GeneralUtils.readObject(localinputStream,socket)) == null){
+                return null;
+            }*/
+            String consumer_name;
+            if ((consumer_name = GeneralUtils.readUTFString(localinputStream,socket)) == null) {
                 return null;
             }
             System.out.println("\033[0;32m" + "Topic name: " + topic_name + "\033[0m");
@@ -329,8 +332,7 @@ public class BrokerUtils {
                 }
                 return null;
             }
-            System.out.println("\033[0;32m" + "Unsubscribing user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " from topic: " + topic_name + "\033[0m");
-            broker.UnsubscribeFromTopic(topic, new_cons.getName());
+            broker.UnsubscribeFromTopic(topic, consumer_name);
         }else{
             System.out.println("\033[0;31m" + "This is not the correct broker for the topic" + "\033[0m");
             return null;
@@ -357,8 +359,15 @@ public class BrokerUtils {
             return null;
         }
         if(correct) {
+            //TODO changing user node message to string message
+            /*
             Android_User_Node new_cons;
             if ((new_cons = (Android_User_Node) GeneralUtils.readObject(localinputStream, socket)) == null) {
+                return null;
+            }
+            */
+            String consumer_name;
+            if ((consumer_name = GeneralUtils.readUTFString(localinputStream,socket)) == null) {
                 return null;
             }
             System.out.println("Topic name: " + topic_name);
@@ -374,14 +383,13 @@ public class BrokerUtils {
                     return null;
                 }
                 System.out.println("Creating new topic");
-                broker.createTopic(topic_name,new_cons.getName());
+                broker.createTopic(topic_name,consumer_name);
                 return null;
             }
             if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                 return null;
             }
-            System.out.println("Registering user with IP: " + new_cons.getIp() + " and port: " + new_cons.getPort() + " to topic: " + topic_name);
-            broker.addConsumerToTopic(topic, new_cons.getName());
+            broker.addConsumerToTopic(topic, consumer_name);
         }else{
             System.out.println("\033[0;31m" + "This is not the correct broker for the topic" + "\033[0m");
             return null;
