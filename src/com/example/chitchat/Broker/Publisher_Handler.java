@@ -4,7 +4,7 @@ package com.example.chitchat.Broker;
 
 
 
-import NetworkUtilities.GeneralUtils;
+import com.example.chitchat.NetworkUtilities.GeneralUtils;
 import com.example.chitchat.Logging.ConsoleColors;
 import com.example.chitchat.NetworkUtilities.BrokerUtils;
 import com.example.chitchat.Tools.Messages;
@@ -30,8 +30,8 @@ public class Publisher_Handler implements Runnable{
         this.publisher_connection = publisher_connection;
         this.broker = broker;
         try {
-            localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
             localoutputStream = new ObjectOutputStream(publisher_connection.getOutputStream());
+            localinputStream = new ObjectInputStream(publisher_connection.getInputStream());
         }catch (SocketException socketException) {
             System.out.println("\033[0;31m" + "Socket error" + "\033[0m");
             shutdownConnection();
