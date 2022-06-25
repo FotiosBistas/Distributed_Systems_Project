@@ -204,15 +204,9 @@ public class Multimedia_File_Android extends Value{
         double ceil = (double)(size)/(double)chunk_size;
         int max_seq = (int) Math.ceil(ceil);
         while((bytesAmount = byteArrayInputStream.read(buffer,0,chunk_size)) > 0){
-            if(counter != max_seq) {
                 Chunk chunk = new Chunk(counter++,chunk_size, max_seq,buffer.clone());
                 chunks.add(chunk);
-            }else{
-                //the last chunk might not be equal to 512KB so we must calculate its actual size
-                int actual_size = (int) (chunk_size - ((long) chunk_size * max_seq - size) + 1);
-                Chunk chunk = new Chunk(counter++, actual_size - 1,max_seq,buffer.clone());
-                chunks.add(chunk);
-            }
+
         }
 
         System.out.println("Created: " + counter + " chunks");

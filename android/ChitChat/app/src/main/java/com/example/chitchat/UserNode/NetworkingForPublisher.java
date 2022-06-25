@@ -141,6 +141,11 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
 
                 }
             }
+            while(true){
+                if(localinputStream.read() == -1){
+                    break;
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
             cancel(true);
@@ -214,7 +219,8 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_story());
             }
         }
-        shutdownConnection();
+
+    shutdownConnection();
     }
 
     @Override
