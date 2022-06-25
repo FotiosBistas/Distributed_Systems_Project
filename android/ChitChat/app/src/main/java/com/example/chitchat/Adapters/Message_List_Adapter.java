@@ -19,6 +19,7 @@ import com.example.chitchat.Tools.MultimediaFile;
 import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
+import com.example.chitchat.UserNode.Android_User_Node;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -40,11 +41,12 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
 
     private Context context;
     private List<Value> message_list;
+    private Android_User_Node androidUserNode;
 
-
-    public Message_List_Adapter(Context context, List<Value> message_list){
+    public Message_List_Adapter(Context context, List<Value> message_list,Android_User_Node androidUserNode){
         this.context = context;
         this.message_list = message_list;
+        this.androidUserNode = androidUserNode;
     }
     @NonNull
     @Override
@@ -145,7 +147,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public int getItemViewType(int position) {
         Value value = (Value) message_list.get(position);
-        String current_username = "hi";
+        String current_username = androidUserNode.getName();
         //check if the publisher name is the same as the current user running the app.
         if(value.getPublisher().equals(current_username)){
             if(value instanceof Text_Message){

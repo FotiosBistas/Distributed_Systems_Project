@@ -177,7 +177,7 @@ public class Message_List_Activity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.refresh_chat) {
-            new Pull_request().execute();
+            new Pull_request(Message_List_Activity.this,this.topic_name,this.androidUserNode).execute();
         }else if(item.getItemId() == R.id.go_back){
             Intent intent = new Intent(Message_List_Activity.this,Central_Screen_Activity.class);
             intent.putExtra("User Node",androidUserNode);

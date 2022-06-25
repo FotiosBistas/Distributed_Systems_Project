@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 public class UserNodeUtils {
 
@@ -119,7 +120,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
      * @param topic_name        Accepts the topic name that the user wants to subscribe to.
-     * @param cons              Accepts a consumer(Android_User_Node instance).
+     * @param cons              Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
     public static Integer register(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
@@ -170,7 +171,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
      * @param topic_name        Accepts the topic name that the user wants to subscribe to.
-     * @param cons              Accepts a consumer(Android_User_Node instance).
+     * @param cons              Accepts a consumer(UserNode instance).
      * @return Returns -1 if everything goes well. If the broker is not the right broker it returns the index in the consumer broker list. If an error occurs it returns null.
      */
     public static Integer unsubscribe(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node cons) {
@@ -219,7 +220,7 @@ public class UserNodeUtils {
      * @param localinputStream  Accepts the local input stream.
      * @param localoutputStream Accepts the local output stream.
      * @param socket            Accepts the local socket.
-     * @param cons              Accepts a consumer instance(Android_User_Node object)
+     * @param cons              Accepts a consumer instance(UserNode object)
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
     public static Integer receiveBrokerList(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, Android_User_Node cons) {
@@ -528,7 +529,7 @@ public class UserNodeUtils {
             }
             System.out.println("Reading topic...");
             Topic temp;
-            if ((temp = (Topic) GeneralUtils.readObject(localinputStream, socket)) == null) {
+            if ((temp = (Topic)GeneralUtils.readObject(localinputStream, socket)) == null) {
                 return null;
             }
             System.out.println("The topic is: " + temp);
@@ -752,6 +753,22 @@ public class UserNodeUtils {
                     androidUserNode.addNewStory(topic, story);
                 }
             }
+            ArrayList<Value> temp = new ArrayList<>();
+            ArrayList<Text_Message> text_messages = androidUserNode.getMessage_list().get(topic);
+            if(text_messages != null){
+                temp.addAll(text_messages);
+            }
+            ArrayList<MultimediaFile> files =  androidUserNode.getFile_list().get(topic);
+            if(files != null){
+                temp.addAll(files);
+            }
+            ArrayList<Story> stories = androidUserNode.getStory_list().get(topic);
+            if(stories != null){
+                temp.addAll(stories);
+            }
+            Collections.sort(temp,new SortMessages());
+            androidUserNode.setTemp_message_list(temp);
+
             return -1; //return -1 if the method worked successfully
             // if the broker is not correct we establish a connection with the new broker
         } else if (message_broker == Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal()) {

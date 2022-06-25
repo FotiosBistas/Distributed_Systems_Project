@@ -122,6 +122,7 @@ public class GeneralUtils {
             System.out.println( ConsoleColors.RED + "Socket error in read object..." + ConsoleColors.RESET);
             return null;
         } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
             System.out.println( ConsoleColors.RED + "Error in read object..." + ConsoleColors.RESET);
             return null;
         }
