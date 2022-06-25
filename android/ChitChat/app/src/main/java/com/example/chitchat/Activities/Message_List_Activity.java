@@ -150,19 +150,18 @@ public class Message_List_Activity extends AppCompatActivity {
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onActivityResult(int requestCode, int result,Intent data) {
         if(result == RESULT_OK){
             Uri selectedMediaUri = data.getData();
             if(selectedMediaUri.toString().contains("image")) {
-                try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedMediaUri);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
+                        Message_List_Activity.this,"image");
+                this.getMessage_list_adapter().addMessage(multimedia_file_android);
             }else if(selectedMediaUri.toString().contains("video")){
-
+                Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
+                        Message_List_Activity.this,"video");
             }
         }
         super.onActivityResult(requestCode, result, data);
