@@ -1,18 +1,26 @@
 package com.example.chitchat.Tools;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -91,6 +99,7 @@ public class Multimedia_File_Android extends Value{
         this.identifier = hashCode();
     }
 
+    //copy constructor
     @RequiresApi(api = Build.VERSION_CODES.O)
     public Multimedia_File_Android(String publisher, String date_created, String file_name, String actual_date_created, long size, ArrayList<Chunk> chunks){
         super(publisher,date_created);
@@ -99,6 +108,46 @@ public class Multimedia_File_Android extends Value{
         this.size = size;
         this.chunks = chunks;
         this.identifier =  this.hashCode();
+    }
+
+    @SuppressLint("Range")
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public Multimedia_File_Android(String publisher, Uri selected_media_uri, Context context, String image_or_video){
+        super(publisher);
+        if(selected_media_uri.getScheme().equals("content")) {
+            Cursor cursor = context.getContentResolver().query(selected_media_uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    this.file_name = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    this.size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                }
+            }finally {
+                assert cursor != null;
+                cursor.close();
+            }
+        }
+        if(image_or_video.equals("image")) {
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), selected_media_uri);
+
+
+                int size = bitmap.getRowBytes() * bitmap.getHeight();
+
+                ByteBuffer byteBuffer = ByteBuffer.allocate(size);
+                bitmap.copyPixelsToBuffer(byteBuffer);
+                byte[] buffer = byteBuffer.array();
+                createChunks(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else {
+            String data = MediaStore.Video.Media.DATA;
+            System.out.println(data);
+        }
+
+
+        this.identifier = hashCode();
+
     }
 
     /**
@@ -116,6 +165,28 @@ public class Multimedia_File_Android extends Value{
     private boolean isExternalStorageReadable(){
         return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||
                 Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY);
+    }
+
+    private void createChunks(byte[] array){
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(array);
+        int bytesAmount = 0;
+        byte[] buffer = new byte[chunk_size];
+        int counter = 1;
+        //calculates the maximum number of chunks for the specific files
+        double ceil = (double)(size)/(double)chunk_size;
+        int max_seq = (int) Math.ceil(ceil);
+        while((bytesAmount = byteArrayInputStream.read(buffer,0,chunk_size)) > 0){
+            if(counter != max_seq) {
+                Chunk chunk = new Chunk(counter++,chunk_size, max_seq,buffer.clone());
+                chunks.add(chunk);
+            }else{
+                //the last chunk might not be equal to 512KB so we must calculate its actual size
+                int actual_size = (int) (chunk_size - ((long) chunk_size * max_seq - size) + 1);
+                Chunk chunk = new Chunk(counter++, actual_size,max_seq,buffer.clone());
+                chunks.add(chunk);
+            }
+        }
+        System.out.println("Created: " + counter + " chunks");
     }
 
    private void createChunks(File file){

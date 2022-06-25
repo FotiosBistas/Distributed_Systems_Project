@@ -3,6 +3,7 @@ package com.example.chitchat.UserNode;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -26,12 +27,14 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
     private WeakReference<Activity> weakReference;
     //default broker ip address to connect to
-    private final String default_ip_address = "192.168.1.5";
+    private String default_ip_address = "192.168.1.5";
     //port that listens to consumer services for that broker
-    private final int default_port = 1234;
+    private int default_port = 1234;
 
     private String topic_name;
     private Android_User_Node cons;
+    private boolean start_new_connection;
+
 
     private Socket request_socket;
     private ObjectInputStream localinputStream;
@@ -57,6 +60,14 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         this.cons = cons;
     }
 
+    public void setDefault_ip_address(String default_ip_address) {
+        this.default_ip_address = default_ip_address;
+    }
+
+    public void setDefault_port(int default_port) {
+        this.default_port = default_port;
+    }
+
     /**
      * we need a weak reference because the Networking For consumer class will be called from multiple activities
      * @param weakReference The activity that has initiated the async task
@@ -68,6 +79,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+
+
         Activity activity = weakReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
@@ -76,6 +89,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
             Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
             central_screen_activity.getProgressBar().setVisibility(View.VISIBLE);
         }
+        Log.e("NetworkingForConsumer","onPreExecute");
     }
 
 
@@ -94,6 +108,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
             localoutputStream = new ObjectOutputStream(request_socket.getOutputStream());
             this.request_type = integers[0];
             for (int i = 0; i < integers.length ; i++){
+                Log.v("NetworkingForConsumer","doInBackground");
                 if(isCancelled()){
                     break;
                 }
@@ -172,6 +187,11 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
                                 }
                             }
+                        }else{
+                            Tuple<String, int[]> brk = cons.getBrokerList().get(index);
+                            startNewConnection(brk,operation);
+                            cancel(true);
+                            continue;
                         }
                         break;
                     case 5:
@@ -246,6 +266,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         int port = new_broker.getValue2()[0];
         System.out.println("New broker port: " + port);
         NetworkingForConsumer new_connection = new NetworkingForConsumer(weakReference,topic_name,cons);
+        new_connection.setDefault_ip_address(IP);
+        new_connection.setDefault_port(port);
         new_connection.execute(i);
     }
 
@@ -253,7 +275,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     @Override
     protected void onPostExecute(Integer integer) {
         super.onPostExecute(integer);
-
+        Log.v("NetworkingForConsumer","onPostExecute");
         Activity activity = weakReference.get();
         if (activity == null || activity.isFinishing()) {
             return;
@@ -285,6 +307,7 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                 message_list_activity.getMessage_list_adapter().addMessages(cons.getTemp_message_list());
             }
         }
+        shutdownConnection();
     }
 
     /**
@@ -294,10 +317,12 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     @Override
     protected void onCancelled(Integer integer) {
         super.onCancelled(integer);
+        System.out.println("SHutting down connection due to error");
         shutdownConnection();
     }
 
     private void shutdownConnection(){
+        System.out.println("Shutting down connection");
         try{
             if(request_socket != null){
                 request_socket.close();

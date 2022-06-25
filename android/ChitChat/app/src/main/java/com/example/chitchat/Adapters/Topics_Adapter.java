@@ -53,14 +53,17 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
     }
 
     public void addTopic(String topic_name){
-        topics.add(topic_name);
-        notifyItemInserted(topics.size() - 1);
+        if(!topics.contains(topic_name)) {
+            topics.add(topic_name);
+            notifyItemInserted(topics.size() - 1);
+        }
     }
 
     public void removeTopic(String topic_name){
-        int position = topics.indexOf(topic_name);
-        topics.remove(topic_name);
-        notifyItemRemoved(position);
+            int position = topics.indexOf(topic_name);
+            topics.remove(topic_name);
+            notifyItemRemoved(position);
+
     }
 
     protected class TopicHolder extends RecyclerView.ViewHolder{
@@ -72,7 +75,6 @@ public class Topics_Adapter extends RecyclerView.Adapter<Topics_Adapter.TopicHol
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //TODO this will open the chatroom for the specific topic
                     onUserClickListener.onUserClicked(v,getAdapterPosition());
                 }
             });

@@ -16,9 +16,14 @@ public class Android_User_Node implements Serializable {
 
     private ArrayList<Value> general_message_list;
 
+    public List<String> getSubscribedTopics() {
+        return SubscribedTopics;
+    }
+
     //this message list is used when receiving conversation data
     private ArrayList<Value> temp_message_list;
 
+    //used when user adds its own files and messages
     private Text_Message temp_message;
     private Multimedia_File_Android temp_multimedia_file_android;
     private Story temp_story;
@@ -62,10 +67,34 @@ public class Android_User_Node implements Serializable {
     //Broker list should be sorted by ids of brokers
     private List<Tuple<String,int[]>> BrokerList = new ArrayList<>();
     private List<Integer> BrokerIds = new ArrayList<>();
+
+
     private final HashMap<String, ArrayList<MultimediaFile>> file_list = new HashMap<>();
     private final HashMap<String,ArrayList<Text_Message>> message_list = new HashMap<>();
     private final HashMap<String, ArrayList<Story>> story_list = new HashMap<>();
+
+    //added to temp message list when pulling so user can see the new messages
+    public HashMap<String, ArrayList<MultimediaFile>> getFile_list() {
+        return file_list;
+    }
+
+    public HashMap<String, ArrayList<Text_Message>> getMessage_list() {
+        return message_list;
+    }
+
+    public HashMap<String, ArrayList<Story>> getStory_list() {
+        return story_list;
+    }
+
     private final List<String> SubscribedTopics = new ArrayList<>();
+
+    //used when reconnecting to the network broker
+    //gets all the topics that the user is subscribed to
+    public void addNewTopic(String topic_name){
+        if(!SubscribedTopics.contains(topic_name)){
+            SubscribedTopics.add(topic_name);
+        }
+    }
 
     public Android_User_Node(String ip, int port, String name){
         this.ip = ip;
@@ -171,7 +200,7 @@ public class Android_User_Node implements Serializable {
 
     @Override
     public String toString() {
-        return "Android_User_Node{" +
+        return "UserNode{" +
                 "ip='" + ip + '\'' +
                 ", port=" + port +
                 ", name='" + name + '\'' +

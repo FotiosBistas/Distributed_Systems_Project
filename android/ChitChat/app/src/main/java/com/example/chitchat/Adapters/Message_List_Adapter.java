@@ -3,6 +3,7 @@ package com.example.chitchat.Adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chitchat.R;
@@ -19,12 +21,15 @@ import com.example.chitchat.Tools.MultimediaFile;
 import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
+import com.example.chitchat.UserNode.Android_User_Node;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -40,11 +45,12 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
 
     private Context context;
     private List<Value> message_list;
+    private Android_User_Node androidUserNode;
 
-
-    public Message_List_Adapter(Context context, List<Value> message_list){
+    public Message_List_Adapter(Context context, List<Value> message_list,Android_User_Node androidUserNode){
         this.context = context;
         this.message_list = message_list;
+        this.androidUserNode = androidUserNode;
     }
     @NonNull
     @Override
@@ -79,9 +85,10 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
 
     public void addMessages(ArrayList<Value> message_list){
         this.message_list = message_list;
-        notifyDataSetChanged();
+        notifyItemRangeInserted(this.message_list.size() - 1, message_list.size());
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Value message = (Value) message_list.get(position);
@@ -120,32 +127,24 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         //get the maximum number of chunks for the specific multimedia file
         int max_sequence = message.getChunks().get(0).getMax_sequence_number();
         int chunk_size = message.getChunks().get(0).getChunk_size();
-        byte[] file = new byte[max_sequence * chunk_size];
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         for(int i = 0; i< message.getChunks().size();i++){
             //add the specific chunk to the file byte array
             byte[] chunk = message.getChunks().get(i).getChunk();
-            for(int j = 0; j < chunk.length; j++){
-                file[j] = chunk[j];
+            try {
+                byteArrayOutputStream.write(chunk);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-        try {
-            FileOutputStream fileOutputStream = new FileOutputStream("/storage/emulated/0/sent_files/hey_there.jpg");
-            fileOutputStream.write(file);
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println(Arrays.toString(file));
-        return file;
+        return byteArrayOutputStream.toByteArray();
     }
 
     @Override
     public int getItemViewType(int position) {
         Value value = (Value) message_list.get(position);
-        String current_username = "hi";
+        String current_username = androidUserNode.getName();
         //check if the publisher name is the same as the current user running the app.
         if(value.getPublisher().equals(current_username)){
             if(value instanceof Text_Message){
@@ -226,6 +225,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             name_of_sender = itemView.findViewById(R.id.received_image_message_sender);
             image_received = (ImageView) itemView.findViewById(R.id.received_image_message_contents);
         }
+        @RequiresApi(api = Build.VERSION_CODES.O)
         void bind(Multimedia_File_Android message){
 
             //create bitmap through the multimedia file's byte array.
@@ -251,7 +251,9 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         void bind(Multimedia_File_Android message){
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
+            System.out.println(file);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
+            System.out.println(bmp);
             image_sent.setImageBitmap(Bitmap.createScaledBitmap(bmp,image_sent.getWidth(),image_sent.getHeight(),false));
             date_sent.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);

@@ -9,6 +9,7 @@ import android.view.WindowManager;
 
 import com.example.chitchat.Activities.Central_Screen_Activity;
 import com.example.chitchat.Activities.Connect_Activity;
+import com.example.chitchat.Activities.Message_List_Activity;
 
 public class Splash_Screen extends AppCompatActivity {
 
