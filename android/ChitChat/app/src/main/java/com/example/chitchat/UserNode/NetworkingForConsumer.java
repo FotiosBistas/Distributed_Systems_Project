@@ -33,8 +33,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
 
     private String topic_name;
     private Android_User_Node cons;
-    private boolean start_new_connection;
-
+    private boolean start_new_connection = false;
+    private Tuple<String,int[]> new_broker;
 
     private Socket request_socket;
     private ObjectInputStream localinputStream;
@@ -189,7 +189,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                             }
                         }else{
                             Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                            startNewConnection(brk,operation);
+                            this.new_broker = brk;
+                            this.start_new_connection = true;
                             cancel(true);
                             continue;
                         }
@@ -217,7 +218,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                             break;
                         }else{
                             Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                            startNewConnection(brk,operation);
+                            this.new_broker = brk;
+                            this.start_new_connection = true;
                             cancel(true);
                             continue;
                         }
@@ -233,7 +235,8 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
                             break;
                         }else{
                             Tuple<String, int[]> brk = cons.getBrokerList().get(index);
-                            startNewConnection(brk,operation);
+                            this.new_broker = brk;
+                            this.start_new_connection = true;
                             cancel(true);
                             continue;
                         }
@@ -280,33 +283,33 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
         if (activity == null || activity.isFinishing()) {
             return;
         }
-
         if (request_type == 1 || request_type == 2 || request_type == 3) {
-            if(activity instanceof Central_Screen_Activity) {
+            if (activity instanceof Central_Screen_Activity) {
                 Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
                 Toast.makeText(activity, "Received broker and id list successfully", Toast.LENGTH_SHORT).show();
                 central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
             }
-        }else if(request_type == 4){
-            if(activity instanceof Central_Screen_Activity) {
+        } else if (request_type == 4) {
+            if (activity instanceof Central_Screen_Activity) {
                 Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
                 Toast.makeText(activity, "Subscribed to topic: " + topic_name + " successfully", Toast.LENGTH_SHORT).show();
                 central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
                 central_screen_activity.getTopicsAdapter().addTopic(topic_name);
             }
-        }else if(request_type == 5){
-            if(activity instanceof Central_Screen_Activity) {
+        } else if (request_type == 5) {
+            if (activity instanceof Central_Screen_Activity) {
                 Central_Screen_Activity central_screen_activity = (Central_Screen_Activity) activity;
                 Toast.makeText(activity, "Unsubscribed from topic: " + topic_name + " successfully", Toast.LENGTH_SHORT).show();
                 central_screen_activity.getProgressBar().setVisibility(View.INVISIBLE);
                 central_screen_activity.getTopicsAdapter().removeTopic(topic_name);
             }
-        }else if(request_type == 6){
-            if(activity instanceof Message_List_Activity){
+        } else if (request_type == 6) {
+            if (activity instanceof Message_List_Activity) {
                 Message_List_Activity message_list_activity = (Message_List_Activity) activity;
                 message_list_activity.getMessage_list_adapter().addMessages(cons.getTemp_message_list());
             }
         }
+
         shutdownConnection();
     }
 
@@ -317,7 +320,10 @@ public class NetworkingForConsumer extends AsyncTask<Integer,Void,Integer>{
     @Override
     protected void onCancelled(Integer integer) {
         super.onCancelled(integer);
-        System.out.println("SHutting down connection due to error");
+        if(start_new_connection){
+            System.out.println("Starting new connection");
+            startNewConnection(new_broker,request_type);
+        }
         shutdownConnection();
     }
 

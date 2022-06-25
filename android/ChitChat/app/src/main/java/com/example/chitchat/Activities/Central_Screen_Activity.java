@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 
+import com.example.chitchat.DataContainer;
 import com.example.chitchat.R;
 import com.example.chitchat.UserNode.NetworkingForConsumer;
 import com.example.chitchat.UserNode.Android_User_Node;
@@ -56,7 +57,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
 
         progressBar = (ProgressBar) this.findViewById(R.id.indeterminateBar);
         //retrieve object of user node from connect activity
-        this.androidUserNode = (Android_User_Node) getIntent().getSerializableExtra("User Node");
+        this.androidUserNode = DataContainer.getInstance().getAndroidUserNode();
         System.out.println(ConsoleColors.RED + androidUserNode + ConsoleColors.RESET);
         Boolean came_from_message_list = (Boolean) getIntent().getSerializableExtra("message list activity");
         if(came_from_message_list == null){
@@ -78,7 +79,6 @@ public class Central_Screen_Activity extends AppCompatActivity{
             @Override
             public void onUserClicked(View v, int position) {
                 Intent intent = new Intent(getApplicationContext(),Message_List_Activity.class);
-                intent.putExtra("User Node", androidUserNode);
                 intent.putExtra("Topic Name",topicsAdapter.getTopics().get(position));
                 System.out.println(topicsAdapter.getTopics().get(position));
                 startActivity(intent);

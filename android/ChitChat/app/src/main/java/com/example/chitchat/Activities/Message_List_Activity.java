@@ -22,6 +22,7 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 
+import com.example.chitchat.DataContainer;
 import com.example.chitchat.R;
 import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Text_Message;
@@ -74,11 +75,11 @@ public class Message_List_Activity extends AppCompatActivity {
         text_message = (EditText) findViewById(R.id.enter_message_chatroom);
         progressBar = (ProgressBar) findViewById(R.id.message_list_bar);
         messageList = new ArrayList<>();
+        this.androidUserNode = DataContainer.getInstance().getAndroidUserNode();
 
 
         Bundle extras = getIntent().getExtras();
         if(extras != null){
-            this.androidUserNode = (Android_User_Node) extras.get("User Node");
             this.topic_name = (String) extras.get("Topic Name");
             System.out.println("This topic name: " + this.topic_name);
         }
@@ -148,9 +149,10 @@ public class Message_List_Activity extends AppCompatActivity {
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"image");
                 new NetworkingForPublisher(Message_List_Activity.this,this.topic_name,this.androidUserNode,multimedia_file_android).execute(1);
-            }else if(selectedMediaUri.toString().contains("video")){
+            }else{
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"video");
+                new NetworkingForPublisher(Message_List_Activity.this,this.topic_name,this.androidUserNode,multimedia_file_android).execute(1);
             }
         }
         super.onActivityResult(requestCode, result, data);
@@ -168,7 +170,6 @@ public class Message_List_Activity extends AppCompatActivity {
             new Pull_request(Message_List_Activity.this,this.topic_name,this.androidUserNode).execute();
         }else if(item.getItemId() == R.id.go_back){
             Intent intent = new Intent(Message_List_Activity.this,Central_Screen_Activity.class);
-            intent.putExtra("User Node",androidUserNode);
             intent.putExtra("message list activity",true);
             startActivity(intent);
             finish();

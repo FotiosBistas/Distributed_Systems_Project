@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.chitchat.DataContainer;
 import com.example.chitchat.R;
 import com.example.chitchat.UserNode.Android_User_Node;
 
@@ -20,7 +21,6 @@ public class Connect_Activity extends AppCompatActivity {
     private Android_User_Node androidUserNode;
     private final int PERMISSIONS_CODE = 1;
     private String[] permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +53,7 @@ public class Connect_Activity extends AppCompatActivity {
                 Connect_Activity.this.androidUserNode = new Android_User_Node(edit_ip.getText().toString(),Integer. parseInt(edit_port.getText().toString()),edit_username.getText().toString());
                 System.out.println("starting async task");
                 Intent intent = new Intent(Connect_Activity.this, Central_Screen_Activity.class);
-                intent.putExtra("User Node", androidUserNode);
+                DataContainer.getInstance().setAndroidUserNode(androidUserNode);
                 startActivity(intent);
                 finish();
             }

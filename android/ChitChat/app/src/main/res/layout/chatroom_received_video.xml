@@ -57,8 +57,8 @@
 
             <VideoView
                 android:id="@+id/received_video_message_contents"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
                 android:layout_marginBottom="8dp"
                 android:maxWidth="260dp"
                 android:maxHeight="260dp"

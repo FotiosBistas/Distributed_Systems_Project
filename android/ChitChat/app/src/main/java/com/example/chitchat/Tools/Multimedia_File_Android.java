@@ -160,8 +160,23 @@ public class Multimedia_File_Android extends Value{
                 e.printStackTrace();
             }
         }else {
-            String data = MediaStore.Video.Media.DATA;
-            System.out.println(data);
+            System.out.println("Creating video");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                FileInputStream fis = new FileInputStream(new File(String.valueOf(selected_media_uri)));
+                byte[] buf = new byte[1024];
+                int n;
+                while (-1 != (n = fis.read(buf)))
+                    baos.write(buf, 0, n);
+
+                byte[] videoBytes = baos.toByteArray();
+                createChunks(videoBytes);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
 
 

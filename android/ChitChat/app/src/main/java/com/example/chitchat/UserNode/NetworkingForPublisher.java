@@ -30,6 +30,9 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
     //port that listens to consumer services for that broker
     private int default_port = 1235;
 
+    private boolean start_new_connection = false;
+    private Tuple<String,int[]> new_broker;
+
     private String topic_name;
     private Android_User_Node pub;
 
@@ -124,11 +127,12 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
                     System.out.println("Successful push");
                 } else {
                     Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                    startNewConnection(brk, push_type, contents);
+                    this.start_new_connection = true;
+                    this.new_broker = brk;
                     cancel(true);
 
                 }
-            }else if(push_type == 1 || push_type == 2){
+            }else if(push_type == 1 || push_type == 2) {
                 if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, multimedia_file_android)) == null) {
                     System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
                     cancel(true);
@@ -136,14 +140,10 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
                     System.out.println("Successful push");
                 } else {
                     Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                    startNewConnection(brk, push_type, contents);
+                    this.start_new_connection = true;
+                    this.new_broker = brk;
                     cancel(true);
 
-                }
-            }
-            while(true){
-                if(localinputStream.read() == -1){
-                    break;
                 }
             }
         } catch (IOException e) {
@@ -158,7 +158,7 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
      *
      * @param new_broker a Tools.tuple containing the ip of the broker and the port number to connect to. THe consumer ports are in the second place in the array
      */
-    private void startNewConnection(Tuple<String, int[]> new_broker, int operation, String contents) {
+    private void startNewConnection(Tuple<String, int[]> new_broker, int operation) {
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         //port for publisher services
@@ -207,25 +207,29 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
         if (activity == null || activity.isFinishing()) {
             return;
         }
-        if(activity instanceof Message_List_Activity) {
+        if (activity instanceof Message_List_Activity) {
             Message_List_Activity message_list_activity = (Message_List_Activity) activity;
             message_list_activity.getProgressBar().setVisibility(View.INVISIBLE);
             //if push text message
             if (push_type == 0) {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_message());
-            }else if(push_type == 1){
+            } else if (push_type == 1) {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_multimedia_file_android());
-            }else if(push_type == 2){
+            } else if (push_type == 2) {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_story());
             }
         }
 
-    shutdownConnection();
+        shutdownConnection();
     }
 
     @Override
     protected void onCancelled(Void v) {
         super.onCancelled(v);
+        if(start_new_connection){
+            System.out.println("Starting new connection");
+            startNewConnection(new_broker,push_type);
+        }
         shutdownConnection();
     }
 

@@ -24,7 +24,9 @@ import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 import com.example.chitchat.UserNode.Android_User_Node;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -71,9 +73,11 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chatroom_sent_image,parent,false);
                 return new Image_Sent_Message_Holder(view);
             case VIEW_VIDEO_RECEIVED_MESSAGE:
-                return null;
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chatroom_received_video,parent,false);
+                return new Video_Received_Message_Holder(view);
             case VIEW_VIDEO_SENT_MESSAGE:
-                return null;
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chatroom_sent_video,parent,false);
+                return new Video_Sent_Message_Holder(view);
             default:
                 return null;
         }
@@ -109,8 +113,10 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
                 ((Image_Sent_Message_Holder) holder).bind((Multimedia_File_Android) message);
                 break;
             case VIEW_VIDEO_RECEIVED_MESSAGE:
+                ((Video_Received_Message_Holder) holder).bind((Multimedia_File_Android) message);
                 break;
             case VIEW_VIDEO_SENT_MESSAGE:
+                ((Video_Sent_Message_Holder)holder).bind((Multimedia_File_Android) message);
                 break;
         }
     }
@@ -152,7 +158,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
                 return VIEW_TEXT_SENT_MESSAGE;
             }else{
                 Multimedia_File_Android file = (Multimedia_File_Android) value;
-                if(findextensionType(file).equals("jpg")){
+                if(findextensionType(file).equals("jpg") || findextensionType(file).equals("png")){
                     return VIEW_IMAGE_SENT_MESSAGE;
                 }else{
                     return VIEW_VIDEO_SENT_MESSAGE;
@@ -164,8 +170,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
                 return VIEW_TEXT_RECEIVED_MESSAGE;
             }else{
                 Multimedia_File_Android file = (Multimedia_File_Android) value;
-                if(findextensionType(file).equals("jpg")){
-                    System.out.println("Found received jpg image");
+                if(findextensionType(file).equals("jpg") || findextensionType(file).equals("png")){
                     return VIEW_IMAGE_RECEIVED_MESSAGE;
                 }else{
                     return VIEW_VIDEO_RECEIVED_MESSAGE;
@@ -270,12 +275,38 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             super(itemView);
             date_received = itemView.findViewById(R.id.received_video_message_date);
             timestamp = itemView.findViewById(R.id.received_video_message_timestamp);
+            video_received = itemView.findViewById(R.id.received_video_message_contents);
             name_of_sender = itemView.findViewById(R.id.received_video_message_sender);
         }
         void bind(Multimedia_File_Android message){
             //date is in format date__time
             date_received.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
+            name_of_sender.setText(message.getPublisher());
+            createTemp(message);
+        }
+
+        private void createTemp(Multimedia_File_Android message){
+            try {
+                File bufferfile = File.createTempFile("test", "mp4");
+                byte[] buffer = copyBytes(message);
+
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(bufferfile));
+
+                bufferedOutputStream.write(buffer);
+
+                setSourceandStartPlay(bufferfile);
+            }catch (IOException ioException){
+                ioException.printStackTrace();
+            }
+        }
+
+
+        private void setSourceandStartPlay(File bufferFile){
+            int mPlayerPosition = video_received.getCurrentPosition();
+
+            video_received.setVideoPath(bufferFile.getAbsolutePath());
+            video_received.start();
         }
     }
 
@@ -286,11 +317,35 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             super(itemView);
             date_sent = itemView.findViewById(R.id.sent_video_message_date);
             timestamp = itemView.findViewById(R.id.sent_video_message_timestamp);
+            video_sent = itemView.findViewById(R.id.sent_video_message_contents);
         }
         void bind(Multimedia_File_Android message){
             date_sent.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
+            createTemp(message);
+        }
 
+        private void createTemp(Multimedia_File_Android message){
+            try {
+                File bufferfile = File.createTempFile("test", "mp4");
+                byte[] buffer = copyBytes(message);
+
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(bufferfile));
+
+                bufferedOutputStream.write(buffer);
+
+                setSourceandStartPlay(bufferfile);
+            }catch (IOException ioException){
+                ioException.printStackTrace();
+            }
+        }
+
+
+        private void setSourceandStartPlay(File bufferFile){
+             int mPlayerPosition = video_sent.getCurrentPosition();
+
+             video_sent.setVideoPath(bufferFile.getAbsolutePath());
+             video_sent.start();
         }
     }
 }
