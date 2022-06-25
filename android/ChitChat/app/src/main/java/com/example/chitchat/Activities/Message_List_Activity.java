@@ -158,7 +158,7 @@ public class Message_List_Activity extends AppCompatActivity {
             if(selectedMediaUri.toString().contains("image")) {
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"image");
-                this.getMessage_list_adapter().addMessage(multimedia_file_android);
+                new NetworkingForPublisher(Message_List_Activity.this,this.topic_name,this.androidUserNode,multimedia_file_android).execute(1);
             }else if(selectedMediaUri.toString().contains("video")){
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"video");

@@ -14,8 +14,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import com.example.chitchat.NetworkUtilities.GeneralUtils;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -99,6 +102,15 @@ public class Multimedia_File_Android extends Value{
         this.identifier = hashCode();
     }
 
+    public Multimedia_File_Android(MultimediaFile multimediaFile){
+        super(multimediaFile.getPublisher(),multimediaFile.getDateCreated());
+        this.file_name = multimediaFile.getMultimediaFileName();
+        this.chunks = multimediaFile.getMultimediaFileChunk();
+        this.size = multimediaFile.getLength();
+        this.actual_date_created = multimediaFile.getActual_date();
+        this.identifier = multimediaFile.getIdentifier();
+    }
+
     //copy constructor
     @RequiresApi(api = Build.VERSION_CODES.O)
     public Multimedia_File_Android(String publisher, String date_created, String file_name, String actual_date_created, long size, ArrayList<Chunk> chunks){
@@ -120,6 +132,7 @@ public class Multimedia_File_Android extends Value{
                 if (cursor != null && cursor.moveToFirst()) {
                     this.file_name = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                     this.size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                    this.actual_date_created = getDateCreated();
                 }
             }finally {
                 assert cursor != null;
@@ -131,12 +144,18 @@ public class Multimedia_File_Android extends Value{
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), selected_media_uri);
 
 
-                int size = bitmap.getRowBytes() * bitmap.getHeight();
+                /*int size = bitmap.getRowBytes() * bitmap.getHeight();
 
                 ByteBuffer byteBuffer = ByteBuffer.allocate(size);
                 bitmap.copyPixelsToBuffer(byteBuffer);
-                byte[] buffer = byteBuffer.array();
-                createChunks(buffer);
+                byte[] buffer = byteBuffer.array();*/
+                if(findextensionType(this).equals("jpg")){
+                    System.out.println("Creating chunks for jpg image");
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+                    byte[] buffer = byteArrayOutputStream.toByteArray();
+                    createChunks(buffer);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -148,6 +167,15 @@ public class Multimedia_File_Android extends Value{
 
         this.identifier = hashCode();
 
+    }
+
+    private String findextensionType(Multimedia_File_Android file){
+        String extension = "";
+        int i = file.getFile_name().lastIndexOf('.');
+        if (i > 0) {
+            extension = file.getFile_name().substring(i+1);
+        }
+        return extension;
     }
 
     /**
@@ -182,10 +210,11 @@ public class Multimedia_File_Android extends Value{
             }else{
                 //the last chunk might not be equal to 512KB so we must calculate its actual size
                 int actual_size = (int) (chunk_size - ((long) chunk_size * max_seq - size) + 1);
-                Chunk chunk = new Chunk(counter++, actual_size,max_seq,buffer.clone());
+                Chunk chunk = new Chunk(counter++, actual_size - 1,max_seq,buffer.clone());
                 chunks.add(chunk);
             }
         }
+
         System.out.println("Created: " + counter + " chunks");
     }
 

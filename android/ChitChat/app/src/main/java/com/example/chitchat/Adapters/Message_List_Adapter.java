@@ -19,6 +19,7 @@ import com.example.chitchat.R;
 import com.example.chitchat.Tools.Chunk;
 import com.example.chitchat.Tools.MultimediaFile;
 import com.example.chitchat.Tools.Multimedia_File_Android;
+import com.example.chitchat.Tools.Story_Android;
 import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 import com.example.chitchat.UserNode.Android_User_Node;
@@ -152,7 +153,6 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             }else{
                 Multimedia_File_Android file = (Multimedia_File_Android) value;
                 if(findextensionType(file).equals("jpg")){
-                    System.out.println("Found sent jpg image");
                     return VIEW_IMAGE_SENT_MESSAGE;
                 }else{
                     return VIEW_VIDEO_SENT_MESSAGE;
@@ -231,7 +231,9 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
-            image_received.setImageBitmap(Bitmap.createScaledBitmap(bmp,image_received.getWidth(),image_received.getHeight(),false));
+            int width = bmp.getWidth();
+            int height = bmp.getHeight();
+            image_received.setImageBitmap(Bitmap.createScaledBitmap(bmp,width,height,false));
             //date is in format date__time
             date_received.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
@@ -251,10 +253,11 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         void bind(Multimedia_File_Android message){
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
-            System.out.println(file);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
-            System.out.println(bmp);
-            image_sent.setImageBitmap(Bitmap.createScaledBitmap(bmp,image_sent.getWidth(),image_sent.getHeight(),false));
+            int width = bmp.getWidth();
+            int height = bmp.getHeight();
+            System.out.println("Width: " + width + " height: " + height);
+            image_sent.setImageBitmap(Bitmap.createScaledBitmap(bmp,width,height,false));
             date_sent.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);
         }

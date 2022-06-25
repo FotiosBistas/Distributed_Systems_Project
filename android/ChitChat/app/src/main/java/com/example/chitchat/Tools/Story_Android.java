@@ -1,17 +1,17 @@
 package com.example.chitchat.Tools;
 
+import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-
-public class Story extends MultimediaFile implements Serializable {
+public class Story_Android extends Multimedia_File_Android{
 
     private boolean isExpired = false;
     private final String expiration_date;
@@ -38,8 +38,8 @@ public class Story extends MultimediaFile implements Serializable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public Story(String publisher, String multimediaFileName){
-        super(publisher,multimediaFileName);
+    public Story_Android(String publisher, String file_name) {
+        super(publisher, file_name);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime date = LocalDateTime.parse(getDateCreated(),formatter);
         LocalDateTime expiration_date = date.plusMinutes(1);
@@ -48,20 +48,26 @@ public class Story extends MultimediaFile implements Serializable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public Story(String publisher, String date_created, String mutlimediaFileName, String actual_date, long length, ArrayList<Chunk> multimediaFileChunk, String expiration_date){
-        super(publisher,date_created,mutlimediaFileName,actual_date,length,multimediaFileChunk);
+    public Story_Android(String publisher, String date_created, String file_name, String actual_date_created, long size, ArrayList<Chunk> chunks, String expiration_date) {
+        super(publisher, date_created, file_name, actual_date_created, size, chunks);
         this.expiration_date = expiration_date;
         this.identifier = Hash();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public Story(MultimediaFile multimediaFile){
-        super(multimediaFile.getPublisher(),multimediaFile.getDateCreated(),multimediaFile.getMultimediaFileName(),multimediaFile.getActual_date(), multimediaFile.getLength(), multimediaFile.getMultimediaFileChunk());
+    public Story_Android(String publisher, Uri selected_media_uri, Context context, String image_or_video) {
+        super(publisher, selected_media_uri, context, image_or_video);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime date = LocalDateTime.parse(getDateCreated(),formatter);
         LocalDateTime expiration_date = date.plusMinutes(1);
         this.expiration_date = expiration_date.format(formatter);
         this.identifier = Hash();
+    }
+
+    public Story_Android(Story story){
+        super(story);
+        this.expiration_date = story.getExpiration_date();
+        this.identifier = story.getIdentifier();
     }
 
     public int Hash(){
@@ -77,7 +83,7 @@ public class Story extends MultimediaFile implements Serializable {
         if(obj.getClass() != this.getClass()){
             return false;
         }
-        final Story story = (Story) obj;
+        final Story_Android story = (Story_Android) obj;
         return this.identifier == story.identifier;
     }
 

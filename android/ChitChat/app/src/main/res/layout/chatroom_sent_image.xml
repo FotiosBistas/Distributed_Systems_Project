@@ -5,7 +5,8 @@
     android:background="@color/faded_green"
     android:layout_marginTop="16dp"
     android:layout_marginEnd="8dp"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_marginRight="8dp">
 
     <TextView
         android:id="@+id/sent_image_message_date"
@@ -42,12 +43,12 @@
 
             <ImageView
                 android:id="@+id/sent_image_message_contents"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
                 android:layout_marginBottom="8dp"
                 android:paddingLeft="12dp"
-                android:maxHeight="260dp"
-                android:maxWidth="260dp"
+                android:maxHeight="100dp"
+                android:maxWidth="100dp"
                 android:paddingTop="8dp"
                 android:paddingRight="12dp"
                 android:src="@drawable/ic_launcher_foreground"
