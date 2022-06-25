@@ -122,9 +122,11 @@ public class GeneralUtils {
             return message;
         }catch (NotSerializableException notSerializableException){
             System.out.println( ConsoleColors.RED + "Not serializable error in read object..." + ConsoleColors.RESET);
+            notSerializableException.printStackTrace();
             return null;
         }catch (SocketException socketException) {
             System.out.println( ConsoleColors.RED + "Socket error in read object..." + ConsoleColors.RESET);
+            socketException.printStackTrace();
             return null;
         } catch (IOException | ClassNotFoundException e) {
             System.out.println( ConsoleColors.RED + "Error in read object..." + ConsoleColors.RESET);

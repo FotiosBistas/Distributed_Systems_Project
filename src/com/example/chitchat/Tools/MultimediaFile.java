@@ -21,6 +21,7 @@ public class MultimediaFile extends Value implements Serializable {
     private final int identifier;
     private final int chunk_size = 512*1024;
 
+    private static final long serialVersionUID = 1L;
 
     public String getMultimediaFileName() {
         return multimediaFileName;

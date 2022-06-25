@@ -208,8 +208,6 @@ public class BrokerUtils {
             if((received_chunk = (Chunk) GeneralUtils.readObject(localinputStream,socket)) == null){
                 return null;
             }
-            //fileOutputStream.write(temp, 0, actual_size);
-            //fileOutputStream.flush();
             chunks.add(received_chunk);
             System.out.println("Chunks size now is: " + chunks.size());
         }
