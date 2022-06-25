@@ -23,6 +23,7 @@ import com.example.chitchat.Tools.Text_Message;
 import com.example.chitchat.Tools.Value;
 import com.example.chitchat.UserNode.Android_User_Node;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -87,6 +88,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         notifyItemRangeInserted(this.message_list.size() - 1, message_list.size());
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Value message = (Value) message_list.get(position);
@@ -125,16 +127,18 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
         //get the maximum number of chunks for the specific multimedia file
         int max_sequence = message.getChunks().get(0).getMax_sequence_number();
         int chunk_size = message.getChunks().get(0).getChunk_size();
-        byte[] file = new byte[max_sequence * chunk_size];
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         for(int i = 0; i< message.getChunks().size();i++){
             //add the specific chunk to the file byte array
             byte[] chunk = message.getChunks().get(i).getChunk();
-            for(int j = 0; j < chunk.length; j++){
-                file[j] = chunk[j];
+            try {
+                byteArrayOutputStream.write(chunk);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-        return file;
+        return byteArrayOutputStream.toByteArray();
     }
 
     @Override
@@ -226,7 +230,6 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
 
             //create bitmap through the multimedia file's byte array.
             byte[] file = copyBytes(message);
-            file = Base64.getDecoder().decode(file);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
             image_received.setImageBitmap(Bitmap.createScaledBitmap(bmp,image_received.getWidth(),image_received.getHeight(),false));
             //date is in format date__time
@@ -250,6 +253,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
             byte[] file = copyBytes(message);
             System.out.println(file);
             Bitmap bmp = BitmapFactory.decodeByteArray(file,0,file.length);
+            System.out.println(bmp);
             image_sent.setImageBitmap(Bitmap.createScaledBitmap(bmp,image_sent.getWidth(),image_sent.getHeight(),false));
             date_sent.setText(message.getDateCreated().split(" ")[0]);
             timestamp.setText(message.getDateCreated().split(" ")[1]);

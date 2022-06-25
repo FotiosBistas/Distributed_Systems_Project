@@ -119,10 +119,10 @@ public class Multimedia_File_Android extends Value{
             try {
                 if (cursor != null && cursor.moveToFirst()) {
                     this.file_name = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                    System.out.println(file_name);
                     this.size = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
                 }
             }finally {
+                assert cursor != null;
                 cursor.close();
             }
         }
