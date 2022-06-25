@@ -150,26 +150,31 @@ public class BrokerUtils {
         if (file_name == null) {
             return null;
         }
+        System.out.println(file_name);
         System.out.println("Receiving the date that the file was sent to the network...");
         String date_created = GeneralUtils.readUTFString(localinputStream,socket);
         if (date_created == null) {
             return null;
         }
+        System.out.println(date_created);
         System.out.println("Receiving the actual date of the file...");
         String actual_date = GeneralUtils.readUTFString(localinputStream,socket);
         if (actual_date == null) {
             return null;
         }
+        System.out.println(actual_date);
         System.out.println("Receiving publisher name...");
         String publisher = GeneralUtils.readUTFString(localinputStream,socket);
         if (publisher == null) {
             return null;
         }
+        System.out.println(publisher);
         System.out.println("Receiving file's size...");
         Long size = GeneralUtils.readLong(localinputStream,socket);
         if (size == null) {
             return null;
         }
+        System.out.println(size);
         String new_file = file_name.substring(file_name.lastIndexOf("\\") + 1);
         System.out.println("Received file: " + new_file);
         Integer number_of_chunks = GeneralUtils.waitForNodePrompt(localinputStream,socket);
@@ -410,7 +415,7 @@ public class BrokerUtils {
     public static String receiveNickname(ObjectInputStream localinputStream, Socket socket) {
         System.out.println( "\033[0;32m" + "Receiving client's nickname" + "\033[0m");
         String nickname;
-        if((nickname = SHA1.encrypt(GeneralUtils.readUTFString(localinputStream,socket))) == null){
+        if((nickname = GeneralUtils.readUTFString(localinputStream,socket)) == null){
             return null;
         }
         System.out.println("\033[0;32m" + "Client's nickname is: " + nickname + "\033[0m");

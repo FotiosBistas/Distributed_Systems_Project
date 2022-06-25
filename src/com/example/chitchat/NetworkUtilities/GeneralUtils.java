@@ -53,9 +53,11 @@ public class GeneralUtils {
             return message;
         } catch (SocketException socketException) {
             System.out.println( ConsoleColors.RED + "Socket error in read UTF string..." + ConsoleColors.RESET);
+            socketException.printStackTrace();
             return null;
         } catch (IOException e) {
             System.out.println( ConsoleColors.RED + "Error in read UTF string..." + ConsoleColors.RESET);
+            e.printStackTrace();
             return null;
         }
     }

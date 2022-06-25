@@ -99,10 +99,12 @@ public class Consumer_Handler implements Runnable {
                     }
                     break;
                 case SENDING_NICK_NAME:
-                    if(BrokerUtils.receiveNickname(localinputStream,consumer_connection) == null){
+                    String nickname;
+                    if((nickname = BrokerUtils.receiveNickname(localinputStream,consumer_connection)) == null){
                         shutdownConnection();
                         return;
                     }
+
                     if(GeneralUtils.FinishedOperation(localoutputStream) == null){
                         shutdownConnection();
                         return;
