@@ -15,6 +15,7 @@ import Logging.ConsoleColors;
 
 import com.example.chitchat.Activities.Message_List_Activity;
 import com.example.chitchat.NetworkUtilities.UserNodeUtils;
+import com.example.chitchat.Tools.Multimedia_File_Android;
 import com.example.chitchat.Tools.Tuple;
 
 import java.io.*;
@@ -35,9 +36,24 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
     private Socket connection;
     private ObjectInputStream localinputStream;
     private ObjectOutputStream localoutputStream;
+    private Multimedia_File_Android multimedia_file_android;
 
     private int push_type;
-    private String contents_or_file_name;
+    private String contents;
+
+    public NetworkingForPublisher(Message_List_Activity message_list_activity, String topic_name, Android_User_Node androidUserNode, Multimedia_File_Android multimedia_file_android) {
+        this.weakReference = new WeakReference<>(message_list_activity);
+        this.topic_name = topic_name;
+        this.pub = androidUserNode;
+        this.multimedia_file_android = multimedia_file_android;
+    }
+
+    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, Android_User_Node androidUserNode, Multimedia_File_Android multimedia_file_android) {
+        this.weakReference = weakReference;
+        this.topic_name = topic_name;
+        this.pub = androidUserNode;
+        this.multimedia_file_android = multimedia_file_android;
+    }
 
     /**
      * we need a weak reference because the Networking For consumer class will be called from multiple activities
@@ -56,18 +72,18 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
         this.default_port = default_port;
     }
 
-    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, Android_User_Node pub, String contents_or_file_name) {
+    public NetworkingForPublisher(WeakReference<Activity> weakReference, String topic_name, Android_User_Node pub, String contents) {
         this.weakReference = weakReference;
         this.topic_name = topic_name;
         this.pub = pub;
-        this.contents_or_file_name = contents_or_file_name;
+        this.contents = contents;
     }
 
-    public NetworkingForPublisher(Activity activity, String topic_name, Android_User_Node pub, String contents_or_file_name) {
+    public NetworkingForPublisher(Activity activity, String topic_name, Android_User_Node pub, String contents) {
         this.weakReference = new WeakReference<>(activity);
         this.topic_name = topic_name;
         this.pub = pub;
-        this.contents_or_file_name = contents_or_file_name;
+        this.contents = contents;
     }
 
     @Override
@@ -100,16 +116,35 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
             localoutputStream = new ObjectOutputStream(connection.getOutputStream());
             localinputStream = new ObjectInputStream(connection.getInputStream());
             this.push_type = integers[0];
-            if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, push_type, contents_or_file_name)) == null) {
-                System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
-                cancel(true);
-            } else if (index == -1) {
-                System.out.println("Successful push");
-            } else {
-                Tuple<String, int[]> brk = pub.getBrokerList().get(index);
-                startNewConnection(brk, push_type, contents_or_file_name);
-                cancel(true);
+            if(push_type == 0) {
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, contents)) == null) {
+                    System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
+                    cancel(true);
+                } else if (index == -1) {
+                    System.out.println("Successful push");
+                } else {
+                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                    startNewConnection(brk, push_type, contents);
+                    cancel(true);
 
+                }
+            }else if(push_type == 1 || push_type == 2){
+                if ((index = UserNodeUtils.push(localinputStream, localoutputStream, connection, topic_name, pub, multimedia_file_android)) == null) {
+                    System.out.println(ConsoleColors.RED + "Error while trying to push" + ConsoleColors.RESET);
+                    cancel(true);
+                } else if (index == -1) {
+                    System.out.println("Successful push");
+                } else {
+                    Tuple<String, int[]> brk = pub.getBrokerList().get(index);
+                    startNewConnection(brk, push_type, contents);
+                    cancel(true);
+
+                }
+            }
+            while(true){
+                if(localinputStream.read() == -1){
+                    break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -123,13 +158,18 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
      *
      * @param new_broker a Tools.tuple containing the ip of the broker and the port number to connect to. THe consumer ports are in the second place in the array
      */
-    private void startNewConnection(Tuple<String, int[]> new_broker, int operation, String contents_or_file_name) {
+    private void startNewConnection(Tuple<String, int[]> new_broker, int operation, String contents) {
         String IP = new_broker.getValue1();
         System.out.println("New connection IP: " + IP);
         //port for publisher services
         int port = new_broker.getValue2()[1];
         System.out.println("New broker port: " + port);
-        NetworkingForPublisher new_connection = new NetworkingForPublisher(weakReference, topic_name, pub, contents_or_file_name);
+        NetworkingForPublisher new_connection;
+        if(multimedia_file_android == null) {
+            new_connection = new NetworkingForPublisher(weakReference, topic_name, pub, contents);
+        }else{
+            new_connection = new NetworkingForPublisher(weakReference,topic_name,pub,multimedia_file_android);
+        }
         new_connection.setDefault_ip_address(IP);
         new_connection.setDefault_port(port);
         new_connection.execute(operation);
@@ -179,7 +219,8 @@ public class NetworkingForPublisher extends AsyncTask<Integer, Void, Void> {
                 message_list_activity.getMessage_list_adapter().addMessage(pub.getTemp_story());
             }
         }
-        shutdownConnection();
+
+    shutdownConnection();
     }
 
     @Override

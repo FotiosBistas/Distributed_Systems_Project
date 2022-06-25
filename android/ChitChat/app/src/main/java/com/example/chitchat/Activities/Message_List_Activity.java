@@ -80,6 +80,7 @@ public class Message_List_Activity extends AppCompatActivity {
         if(extras != null){
             this.androidUserNode = (Android_User_Node) extras.get("User Node");
             this.topic_name = (String) extras.get("Topic Name");
+            System.out.println("This topic name: " + this.topic_name);
         }
 
 
@@ -114,19 +115,7 @@ public class Message_List_Activity extends AppCompatActivity {
         networkingForConsumer.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,6);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private Multimedia_File_Android createMultimediaFile(Context  context, String file_name){
-        String extension = "";
-        int i = file_name.lastIndexOf('.');
-        if(i > 0){
-            //Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(GlobalVariables.getInstance().getUsername(), file_name,this);
-            //return multimedia_file_android;
-            return null; 
-        }else{
-            System.out.println("Your file name should only include 1 dot");
-            return null;
-        }
-    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void createMessage(){
@@ -158,7 +147,7 @@ public class Message_List_Activity extends AppCompatActivity {
             if(selectedMediaUri.toString().contains("image")) {
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"image");
-                this.getMessage_list_adapter().addMessage(multimedia_file_android);
+                new NetworkingForPublisher(Message_List_Activity.this,this.topic_name,this.androidUserNode,multimedia_file_android).execute(1);
             }else if(selectedMediaUri.toString().contains("video")){
                 Multimedia_File_Android multimedia_file_android = new Multimedia_File_Android(androidUserNode.getName(),selectedMediaUri,
                         Message_List_Activity.this,"video");

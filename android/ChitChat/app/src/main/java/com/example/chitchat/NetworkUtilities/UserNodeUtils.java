@@ -335,7 +335,7 @@ public class UserNodeUtils {
      * @param localoutputStream Accepts the local output stream.
      * @return Returns -1 if everything goes well. Returns null if an error occurs.
      */
-    public static Integer sendStory(Story story, ObjectOutputStream localoutputStream) {
+    public static Integer sendStory(Story_Android story, ObjectOutputStream localoutputStream) {
         return sendFile(story, localoutputStream);
     }
 
@@ -403,7 +403,7 @@ public class UserNodeUtils {
      * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node pub, int file_or_text, String contents_or_file_name) {
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node pub, String contents) {
         System.out.println("Requesting for proper broker from the connection");
         notifyBrokersNewMessage(localoutputStream);
 
@@ -459,24 +459,99 @@ public class UserNodeUtils {
                 }
             }
             if (subscribed_user) {
-                if(file_or_text == 0){ // push text message
                     push_message(localoutputStream);
-                    Text_Message new_text = new Text_Message(pub.getName(), contents_or_file_name);
+                    Text_Message new_text = new Text_Message(pub.getName(), contents);
                     pub.setTemp_message(new_text);
                     sendTextMessage(new_text, localoutputStream);
-                }else if(file_or_text == 1){ //push multimedia file
-                    push_file(localoutputStream);
-                    Multimedia_File_Android new_file = new Multimedia_File_Android(pub.getName(), contents_or_file_name);
-                    pub.setTemp_multimedia_file_android(new_file);
-                    sendFile(new_file, localoutputStream);
-                }else if(file_or_text == 2){// push story
-                    push_story(localoutputStream);
-                    Story new_story = new Story(pub.getName(), contents_or_file_name);
-                    pub.setTemp_story(new_story);
-                    sendStory(new_story, localoutputStream);
+            } else {
+                System.out.println("User is not subscribed to topic and can't post there");
+                return null;
+            }
+            return -1;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Does all the necessary operations in order to push a message or a file given from the command line to the brokers:
+     * 1.) Finds the proper broker to push the data to
+     * 2.) If the connected broker is the right broker and the consumer is subscribed to the topic it pushes the file.
+     *
+     * @param localinputStream  Accepts the local input stream.
+     * @param localoutputStream Accepts the local output stream.
+     * @param socket            Accepts the local socket.
+     * @param topic_name        Accepts the topic_name that it wants to push to.
+     * @param pub               Accepts a node to access its name and other necessary fiels.
+     * @return Returns -1 if everything goes well. Returns null if an error occurs. If the connected broker is the wrong broker it returns its index.
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static Integer push(ObjectInputStream localinputStream, ObjectOutputStream localoutputStream, Socket socket, String topic_name, Android_User_Node pub, Multimedia_File_Android file) {
+        System.out.println("Requesting for proper broker from the connection");
+        notifyBrokersNewMessage(localoutputStream);
+
+
+        if (GeneralUtils.sendMessage(topic_name, localoutputStream) == null) {
+            return null;
+        }
+        boolean subscribed_user = false;
+        System.out.println("Waiting to receive finished operation message that the broker received the topic name");
+        Integer broker_message;
+        if ((broker_message = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+            return null;
+        } else if (broker_message == Messages.FINISHED_OPERATION.ordinal()) {
+            System.out.println("Broker received the topic name");
+        }
+        System.out.println("Waiting to receive correct broker message from the broker");
+        if ((broker_message = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+            return null;
+        } else if (Messages.I_AM_NOT_THE_CORRECT_BROKER.ordinal() == broker_message) {
+            //waiting for broker to send the index of the correct broker in the broker list
+            System.out.println("Receiving the index for the correct broker");
+            Integer index;
+            if ((index = GeneralUtils.waitForNodePrompt(localinputStream, socket)) == null) {
+                return null;
+            }
+            System.out.println("The index received is: " + index);
+            return index;
+        } else if (Messages.I_AM_THE_CORRECT_BROKER.ordinal() == broker_message) {
+            if (GeneralUtils.FinishedOperation(localoutputStream) == null) {
+                return null;
+            }
+            System.out.println("Requesting for topic list from the broker");
+            if (GeneralUtils.sendMessage(Messages.GET_TOPIC_LIST, localoutputStream) == null) {
+                return null;
+            }
+            ArrayList<Topic> topics = receiveTopicList(localoutputStream, localinputStream, socket);
+            if (topics == null) {
+                return null;
+            } else if (topics.isEmpty()) {
+                System.out.println("\033[0;31m" + "Received empty list" + "\033[0m");
+                return null;
+            }
+            for (Topic topic : topics) {
+                topic.printSubscribers();
+                System.out.println("This publisher's name is: " + pub.getName());
+                if (topic.getName().equals(topic_name)) {
+                    System.out.println("Found the right topic: " + topic.getName());
+                    if (topic.isUserSubscribed(pub.getName())) {
+                        System.out.println("This publisher is subcribed to the topic");
+                        subscribed_user = true;
+                        break;
+                    }
                 }
+            }
+            if (subscribed_user) {
+                if(file instanceof Story_Android){
+                    push_story(localoutputStream);
+                    pub.setTemp_story((Story_Android) file);
+                    sendStory((Story_Android) file,localoutputStream);
 
-
+                }else{
+                    push_file(localoutputStream);
+                    pub.setTemp_multimedia_file_android(file);
+                    sendFile(file,localoutputStream);
+                }
             } else {
                 System.out.println("User is not subscribed to topic and can't post there");
                 return null;
@@ -656,8 +731,16 @@ public class UserNodeUtils {
             //System.out.println(ConsoleColors.PURPLE + "Showing message queue: " + ConsoleColors.RESET);
             ArrayList<Value> return_list = new ArrayList<>();
             return_list.addAll(temp.getMessage_queue());
-            return_list.addAll(temp.getStory_queue());
-            return_list.addAll(temp.getFile_queue());
+            ArrayList<Story_Android> story_androids = new ArrayList<>();
+            for(Story story: temp.getStory_queue()){
+                story_androids.add(new Story_Android(story));
+            }
+            return_list.addAll(story_androids);
+            ArrayList<Multimedia_File_Android> multimedia_file_androids = new ArrayList<>();
+            for(MultimediaFile file: temp.getFile_queue()){
+                multimedia_file_androids.add(new Multimedia_File_Android(file));
+            }
+            return_list.addAll(multimedia_file_androids);
             Collections.sort(return_list,new SortMessages());
             androidUserNode.setTemp_message_list(return_list);
             return -1;
@@ -743,7 +826,8 @@ public class UserNodeUtils {
                 //System.out.println(ConsoleColors.RED + "There are no new files" + ConsoleColors.RESET);
             } else {
                 for (MultimediaFile val : new_files) {
-                    androidUserNode.addNewFile(topic, val);
+                    //convert multimedia file to android multimedia file
+                    androidUserNode.addNewFile(topic, new Multimedia_File_Android(val));
                 }
             }
             if (new_stories == null) {
@@ -752,7 +836,7 @@ public class UserNodeUtils {
                 // System.out.println(ConsoleColors.RED + "There are no new stories" + ConsoleColors.RESET);
             } else {
                 for (Story story : new_stories) {
-                    androidUserNode.addNewStory(topic, story);
+                    androidUserNode.addNewStory(topic, new Story_Android(story));
                 }
             }
             ArrayList<Value> temp = new ArrayList<>();
@@ -760,11 +844,11 @@ public class UserNodeUtils {
             if(text_messages != null){
                 temp.addAll(text_messages);
             }
-            ArrayList<MultimediaFile> files =  androidUserNode.getFile_list().get(topic);
+            ArrayList<Multimedia_File_Android> files =  androidUserNode.getFile_list().get(topic);
             if(files != null){
                 temp.addAll(files);
             }
-            ArrayList<Story> stories = androidUserNode.getStory_list().get(topic);
+            ArrayList<Story_Android> stories = androidUserNode.getStory_list().get(topic);
             if(stories != null){
                 temp.addAll(stories);
             }

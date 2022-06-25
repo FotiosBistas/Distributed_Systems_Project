@@ -26,7 +26,7 @@ public class Android_User_Node implements Serializable {
     //used when user adds its own files and messages
     private Text_Message temp_message;
     private Multimedia_File_Android temp_multimedia_file_android;
-    private Story temp_story;
+    private Story_Android temp_story;
 
     public Text_Message getTemp_message() {
         return temp_message;
@@ -44,11 +44,11 @@ public class Android_User_Node implements Serializable {
         this.temp_multimedia_file_android = temp_multimedia_file_android;
     }
 
-    public Story getTemp_story() {
+    public Story_Android getTemp_story() {
         return temp_story;
     }
 
-    public void setTemp_story(Story temp_story) {
+    public void setTemp_story(Story_Android temp_story) {
         this.temp_story = temp_story;
     }
 
@@ -69,12 +69,12 @@ public class Android_User_Node implements Serializable {
     private List<Integer> BrokerIds = new ArrayList<>();
 
 
-    private final HashMap<String, ArrayList<MultimediaFile>> file_list = new HashMap<>();
+    private final HashMap<String, ArrayList<Multimedia_File_Android>> file_list = new HashMap<>();
     private final HashMap<String,ArrayList<Text_Message>> message_list = new HashMap<>();
-    private final HashMap<String, ArrayList<Story>> story_list = new HashMap<>();
+    private final HashMap<String, ArrayList<Story_Android>> story_list = new HashMap<>();
 
     //added to temp message list when pulling so user can see the new messages
-    public HashMap<String, ArrayList<MultimediaFile>> getFile_list() {
+    public HashMap<String, ArrayList<Multimedia_File_Android>> getFile_list() {
         return file_list;
     }
 
@@ -82,7 +82,7 @@ public class Android_User_Node implements Serializable {
         return message_list;
     }
 
-    public HashMap<String, ArrayList<Story>> getStory_list() {
+    public HashMap<String, ArrayList<Story_Android>> getStory_list() {
         return story_list;
     }
 
@@ -146,12 +146,12 @@ public class Android_User_Node implements Serializable {
      * @param topic_name Accepts the topic that received a new message.
      * @param new_story Accepts the story object we received.
      */
-    public synchronized void addNewStory(String topic_name,Story new_story){
+    public synchronized void addNewStory(String topic_name,Story_Android new_story){
         if(story_list.containsKey(topic_name)) {
-            ArrayList<Story> stories = story_list.get(topic_name);
+            ArrayList<Story_Android> stories = story_list.get(topic_name);
             stories.add(new_story);
         }else{
-            story_list.put(topic_name,new ArrayList<Story>());
+            story_list.put(topic_name,new ArrayList<Story_Android>());
             story_list.get(topic_name).add(new_story);
         }
     }
@@ -161,12 +161,12 @@ public class Android_User_Node implements Serializable {
      * @param topic_name Accepts the topic that received a new message.
      * @param new_file Accepts the file object we received.
      */
-    public synchronized void addNewFile(String topic_name,MultimediaFile new_file){
+    public synchronized void addNewFile(String topic_name,Multimedia_File_Android new_file){
         if(file_list.containsKey(topic_name)) {
-            ArrayList<MultimediaFile> files = file_list.get(topic_name);
+            ArrayList<Multimedia_File_Android> files = file_list.get(topic_name);
             files.add(new_file);
         }else{
-            file_list.put(topic_name,new ArrayList<MultimediaFile>());
+            file_list.put(topic_name,new ArrayList<Multimedia_File_Android>());
             file_list.get(topic_name).add(new_file);
         }
     }
@@ -176,13 +176,13 @@ public class Android_User_Node implements Serializable {
         temp.remove(old_text_message);
     }
 
-    private synchronized void removeFromFileQueue(String topic_name,MultimediaFile old_file){
-        ArrayList<MultimediaFile> temp = file_list.get(topic_name);
+    private synchronized void removeFromFileQueue(String topic_name,Multimedia_File_Android old_file){
+        ArrayList<Multimedia_File_Android> temp = file_list.get(topic_name);
         temp.remove(old_file);
     }
 
-    private synchronized void removeFromStoryQueue(String topic_name,Story old_story){
-        ArrayList<Story> temp = story_list.get(topic_name);
+    private synchronized void removeFromStoryQueue(String topic_name,Story_Android old_story){
+        ArrayList<Story_Android> temp = story_list.get(topic_name);
         temp.remove(old_story);
     }
 

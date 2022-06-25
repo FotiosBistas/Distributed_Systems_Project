@@ -80,6 +80,7 @@ public class Central_Screen_Activity extends AppCompatActivity{
                 Intent intent = new Intent(getApplicationContext(),Message_List_Activity.class);
                 intent.putExtra("User Node", androidUserNode);
                 intent.putExtra("Topic Name",topicsAdapter.getTopics().get(position));
+                System.out.println(topicsAdapter.getTopics().get(position));
                 startActivity(intent);
                 finish();
             }
