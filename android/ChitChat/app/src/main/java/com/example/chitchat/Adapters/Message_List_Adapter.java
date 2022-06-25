@@ -81,7 +81,7 @@ public class Message_List_Adapter extends RecyclerView.Adapter<RecyclerView.View
 
     public void addMessages(ArrayList<Value> message_list){
         this.message_list = message_list;
-        notifyDataSetChanged();
+        notifyItemRangeInserted(this.message_list.size() - 1, message_list.size());
     }
 
     @Override

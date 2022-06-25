@@ -88,6 +88,14 @@ public class Android_User_Node implements Serializable {
 
     private final List<String> SubscribedTopics = new ArrayList<>();
 
+    //used when reconnecting to the network broker
+    //gets all the topics that the user is subscribed to
+    public void addNewTopic(String topic_name){
+        if(!SubscribedTopics.contains(topic_name)){
+            SubscribedTopics.add(topic_name);
+        }
+    }
+
     public Android_User_Node(String ip, int port, String name){
         this.ip = ip;
         this.port = port;
