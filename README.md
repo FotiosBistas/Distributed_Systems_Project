@@ -2,7 +2,14 @@
 
 This is a 3rd year semester project for Athens University of Economics And Business. 
 Includes introductory pub-sub,sockets,dht,brokers, chunking etc. 
+
+
+
 Phase 1: Create the pub/sub system 
+
+
+
+
 Phase 2: Create an android app that will use the services created above.
 
 
@@ -15,9 +22,16 @@ The idea is the following:
 
 
 
+The broker class is the server component of the system. It handles publisher and consumer requests using the publisher handler class and the consumer handler class. It achieves that using 2 ports for each type of service. 
 
-The class diagram: 
-![ProjectSkeleton2022](https://user-images.githubusercontent.com/83087431/163029181-81d7baf4-7f15-4029-9b53-f07ea6ddf30a.png)
+
+The user node class is essentially a temporary class used for the phase 1 meant to be replaced by the android implementation of the project. 
+
+
+User sends files, images and text messages on the network. These messages are directed towards topics that the user must be subscribed to see and publish them. All files are chunked into 512KB chunks and then sent on to the network. We were not instructed that to be able to handle chunks seperately and we used specifically tcp object streams for the sockets so its kinda pointeless the way its implemented. 
+
+
+
 
 
 
