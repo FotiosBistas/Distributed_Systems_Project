@@ -25,14 +25,16 @@ The idea is the following:
 The broker class is the server component of the system. It handles publisher and consumer requests using the publisher handler class and the consumer handler class. It achieves that using 2 ports for each type of service. 
 
 
-The user node class is essentially a temporary class used for the phase 1 meant to be replaced by the android implementation of the project. 
+The user node class is essentially a temporary class used for the phase 1 meant to be replaced by the android implementation of the project. All the requests that the user node sends are not persistent meaning each request needs a new connection. 
 
 
 
-Using the messages enum the user prompts the broker the server the specific request for a specific topic. There is a main broker which distributes requests based on the hashed SHA1 value of the topic. Example: C++ topic is hashed to 150 the broker with id 200 will take care the requests for that topic. 
+Using the messages enum the user prompts the broker the server the specific request for a specific topic. There is a main broker which distributes requests based on the hashed SHA1 value of the topic. Example: C++ topic is hashed to 150 the default broker will redirect the request for that topic to the broker with id 200. 
 
 
-User sends files, images and text messages on the network. These messages are directed towards topics that the user must be subscribed to see and publish them. All files are chunked into 512KB chunks and then sent on to the network. We were not instructed that to be able to handle chunks seperately and we used specifically tcp object streams for the sockets so its kinda pointeless the way its implemented. 
+
+
+User sends files, images and text messages on the network. These messages are directed towards topics that the user must be subscribed to see and publish them. All files are chunked into 512KB chunks and then sent on to the network. We were not instructed that to be able to handle chunks seperately and we used specifically tcp object streams for the sockets so its kinda pointless the way its implemented. 
 
 
 
