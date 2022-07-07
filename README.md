@@ -48,7 +48,7 @@ A significant software requirement that needs to be addressed for better compreh
 
 The role of `pull` is to deliver all the data of an intermediate node that concern the user (_subscriber_) that calls the function. Values from each topic are collected and delivered to the _subscriber_ that issued the request. 
 
-<font size ="5">The above part part of the read me was conceived by [Georgios E. Syros](https://github.com/gsiros "Georgios E. Syros")</font>
+<font size ="10">The above part part of the read me was conceived by [Georgios E. Syros](https://github.com/gsiros "Georgios E. Syros")</font>
 
 The broker class is the server component of the system. It handles publisher and consumer requests using the publisher handler class and the consumer handler class. It achieves that using 2 ports for each type of service. 
 
