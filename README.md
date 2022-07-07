@@ -62,7 +62,10 @@ Using the messages enum the user prompts the broker the server the specific requ
 
 
 
-User sends files, images and text messages on the network. These messages are directed towards topics that the user must be subscribed to see and publish them. All files are chunked into 512KB chunks and then sent on to the network. We were not instructed that to be able to handle chunks seperately and we used specifically tcp object streams for the sockets so its kinda pointless the way its implemented. 
+User sends files, images and text messages on the network. These messages are directed towards topics that the user must be subscribed to see and publish them. All files are chunked into 512KB chunks and then sent on to the network. 
+
+
+[^1].We were not instructed that to be able to handle chunks seperately and we used specifically tcp object streams for the sockets so its kinda pointless the way its implemented. 
 
 
 
